@@ -1589,28 +1589,28 @@
             label: '언제?',
             keyword: '언제',
             fairy: '언제 있었던 일이야?',
-            ins: '언제 있었던 일인지 카드에서 골라봐요!',
+            ins: '언제 있었던 일인지 떠올려보고 들려주세요!',
             options: optsFor('when')
         }, {
             key: 'where',
             label: '어디서?',
             keyword: '어디에서',
             fairy: '어디에서 일어났니?',
-            ins: '어디에서 있었던 일인지 카드에서 골라봐요!',
+            ins: '어디에서 있었던 일인지 떠올려보고 들려주세요!',
             options: optsFor('where')
         }, {
             key: 'who',
             label: '누구와?',
             keyword: '누구와',
             fairy: '누구와 같이 있었어?',
-            ins: '누구와 있었는지 카드에서 골라봐요!',
+            ins: '누구와 함께 있었는지 떠올려보고 들려주세요!',
             options: optsFor('who')
         }, {
             key: 'what',
             label: '무엇을?',
             keyword: '무엇을',
             fairy: '무엇을 했니?',
-            ins: '무엇을 했는지 카드에서 골라봐요!',
+            ins: '무엇을 했는지 떠올려보고 들려주세요!',
             options: optsFor('what')
         }];
         const FEELINGS = [{
@@ -1769,7 +1769,7 @@
                 eg: '강아지가 사랑스러웠다.'
             }]
         }];
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzXnMW7229uvW8CuaUvaYDI8xchr2HuNxgkSs2P6QO42UD7WvVdFMUjbIAGL-De0e1R/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbx5WZpaPCoE6HGxYD9vRfzhFamXsLUGV84bSBz27fAG256rNnlZf9uLfcjJrXqA4D6R9Q/exec";
         const isGasOk = GAS_URL.indexOf("script.google.com") !== -1 && GAS_URL.indexOf("여기에") === -1;
         const DUMMY = [{
             id: 1,
@@ -2941,20 +2941,17 @@
                 animate: {
                     opacity: 1
                 },
-                className: "w-full flex flex-col h-full items-center justify-center py-4 px-6"
+                className: "w-full h-full flex flex-col gap-3 overflow-hidden py-4 px-6"
             }, /*#__PURE__*/React.createElement("div", {
-                className: "flex items-start gap-8 w-full max-w-6xl flex-1"
-            }, /*#__PURE__*/React.createElement("div", {
-                className: "w-[20%] flex flex-col items-center justify-center bg-white rounded-[3rem] p-8 border-2 border-orange-50 shadow-lg shrink-0 h-full"
-            }, /*#__PURE__*/React.createElement("div", {
-                className: "text-7xl mb-4"
-            }, "\uD83D\uDE0A"), /*#__PURE__*/React.createElement("p", {
-                className: "text-xl font-black text-slate-500 text-center mb-4"
-            }, "\uC65C \uADF8\uB7F0 \uB9C8\uC74C\uC774 \uB4E4\uC5C8\uB294\uC9C0 \uB4E4\uB824\uC904\uB798?"), /*#__PURE__*/React.createElement("button", {
-                onClick: goPrev,
-                className: "mt-auto flex items-center gap-2 py-4 w-full bg-orange-50 text-orange-600 border-2 border-orange-100 rounded-2xl font-black text-2xl justify-center active:scale-95"
-            }, /*#__PURE__*/React.createElement(IconRotateCcw, null), " \uC774\uC804")), /*#__PURE__*/React.createElement("div", {
-                className: "flex-1 bg-white p-8 rounded-[3.5rem] shadow-xl border-4 border-orange-50 flex flex-col h-full"
+                className: "flex items-start gap-3 shrink-0"
+            }, /*#__PURE__*/React.createElement(PencilFairy, {
+                mini: true,
+                isListening: listening,
+                speech: "\uC65C \uADF8\uB7F0 \uB9C8\uC74C\uC774 \uB4E4\uC5C8\uB294\uC9C0 \uB4E4\uB824\uC904\uB798?",
+                speechDir: "right",
+                className: "shrink-0"
+            })), /*#__PURE__*/React.createElement("div", {
+                className: "flex-1 bg-white p-8 rounded-[3.5rem] shadow-xl border-4 border-orange-50 flex flex-col w-full max-w-6xl mx-auto min-h-0"
             }, /*#__PURE__*/React.createElement("div", {
                 className: "text-center mb-6 shrink-0"
             }, /*#__PURE__*/React.createElement("h2", {
@@ -3065,7 +3062,7 @@
                 disabled: isCapture,
                 className: "flex items-center gap-3 px-8 py-4 bg-slate-800 text-white rounded-2xl font-black text-xl shadow-lg active:scale-95 disabled:opacity-60"
             }, /*#__PURE__*/React.createElement(IconDownload, null), " \uC77C\uAE30 \uC0AC\uC9C4 \uC800\uC7A5\uD558\uAE30 \uD83D\uDCF8"))), /*#__PURE__*/React.createElement("div", {
-                className: "flex-[3.5] bg-orange-50/50 rounded-[3rem] p-8 border-4 border-orange-100 flex flex-col gap-4 overflow-y-auto custom-scrollbar"
+                className: "flex-[3.5] bg-orange-50/50 rounded-[3rem] p-8 border-4 border-orange-100 flex flex-col gap-4 overflow-hidden"
             }, /*#__PURE__*/React.createElement("div", {
                 className: "text-center mb-2"
             }, /*#__PURE__*/React.createElement("h4", {
@@ -3102,7 +3099,7 @@
             })), /*#__PURE__*/React.createElement("div", {
                 className: "flex items-center justify-center gap-3 py-3 rounded-2xl text-base font-black " + (isSaving ? "bg-slate-100 text-slate-500" : saveStatus === 'success' ? "bg-emerald-100 text-emerald-700" : saveStatus === 'error' ? "bg-red-100 text-red-600" : saved ? "bg-emerald-50 text-emerald-600" : "bg-slate-50 text-slate-400")
             }, isSaving && "저장하는 중...", !isSaving && saveStatus === 'success' && "✅ 저장 완료!", !isSaving && saveStatus === 'error' && "⚠️ 저장 실패", !isSaving && !saveStatus && saved && "✅ 저장됨", !isSaving && !saveStatus && !saved && "⭐ 별점을 선택하면 자동 저장됩니다"))), /*#__PURE__*/React.createElement("div", {
-                className: "shrink-0 flex justify-center pb-2"
+                className: "shrink-0 flex justify-center pb-2 hidden"
             }, /*#__PURE__*/React.createElement("button", {
                 onClick: reset,
                 className: "flex items-center gap-2 py-1 text-slate-400 font-black text-lg hover:text-orange-500"
