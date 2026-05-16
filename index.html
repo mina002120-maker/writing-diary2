@@ -1589,28 +1589,28 @@
             label: '언제?',
             keyword: '언제',
             fairy: '언제 있었던 일이야?',
-            ins: '언제 있었던 일인지 떠올려보고 들려주세요!',
+            ins: '언제 있었던 일인지 카드에서 골라봐요!',
             options: optsFor('when')
         }, {
             key: 'where',
             label: '어디서?',
             keyword: '어디에서',
             fairy: '어디에서 일어났니?',
-            ins: '어디에서 있었던 일인지 떠올려보고 들려주세요!',
+            ins: '어디에서 있었던 일인지 카드에서 골라봐요!',
             options: optsFor('where')
         }, {
             key: 'who',
             label: '누구와?',
             keyword: '누구와',
             fairy: '누구와 같이 있었어?',
-            ins: '누구와 함께 있었는지 떠올려보고 들려주세요!',
+            ins: '누구와 있었는지 카드에서 골라봐요!',
             options: optsFor('who')
         }, {
             key: 'what',
             label: '무엇을?',
             keyword: '무엇을',
             fairy: '무엇을 했니?',
-            ins: '무엇을 했는지 떠올려보고 들려주세요!',
+            ins: '무엇을 했는지 카드에서 골라봐요!',
             options: optsFor('what')
         }];
         const FEELINGS = [{
@@ -1769,7 +1769,7 @@
                 eg: '강아지가 사랑스러웠다.'
             }]
         }];
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbx9oweOhrqFgpYYMmi7Gc8BwE9SdHDUWlZqAYb_rvZq8IdPY2EyMojiG9l5eiGDnMj7/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyKm3d8d_M0_2sQKdDAzUrTLfjZnm8xxwgvpWfXbjVi45cqymzs4ZfqwNhB1VKPZzAa4Q/exec";
         const isGasOk = GAS_URL.indexOf("script.google.com") !== -1 && GAS_URL.indexOf("여기에") === -1;
         const DUMMY = [{
             id: 1,
@@ -2941,17 +2941,20 @@
                 animate: {
                     opacity: 1
                 },
-                className: "w-full h-full flex flex-col gap-3 overflow-hidden py-4 px-6"
+                className: "w-full flex flex-col h-full items-center justify-center py-4 px-6"
             }, /*#__PURE__*/React.createElement("div", {
-                className: "flex items-start gap-3 shrink-0"
-            }, /*#__PURE__*/React.createElement(PencilFairy, {
-                mini: true,
-                isListening: listening,
-                speech: "\uC65C \uADF8\uB7F0 \uB9C8\uC74C\uC774 \uB4E4\uC5C8\uB294\uC9C0 \uB4E4\uB824\uC904\uB798?",
-                speechDir: "right",
-                className: "shrink-0"
-            })), /*#__PURE__*/React.createElement("div", {
-                className: "flex-1 bg-white p-8 rounded-[3.5rem] shadow-xl border-4 border-orange-50 flex flex-col w-full max-w-6xl mx-auto min-h-0"
+                className: "flex items-start gap-8 w-full max-w-6xl flex-1"
+            }, /*#__PURE__*/React.createElement("div", {
+                className: "w-[20%] flex flex-col items-center justify-center bg-white rounded-[3rem] p-8 border-2 border-orange-50 shadow-lg shrink-0 h-full"
+            }, /*#__PURE__*/React.createElement("div", {
+                className: "text-7xl mb-4"
+            }, "\uD83D\uDE0A"), /*#__PURE__*/React.createElement("p", {
+                className: "text-xl font-black text-slate-500 text-center mb-4"
+            }, "\uC65C \uADF8\uB7F0 \uB9C8\uC74C\uC774 \uB4E4\uC5C8\uB294\uC9C0 \uB4E4\uB824\uC904\uB798?"), /*#__PURE__*/React.createElement("button", {
+                onClick: goPrev,
+                className: "mt-auto flex items-center gap-2 py-4 w-full bg-orange-50 text-orange-600 border-2 border-orange-100 rounded-2xl font-black text-2xl justify-center active:scale-95"
+            }, /*#__PURE__*/React.createElement(IconRotateCcw, null), " \uC774\uC804")), /*#__PURE__*/React.createElement("div", {
+                className: "flex-1 bg-white p-8 rounded-[3.5rem] shadow-xl border-4 border-orange-50 flex flex-col h-full"
             }, /*#__PURE__*/React.createElement("div", {
                 className: "text-center mb-6 shrink-0"
             }, /*#__PURE__*/React.createElement("h2", {
