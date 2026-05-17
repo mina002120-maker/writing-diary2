@@ -1,9 +1,4 @@
 <!DOCTYPE html>
-<!-- ╔═══════════════════════════════════════════════╗ -->
-<!-- ║  ★ GAS URL 설정 — 배포 후 이 줄만 수정하세요 ★  ║ -->
-<!-- ╚═══════════════════════════════════════════════╝ -->
-<script>var GAS_URL = https://script.google.com/macros/s/AKfycbykJdgaZeCY8BWmuw-KpSyJ5zvWCtmAn0GPefxHQpJ0NwbgEY5VdalVHeECuZ7VPFEOHg/exec';</script>
-<!--  위 URL을 Google Apps Script 배포 URL로 교체하세요  -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -57,17 +52,53 @@
         setTimeout(updateScale, 100);
     })();
 </script>
+<!-- ╔═══════════════════════════════════════════════════╗ -->
+<!-- ║  ★ GAS URL — 아래 5번째 줄의 URL만 수정하세요 ★    ║ -->
+<!-- ╚═══════════════════════════════════════════════════╝ -->
+<script>
+// ★★★ 배포 후 이 줄만 수정하세요 ★★★
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbyWe8g4ECqXm6k2ZBqPPxJw1PI4ZQXGLbacapW0w8zDiXTi7YSiMboDbQGV2OAWTEC9Ug/exec';
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+</script>
 <script>
 // ═══════════════════════════════════════════════
 // 공통 설정
 // ═══════════════════════════════════════════════
 
+// ── React 별칭 ──
 var useState   = React.useState;
 var useRef     = React.useRef;
 var useEffect  = React.useEffect;
 var useMemo    = React.useMemo;
-var motion     = Motion.motion;
 var h          = React.createElement;
+
+// ── framer-motion: UMD 글로벌 변수명 안전하게 처리 ──
+// v10 UMD → window.Motion, v11+ → window.FramerMotion
+var _MotionLib = window.Motion || window.FramerMotion || {};
+var motion = _MotionLib.motion;
+
+// framer-motion 로드 실패 시 기본 div로 대체
+if (!motion) {
+    var _tags = ['div','span','button','a','p','h1','h2','h3','ul','li','section','article'];
+    motion = {};
+    for (var _ti = 0; _ti < _tags.length; _ti++) {
+        (function(tag) {
+            motion[tag] = function(props, children) {
+                // animate/initial/transition/whileHover/whileTap 제거 후 렌더
+                var safeProps = {};
+                if (props) {
+                    Object.keys(props).forEach(function(k) {
+                        if (['animate','initial','transition','whileHover','whileTap','whileFocus','exit','variants'].indexOf(k) === -1) {
+                            safeProps[k] = props[k];
+                        }
+                    });
+                }
+                return React.createElement(tag, safeProps);
+            };
+        })(_tags[_ti]);
+    }
+    console.warn('framer-motion 로드 실패 — 기본 HTML 요소로 대체합니다');
+}
 
 // ── localStorage 헬퍼 ──
 function lsGet(key, fallback) {
