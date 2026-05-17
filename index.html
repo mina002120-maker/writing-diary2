@@ -56,7 +56,7 @@
 // ═══════════════════════════════════════════════
 // 공통 설정
 // ═══════════════════════════════════════════════
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbyDOOCmp0O1tSM1ZdNILQgqRmE4xVI-KnjPO472Btx3N62JE6sgN3o1dGr5El6I9ohcjQ/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbwArv2ZMzwipOY-M3---JZyiCKWx3ieQMT0LGpuM6ijsjAAVdbPMqaDM_f6u6pNGNWdeg/exec';
 
 var useState   = React.useState;
 var useRef     = React.useRef;
@@ -3412,17 +3412,15 @@ function Stage3(props) {
 
     function doSubmit() {
         setSubStep('submit');
-        // GAS에 일기 저장
+        // GAS 일기데이터 시트에 저장
         var payload = {
             type: 'saveDiary',
-            studentId: data.studentId,
+            studentId:   data.studentId,
             studentName: data.studentName,
-            date: new Date().toISOString().slice(0, 10),
-            title: title,
-            body: diaryText,
-            sentence1: baseParts,
-            sentence2: { feelings: feelings, reason: reason },
-            hasDrawing: !!drawingImage
+            title:       title,
+            sentence1:   baseParts,
+            sentence2:   { feelings: feelings, reason: reason },
+            body:        diaryText
         };
         var gasPostFn = (props.gasPost || gasPost);
         try { gasPostFn(payload).catch(function(){}); } catch(e) {}
@@ -3887,7 +3885,19 @@ function App() {
         content = h(Stage1_1, {
             onBack: goMenu,
             onComplete: function(newCards) {
-                updateProgress({ cards1: progress.cards1 + newCards });
+                // 카드 수집 기록 → 학습카드 시트
+                try {
+                    gasPost({
+                        type: 'saveCard',
+                        studentId: student ? student.id : '',
+                        studentName: student ? student.name : '',
+                        stage: '1단계❶',
+                        cards: Array.isArray(newCards)
+                            ? newCards
+                            : [{ key: '', value: newCards, emoji: '', group: '' }]
+                    }).catch(function(){});
+                } catch(e) {}
+                updateProgress({ cards1: progress.cards1 + (typeof newCards === 'number' ? newCards : 1) });
                 goMenu();
             }
         });
@@ -3896,6 +3906,16 @@ function App() {
         content = h(Stage1_2, {
             onBack: goMenu,
             onComplete: function(sentence) {
+                // 문장 완성 기록 → 학습문장 시트
+                try {
+                    gasPost({
+                        type: 'saveSentence',
+                        studentId: student ? student.id : '',
+                        studentName: student ? student.name : '',
+                        stage: '1단계❷',
+                        sentence1: sentence
+                    }).catch(function(){});
+                } catch(e) {}
                 updateProgress({ did1_2: true, sentence1: sentence });
                 goMenu();
             },
@@ -3906,7 +3926,19 @@ function App() {
         content = h(Stage2_1, {
             onBack: goMenu,
             onComplete: function(newCards) {
-                updateProgress({ cards2: progress.cards2 + newCards });
+                // 감정 카드 수집 기록 → 학습카드 시트
+                try {
+                    gasPost({
+                        type: 'saveCard',
+                        studentId: student ? student.id : '',
+                        studentName: student ? student.name : '',
+                        stage: '2단계❶',
+                        cards: Array.isArray(newCards)
+                            ? newCards
+                            : [{ key: 'feeling', value: newCards, emoji: '', group: '' }]
+                    }).catch(function(){});
+                } catch(e) {}
+                updateProgress({ cards2: progress.cards2 + (typeof newCards === 'number' ? newCards : 1) });
                 goMenu();
             }
         });
@@ -3915,6 +3947,16 @@ function App() {
         content = h(Stage2_2, {
             onBack: goMenu,
             onComplete: function(result) {
+                // 감정 문장 완성 기록 → 학습문장 시트
+                try {
+                    gasPost({
+                        type: 'saveSentence',
+                        studentId: student ? student.id : '',
+                        studentName: student ? student.name : '',
+                        stage: '2단계❷',
+                        sentence2: result
+                    }).catch(function(){});
+                } catch(e) {}
                 updateProgress({ did2_2: true, sentence2: result });
                 goMenu();
             },
