@@ -61,7 +61,7 @@ window.GAS_URL = '여기에_배포된_GAS_URL을_입력하세요';
 </script>
 <!--
    ↑ 위의 줄을 이렇게 수정하세요 (URL 부분만 교체):
-   window.GAS_URL = 'https://script.google.com/macros/s/AKfycbz1kdK8u4_pEUjbYN-0VBZxh-NZOweUMXownLWPNH1J8g_ZZ6kYh_xlen6wETVDqC7zVw/exec';
+   window.GAS_URL = 'https://script.google.com/macros/s/AKfycbxjdd8a5G7TAnIlN9RtTuHdvPUMk5o1ON9_2aSOlKutQZGipjTyDJfpwzT_hp1BTpirXQ/exec';
 
    주의사항:
    • 따옴표(')는 그대로 두기
@@ -324,6 +324,126 @@ function StageCard(props) {
     );
 }
 
+// ═══════════════════════════════════════════════
+// 공용 컴포넌트 — 각 단계 상단 헤더
+// (단계 전환 드롭다운 + 홈 버튼 + 우측 카운터 슬롯)
+// ═══════════════════════════════════════════════
+var STAGE_OPTIONS = [
+    { key: 's1_1', label: '1단계 ❶  카드로 학습 (4요소)', bg: 'bg-amber-100',   text: 'text-amber-700',   border: 'border-amber-200' },
+    { key: 's1_2', label: '1단계 ❷  카드로 문장 만들기',    bg: 'bg-red-100',     text: 'text-red-700',     border: 'border-red-200' },
+    { key: 's2_1', label: '2단계 ❶  카드로 학습 (감정)',   bg: 'bg-purple-100',  text: 'text-purple-700',  border: 'border-purple-200' },
+    { key: 's2_2', label: '2단계 ❷  카드로 문장 만들기',    bg: 'bg-green-100',   text: 'text-green-700',   border: 'border-green-200' },
+    { key: 's3',   label: '3단계      일기쓰기',           bg: 'bg-pink-100',    text: 'text-pink-700',    border: 'border-pink-200' }
+];
+
+function StageHeader(props) {
+    var currentKey = props.currentKey;         // 's1_1' 등
+    var onChangeStage = props.onChangeStage;   // 단계 전환 콜백
+    var onGoHome = props.onGoHome;             // 홈 버튼 콜백
+    var rightSlot = props.rightSlot;           // 우측 추가 영역 (카드 카운터 등)
+
+    var current = null;
+    for (var i = 0; i < STAGE_OPTIONS.length; i++) {
+        if (STAGE_OPTIONS[i].key === currentKey) { current = STAGE_OPTIONS[i]; break; }
+    }
+    if (!current) current = STAGE_OPTIONS[0];
+
+    function handleChange(e) {
+        var key = e.target.value;
+        if (key && key !== currentKey && onChangeStage) {
+            onChangeStage(key);
+        }
+    }
+
+    return h("div", { className: "px-6 pt-4 pb-2 flex items-center gap-3" },
+        // 좌측: 단계 선택 드롭다운
+        h("div", { className: "relative" },
+            h("select", {
+                value: currentKey,
+                onChange: handleChange,
+                className: "px-5 py-2.5 rounded-2xl font-black text-base border-2 cursor-pointer appearance-none pr-10 " +
+                    current.bg + " " + current.text + " " + current.border,
+                style: {
+                    backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'14\' height=\'14\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'3\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 0.75rem center'
+                }
+            },
+                STAGE_OPTIONS.map(function(opt) {
+                    return h("option", { key: opt.key, value: opt.key }, opt.label);
+                })
+            )
+        ),
+
+        // 홈 버튼
+        h("button", {
+            onClick: onGoHome,
+            className: "px-4 py-2.5 bg-white text-slate-700 rounded-2xl font-black text-base border-2 border-slate-200 hover:border-slate-400 hover:bg-slate-50 flex items-center gap-1.5 shadow-sm"
+        },
+            h("span", { className: "text-xl" }, "🏠"),
+            h("span", null, "홈")
+        ),
+
+        // 우측 슬롯 (카드 카운터 등)
+        rightSlot && h("div", { className: "ml-auto" }, rightSlot)
+    );
+}
+
+// ═══════════════════════════════════════════════
+// 공용 컴포넌트 — 폭죽 (정답 시 표시)
+// ═══════════════════════════════════════════════
+function Confetti(props) {
+    var show = props.show;
+    if (!show) return null;
+
+    // 폭죽 조각 30개 — 색·크기·각도 랜덤
+    var colors = ['#F87171', '#FB923C', '#FBBF24', '#FACC15', '#34D399', '#22D3EE', '#60A5FA', '#A78BFA', '#F472B6'];
+    var pieces = [];
+    for (var i = 0; i < 30; i++) {
+        var angle = (Math.PI * 2 * i) / 30 + (Math.random() - 0.5) * 0.4;
+        var distance = 280 + Math.random() * 200;
+        pieces.push({
+            id: i,
+            color: colors[i % colors.length],
+            dx: Math.cos(angle) * distance,
+            dy: Math.sin(angle) * distance - 100, // 살짝 위로
+            rot: Math.random() * 720,
+            size: 10 + Math.random() * 8,
+            delay: Math.random() * 0.15
+        });
+    }
+
+    return h("div", {
+        className: "fixed inset-0 pointer-events-none flex items-center justify-center",
+        style: { zIndex: 9999 }
+    },
+        // 중앙 큰 이모지
+        h(motion.div, {
+            initial: { scale: 0, rotate: -180 },
+            animate: { scale: [0, 1.3, 1], rotate: 0 },
+            transition: { duration: 0.6, times: [0, 0.5, 1] },
+            className: "text-9xl",
+            style: { filter: 'drop-shadow(0 0 30px rgba(251, 191, 36, 0.6))' }
+        }, "🎉"),
+        // 폭죽 조각들
+        pieces.map(function(p) {
+            return h(motion.div, {
+                key: p.id,
+                initial: { x: 0, y: 0, opacity: 1, rotate: 0, scale: 1 },
+                animate: { x: p.dx, y: p.dy + 400, opacity: 0, rotate: p.rot, scale: 0.5 },
+                transition: { duration: 1.5, delay: p.delay, ease: [0.2, 0.8, 0.4, 1] },
+                className: "absolute rounded-sm",
+                style: {
+                    width: p.size + 'px',
+                    height: p.size + 'px',
+                    background: p.color,
+                    boxShadow: '0 0 12px ' + p.color
+                }
+            });
+        })
+    );
+}
+
 function MainMenu(props) {
     var progress = props.progress || {};
     var onNavigate = props.onNavigate || function(){};
@@ -361,14 +481,6 @@ function MainMenu(props) {
         { sub1Done: false,          sub2Done: false,          sub2Locked: false,            sub2LockReason: '',                   stageLocked: stage3Locked, stageLockReason: stage3LockReason }
     ];
 
-    var totalDone = 0;
-    if (stage1Sub1Done) totalDone++;
-    if (stage1Sub2Done) totalDone++;
-    if (stage2Sub1Done) totalDone++;
-    if (stage2Sub2Done) totalDone++;
-    if (!stage3Locked) totalDone++;
-    var progressPct = (totalDone / 5) * 100;
-
     function navigateToStage(stageNum) {
         // 토스트 잠깐 표시 후 실제 이동
         setNavTarget({ stage: stageNum, time: Date.now() });
@@ -403,24 +515,82 @@ function MainMenu(props) {
         ),
 
         h("div", { className: "px-10 pb-3 shrink-0" },
-            h("div", { className: "bg-white rounded-3xl px-5 py-3 shadow-lg border-4 border-yellow-200 flex items-center gap-4" },
-                h(motion.div, {
-                    animate: { rotate: [0, 15, -15, 0] },
-                    transition: { repeat: Infinity, duration: 3, ease: "easeInOut" },
-                    className: "text-3xl"
-                }, "🌟"),
-                h("div", { className: "flex-1" },
-                    h("div", { className: "flex items-center justify-between mb-1" },
-                        h("span", { className: "text-base font-black text-amber-700" }, "오늘 별 모으기"),
-                        h("span", { className: "text-lg font-black text-amber-600" }, "⭐ " + totalDone + " / 5")
+            h("div", { className: "bg-white rounded-3xl px-5 py-3 shadow-lg border-4 border-slate-200" },
+                // 5단계 진행바
+                h("div", { className: "flex items-center gap-2" },
+                    // 1단계 ❶
+                    h("div", { className: "flex-1 flex flex-col items-center gap-1" },
+                        h("span", { className: "text-xs font-black " + (stage1Sub1Done ? "text-amber-700" : "text-slate-400") }, "1단계 ❶"),
+                        h("div", { className: "w-full h-3 rounded-full bg-slate-100 overflow-hidden border border-slate-200" },
+                            h(motion.div, {
+                                initial: { width: 0 },
+                                animate: { width: stage1Sub1Done ? '100%' : '0%' },
+                                transition: { duration: 0.6 },
+                                className: "h-full bg-amber-400 rounded-full"
+                            })
+                        )
                     ),
-                    h("div", { className: "w-full bg-amber-50 rounded-full h-4 overflow-hidden border-2 border-amber-100" },
-                        h(motion.div, {
-                            initial: { width: 0 },
-                            animate: { width: progressPct + '%' },
-                            transition: { duration: 0.6, ease: "easeOut" },
-                            className: "h-full bg-gradient-to-r from-amber-300 via-purple-300 to-emerald-300 rounded-full"
-                        })
+                    h("span", { className: "text-base text-slate-300 font-black" }, "›"),
+
+                    // 1단계 ❷
+                    h("div", { className: "flex-1 flex flex-col items-center gap-1" },
+                        h("span", { className: "text-xs font-black " + (stage1Sub2Done ? "text-orange-700" : stage1Sub2Locked ? "text-slate-300" : "text-slate-400") },
+                            stage1Sub2Locked ? "🔒 1단계 ❷" : "1단계 ❷"
+                        ),
+                        h("div", { className: "w-full h-3 rounded-full bg-slate-100 overflow-hidden border border-slate-200" },
+                            h(motion.div, {
+                                initial: { width: 0 },
+                                animate: { width: stage1Sub2Done ? '100%' : '0%' },
+                                transition: { duration: 0.6, delay: 0.1 },
+                                className: "h-full bg-orange-400 rounded-full"
+                            })
+                        )
+                    ),
+                    h("span", { className: "text-base text-slate-300 font-black" }, "›"),
+
+                    // 2단계 ❶
+                    h("div", { className: "flex-1 flex flex-col items-center gap-1" },
+                        h("span", { className: "text-xs font-black " + (stage2Sub1Done ? "text-purple-700" : "text-slate-400") }, "2단계 ❶"),
+                        h("div", { className: "w-full h-3 rounded-full bg-slate-100 overflow-hidden border border-slate-200" },
+                            h(motion.div, {
+                                initial: { width: 0 },
+                                animate: { width: stage2Sub1Done ? '100%' : '0%' },
+                                transition: { duration: 0.6, delay: 0.2 },
+                                className: "h-full bg-purple-400 rounded-full"
+                            })
+                        )
+                    ),
+                    h("span", { className: "text-base text-slate-300 font-black" }, "›"),
+
+                    // 2단계 ❷
+                    h("div", { className: "flex-1 flex flex-col items-center gap-1" },
+                        h("span", { className: "text-xs font-black " + (stage2Sub2Done ? "text-green-700" : stage2Sub2Locked ? "text-slate-300" : "text-slate-400") },
+                            stage2Sub2Locked ? "🔒 2단계 ❷" : "2단계 ❷"
+                        ),
+                        h("div", { className: "w-full h-3 rounded-full bg-slate-100 overflow-hidden border border-slate-200" },
+                            h(motion.div, {
+                                initial: { width: 0 },
+                                animate: { width: stage2Sub2Done ? '100%' : '0%' },
+                                transition: { duration: 0.6, delay: 0.3 },
+                                className: "h-full bg-green-400 rounded-full"
+                            })
+                        )
+                    ),
+                    h("span", { className: "text-base text-slate-300 font-black" }, "›"),
+
+                    // 3단계
+                    h("div", { className: "flex-1 flex flex-col items-center gap-1" },
+                        h("span", { className: "text-xs font-black " + (!stage3Locked ? "text-pink-700" : "text-slate-300") },
+                            stage3Locked ? "🔒 3단계" : "3단계"
+                        ),
+                        h("div", { className: "w-full h-3 rounded-full bg-slate-100 overflow-hidden border border-slate-200" },
+                            h(motion.div, {
+                                initial: { width: 0 },
+                                animate: { width: !stage3Locked ? '100%' : '0%' },
+                                transition: { duration: 0.6, delay: 0.4 },
+                                className: "h-full bg-pink-400 rounded-full"
+                            })
+                        )
                     )
                 )
             )
@@ -828,30 +998,39 @@ function Stage1_1(props) {
     var st5b = useState(false);     var hasTriedRecording = st5b[0], setHasTriedRecording = st5b[1];
     var st6 = useState('');         var transcript = st6[0], setTranscript = st6[1];
     var st7 = useState([]);         var collected = st7[0], setCollected = st7[1];
-    var st8 = useState(null);       var chosenForWriting = st8[0], setChosenForWriting = st8[1]; // 공책에 쓸 예시 인덱스
+    var st8 = useState(null);       var chosenForWriting = st8[0], setChosenForWriting = st8[1];
+    var st9 = useState(false);      var showConfetti = st9[0], setShowConfetti = st9[1]; // 폭죽
+    var st10 = useState(false);     var mustRetry = st10[0], setMustRetry = st10[1];    // 재녹음 필요
     var recRef = useRef(null);
 
     // examples: drawn 단어에 맞는 예시문장 배열
-    // DEMO_EXAMPLES_TABLE에서 찾고, 없으면 drawn 카드 정보로 자동 생성
     var examples = (function() {
         if (!drawn) return [];
         var found = DEMO_EXAMPLES_TABLE[drawn.value];
-        if (found && found.length > 0) return found;
+
+        // 유효성 검증: 4요소 문자열 배열인지
+        function isValid(rows) {
+            if (!rows || !Array.isArray(rows) || rows.length === 0) return false;
+            return rows.every(function(row) {
+                return Array.isArray(row) && row.length >= 4 &&
+                       row[0] && row[1] && row[2] && row[3];
+            });
+        }
+
+        if (isValid(found)) return found;
+
         // 자동 생성: 선택한 카테고리 단어를 포함한 예시 3개
-        var catDefaults = {
-            when:  ['교실에서', '친구랑', '신나게 놀았다'],
-            where: ['오늘 아침에', '친구랑', '즐겁게 지냈다'],
-            who:   ['오늘', '교실에서', '함께 공부했다'],
-            what:  ['오늘', '교실에서', '친구랑']
-        };
-        var d = catDefaults[selectedCat] || ['오늘', '교실에서', '친구랑', '재미있게 놀았다'];
-        // 선택한 카테고리 위치에 drawn.value 넣기
         var catIdx = { when: 0, where: 1, who: 2, what: 3 }[selectedCat] || 0;
-        var base = ['오늘', '교실에서', '친구랑', '재미있게 놀았다'];
-        var row1 = base.slice(); row1[catIdx] = drawn.value;
-        var row2 = ['학교 끝나고', '운동장에서', '친구들과', '신나게 놀았다']; row2[catIdx] = drawn.value;
-        var row3 = ['쉬는 시간에', '도서관에서', '혼자서', '책을 읽었다']; row3[catIdx] = drawn.value;
-        return [row1, row2, row3];
+        var bases = [
+            ['오늘',       '교실에서',   '친구랑',   '재미있게 놀았다'],
+            ['학교 끝나고', '운동장에서', '친구들과', '신나게 놀았다'],
+            ['쉬는 시간에', '도서관에서', '혼자서',   '책을 읽었다']
+        ];
+        return bases.map(function(base) {
+            var row = base.slice();
+            row[catIdx] = drawn.value;
+            return row;
+        });
     })();
     var currentExample = examples[exampleIdx];
 
@@ -885,8 +1064,42 @@ function Stage1_1(props) {
             recRef.current = r;
         }
         if (recording) recRef.current.stop();
-        else { setTranscript(''); setHasTriedRecording(true); try { recRef.current.start(); } catch (er) {} }
+        else { setTranscript(''); setHasTriedRecording(true); setMustRetry(false); try { recRef.current.start(); } catch (er) {} }
     }
+
+    // 녹음 종료 시 매칭 결과 처리 (폭죽 / 재녹음 강제)
+    useEffect(function() {
+        if (!transcript || recording || !currentExample) return;
+        var result = checkAllFields(transcript, currentExample);
+        var count = (result.when?1:0) + (result.where?1:0) + (result.who?1:0) + (result.what?1:0);
+        if (count === 4) {
+            // 완벽! 폭죽 터트리기 + 1.8초 후 자동으로 다음으로
+            setShowConfetti(true);
+            setMustRetry(false);
+            var t = setTimeout(function() {
+                setShowConfetti(false);
+                // 자동 진행
+                if (exampleIdx + 1 < examples.length) {
+                    setExampleIdx(exampleIdx + 1);
+                    setTranscript('');
+                    setHasTriedRecording(false);
+                    setSubStep('record');
+                } else {
+                    setHasTriedRecording(false);
+                    setSubStep('choose');
+                }
+            }, 1800);
+            return function() { clearTimeout(t); };
+        } else if (count <= 1) {
+            // 많이 틀림 → 재녹음 강제
+            setMustRetry(true);
+            setShowConfetti(false);
+        } else {
+            // 2-3개 맞음 → 진행 가능
+            setMustRetry(false);
+            setShowConfetti(false);
+        }
+    }, [transcript, recording]);
 
     function completeReading() {
         if (recRef.current && recording) recRef.current.stop();
@@ -986,15 +1199,31 @@ function Stage1_1(props) {
             h("div", { className: "flex-1 flex items-center justify-center" },
                 h("div", { className: "grid grid-cols-5 gap-4 max-w-5xl" },
                     pool.map(function (card, idx) {
+                        // 이미 수집한 카드인지 확인 (같은 카테고리 + 같은 단어)
+                        var isCollected = false;
+                        for (var ci = 0; ci < collected.length; ci++) {
+                            if (collected[ci].key === selectedCat && collected[ci].value === card.value) {
+                                isCollected = true; break;
+                            }
+                        }
                         return h(motion.button, {
                             key: idx,
                             whileHover: { scale: 1.05, y: -5 },
                             whileTap: { scale: 0.95 },
                             onClick: function () { pickCard(card); },
-                            className: "relative w-40 h-56 bg-gradient-to-b from-slate-600 to-slate-900 rounded-2xl shadow-xl border-4 border-transparent hover:border-orange-400 flex items-center justify-center"
+                            className: "relative w-40 h-56 rounded-2xl shadow-xl border-4 flex flex-col items-center justify-center gap-2 " +
+                                (isCollected
+                                    ? "bg-white border-orange-300 ring-2 ring-orange-200 hover:border-orange-500"
+                                    : "bg-gradient-to-b from-slate-600 to-slate-900 border-transparent hover:border-orange-400")
                         },
                             h("div", { className: "absolute top-2 left-2 right-2 h-2 rounded-full " + cDraw.stripe }),
-                            h("span", { className: "text-5xl" }, "🌟")
+                            isCollected
+                                ? h(React.Fragment, null,
+                                    h("span", { className: "text-5xl mt-2" }, card.emoji),
+                                    h("span", { className: "text-lg font-black " + cDraw.text + " text-center px-2 leading-tight" }, card.value),
+                                    h("div", { className: "absolute top-1 right-1 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-white text-sm font-black border-2 border-white shadow-md" }, "✓")
+                                )
+                                : h("span", { className: "text-5xl" }, "🌟")
                         );
                     })
                 )
@@ -1130,7 +1359,7 @@ function Stage1_1(props) {
                 h(PencilFairy, { mini: true, isListening: recording }),
                 h("div", { className: "bg-white px-7 py-3 rounded-3xl shadow-xl border-2 mt-4 " + (recording ? "border-red-400 ring-4 ring-red-50" : "border-orange-200") },
                     h("h2", { className: "text-xl font-black " + (recording ? "text-red-500" : "text-slate-800") },
-                        recording ? "🎙️ 듣고 있어요!" : "큰 소리로 따라 말해봐요! (예시 " + (exampleIdx + 1) + "/" + examples.length + ")"
+                        recording ? "🎙️ 듣고 있어요!" : (mustRetry ? "음... 다시 또박또박 말해볼까요? 🌱" : "큰 소리로 따라 말해봐요! (예시 " + (exampleIdx + 1) + "/" + examples.length + ")")
                     )
                 )
             ),
@@ -1190,15 +1419,15 @@ function Stage1_1(props) {
                                 : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed")
                     }, "⏭️ 건너뛰기"),
 
-                    // 3. 완료 버튼 — 녹음이 있으면 바로 눌를 수 있음
+                    // 3. 완료 버튼 — 녹음이 있고 너무 많이 틀리지 않았으면 활성
                     h("button", {
                         onClick: completeReading,
-                        disabled: !transcript && !hasTriedRecording,
+                        disabled: (!transcript && !hasTriedRecording) || mustRetry,
                         className: "px-10 py-4 rounded-2xl text-2xl font-black shadow-md border-4 " +
-                            (transcript || hasTriedRecording
+                            ((transcript || hasTriedRecording) && !mustRetry
                                 ? "bg-emerald-500 text-white border-emerald-600 shadow-[0_6px_0_rgb(4,120,87)] active:translate-y-1 active:shadow-none"
                                 : "bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed")
-                    }, "✅ 완료!")
+                    }, mustRetry ? "🎤 다시 녹음해주세요" : "✅ 완료!")
                 )
             )
         );
@@ -1317,16 +1546,17 @@ function Stage1_1(props) {
     }
 
     return h("div", { className: "h-full w-full bg-[#F0F7FF] flex flex-col" },
-        h("div", { className: "px-8 pt-5 pb-2 flex items-center justify-between" },
-            h("span", { className: "px-4 py-2 bg-amber-100 text-amber-700 rounded-2xl font-black text-base border border-amber-200" },
-                "1단계 ❶ 카드로 학습 (4요소)"
-            ),
-            h("div", { className: "flex items-center gap-2 px-5 py-2 bg-white border-2 border-orange-300 rounded-2xl shadow-sm" },
+        h(StageHeader, {
+            currentKey: 's1_1',
+            onChangeStage: props.onChangeStage,
+            onGoHome: props.onBack,
+            rightSlot: h("div", { className: "flex items-center gap-2 px-5 py-2 bg-white border-2 border-orange-300 rounded-2xl shadow-sm" },
                 h("span", { className: "text-2xl" }, "🃏"),
                 h("span", { className: "text-xl font-black text-orange-600" }, collected.length + "장")
             )
-        ),
-        h("main", { className: "flex-1 overflow-hidden" }, content)
+        }),
+        h("main", { className: "flex-1 overflow-hidden" }, content),
+        h(Confetti, { show: showConfetti })
     );
 }
 
@@ -1952,15 +2182,15 @@ function Stage1_2(props) {
     }
 
     return h("div", { className: "h-full w-full bg-[#F0F7FF] flex flex-col" },
-        h("div", { className: "px-8 pt-5 pb-2 flex items-center justify-between" },
-            h("span", { className: "px-4 py-2 bg-red-100 text-red-700 rounded-2xl font-black text-base border border-red-200" },
-                "1단계 ❷ 카드로 문장 만들기 (4요소)"
-            ),
-            h("div", { className: "flex items-center gap-2 px-5 py-2 bg-white border-2 border-orange-300 rounded-2xl shadow-sm" },
+        h(StageHeader, {
+            currentKey: 's1_2',
+            onChangeStage: props.onChangeStage,
+            onGoHome: props.onBack,
+            rightSlot: h("div", { className: "flex items-center gap-2 px-5 py-2 bg-white border-2 border-orange-300 rounded-2xl shadow-sm" },
                 h("span", { className: "text-2xl" }, "🃏"),
                 h("span", { className: "text-xl font-black text-orange-600" }, "모은 카드: " + collected.length + "장")
             )
-        ),
+        }),
         h("main", { className: "flex-1 overflow-hidden relative" }, content)
     );
 }
@@ -2299,13 +2529,15 @@ function NotebookGrid(props) {
 function Stage2_1(props) {
     // subStep: 'draw' → 'flip' → 'study' → 'record' → 'choose' → 'write' → 'complete'
     var s1 = useState('draw');     var subStep = s1[0], setSubStep = s1[1];
-    var s2 = useState(null);       var drawn = s2[0], setDrawn = s2[1];     // 뽑은 감정 카드
+    var s2 = useState(null);       var drawn = s2[0], setDrawn = s2[1];
     var s3 = useState(0);          var exampleIdx = s3[0], setExampleIdx = s3[1];
     var s4 = useState(false);      var recording = s4[0], setRecording = s4[1];
     var s4b = useState(false);     var hasTriedRecording = s4b[0], setHasTriedRecording = s4b[1];
     var s5 = useState('');         var transcript = s5[0], setTranscript = s5[1];
     var s6 = useState([]);         var collected = s6[0], setCollected = s6[1];
     var s7 = useState(null);       var chosenForWriting = s7[0], setChosenForWriting = s7[1];
+    var s8 = useState(false);      var showConfetti = s8[0], setShowConfetti = s8[1];
+    var s9 = useState(false);      var mustRetry = s9[0], setMustRetry = s9[1];
     var recRef = useRef(null);
 
     var examples = drawn ? (FEELINGS_EXAMPLES[drawn.value] || []) : [];
@@ -2335,8 +2567,46 @@ function Stage2_1(props) {
             recRef.current = r;
         }
         if (recording) recRef.current.stop();
-        else { setTranscript(''); setHasTriedRecording(true); try { recRef.current.start(); } catch (er) {} }
+        else { setTranscript(''); setHasTriedRecording(true); setMustRetry(false); try { recRef.current.start(); } catch (er) {} }
     }
+
+    // 녹음 종료 시 결과 처리 (폭죽 / 재녹음 강제)
+    useEffect(function() {
+        if (!transcript || recording || !currentExample) return;
+        var result = checkAllFields(transcript, currentExample);
+        // 2단계는 5요소 (when, where, who, what, feeling)
+        var total = FIELD_KEYS.length;
+        var count = 0;
+        for (var k = 0; k < FIELD_KEYS.length; k++) {
+            if (result[FIELD_KEYS[k]]) count++;
+        }
+        var passThreshold = total - 1; // 5개 중 4개 이상 = 정답
+        var failThreshold = Math.floor(total / 3); // 5개 중 1개 이하 = 너무 많이 틀림
+
+        if (count >= passThreshold) {
+            setShowConfetti(true);
+            setMustRetry(false);
+            var t = setTimeout(function() {
+                setShowConfetti(false);
+                if (exampleIdx + 1 < examples.length) {
+                    setExampleIdx(exampleIdx + 1);
+                    setTranscript('');
+                    setHasTriedRecording(false);
+                    setSubStep('record');
+                } else {
+                    setHasTriedRecording(false);
+                    setSubStep('choose');
+                }
+            }, 1800);
+            return function() { clearTimeout(t); };
+        } else if (count <= failThreshold) {
+            setMustRetry(true);
+            setShowConfetti(false);
+        } else {
+            setMustRetry(false);
+            setShowConfetti(false);
+        }
+    }, [transcript, recording]);
 
     function completeReading() {
         if (recRef.current && recording) recRef.current.stop();
@@ -2577,7 +2847,7 @@ function Stage2_1(props) {
                 h(PencilFairy, { mini: true, isListening: recording }),
                 h("div", { className: "bg-white px-7 py-3 rounded-3xl shadow-xl border-2 mt-4 " + (recording ? "border-red-400 ring-4 ring-red-50" : "border-purple-200") },
                     h("h2", { className: "text-xl font-black " + (recording ? "text-red-500" : "text-slate-800") },
-                        recording ? "🎙️ 듣고 있어요!" : "큰 소리로 따라 말해봐요! (예시 " + (exampleIdx + 1) + "/" + examples.length + ")"
+                        recording ? "🎙️ 듣고 있어요!" : (mustRetry ? "음... 다시 또박또박 말해볼까요? 🌱" : "큰 소리로 따라 말해봐요! (예시 " + (exampleIdx + 1) + "/" + examples.length + ")")
                     )
                 )
             ),
@@ -2626,12 +2896,12 @@ function Stage2_1(props) {
                     }, "⏭️ 건너뛰기"),
                     h("button", {
                         onClick: completeReading,
-                        disabled: !transcript && !hasTriedRecording,
+                        disabled: (!transcript && !hasTriedRecording) || mustRetry,
                         className: "px-10 py-4 rounded-2xl text-2xl font-black shadow-md border-4 " +
-                            (transcript || hasTriedRecording
+                            ((transcript || hasTriedRecording) && !mustRetry
                                 ? "bg-emerald-500 text-white border-emerald-600 shadow-[0_6px_0_rgb(4,120,87)] active:translate-y-1 active:shadow-none"
                                 : "bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed")
-                    }, "✅ 완료!")
+                    }, mustRetry ? "🎤 다시 녹음해주세요" : "✅ 완료!")
                 )
             )
         );
@@ -2742,16 +3012,17 @@ function Stage2_1(props) {
     }
 
     return h("div", { className: "h-full w-full bg-[#F0F7FF] flex flex-col" },
-        h("div", { className: "px-8 pt-5 pb-2 flex items-center justify-between" },
-            h("span", { className: "px-4 py-2 bg-purple-100 text-purple-700 rounded-2xl font-black text-base border border-purple-200" },
-                "2단계 ❶ 카드로 학습 (감정)"
-            ),
-            h("div", { className: "flex items-center gap-2 px-5 py-2 bg-white border-2 border-purple-300 rounded-2xl shadow-sm" },
+        h(StageHeader, {
+            currentKey: 's2_1',
+            onChangeStage: props.onChangeStage,
+            onGoHome: props.onBack,
+            rightSlot: h("div", { className: "flex items-center gap-2 px-5 py-2 bg-white border-2 border-purple-300 rounded-2xl shadow-sm" },
                 h("span", { className: "text-2xl" }, "💖"),
                 h("span", { className: "text-xl font-black text-purple-600" }, collected.length + "장")
             )
-        ),
-        h("main", { className: "flex-1 overflow-hidden" }, content)
+        }),
+        h("main", { className: "flex-1 overflow-hidden" }, content),
+        h(Confetti, { show: showConfetti })
     );
 }
 
@@ -3243,17 +3514,17 @@ function Stage2_2(props) {
     );
 
     return h("div", { className: "h-full w-full bg-[#F0F7FF] flex flex-col" },
-        h("div", { className: "px-8 pt-5 pb-2 flex items-center justify-between" },
-            h("span", { className: "px-4 py-2 bg-purple-100 text-purple-700 rounded-2xl font-black text-base border border-purple-200" },
-                "2단계 ❷ 카드로 문장 만들기 (감정)"
-            ),
-            h("span", { className: "px-4 py-2 bg-white border-2 border-purple-300 rounded-2xl font-black text-base text-purple-700" },
+        h(StageHeader, {
+            currentKey: 's2_2',
+            onChangeStage: props.onChangeStage,
+            onGoHome: props.onBack,
+            rightSlot: h("span", { className: "px-4 py-2 bg-white border-2 border-purple-300 rounded-2xl font-black text-base text-purple-700" },
                 subStep === 'start' ? "안내" :
                 subStep === 'feeling' ? "1) 마음 고르기" :
                 subStep === 'reason' ? "2) 이유 쓰기" :
                 subStep === 'preview' ? "3) 미리보기" : "끝"
             )
-        ),
+        }),
         h("main", { className: "flex-1 overflow-hidden" }, content),
         modal
     );
@@ -3759,18 +4030,18 @@ function Stage3(props) {
     }
 
     return h("div", { className: "h-full w-full bg-[#F0F7FF] flex flex-col" },
-        h("div", { className: "px-8 pt-5 pb-2 flex items-center justify-between" },
-            h("span", { className: "px-4 py-2 bg-emerald-100 text-emerald-700 rounded-2xl font-black text-base border border-emerald-200" },
-                "3단계 — 일기쓰기"
-            ),
-            h("span", { className: "px-4 py-2 bg-white border-2 border-emerald-300 rounded-2xl font-black text-base text-emerald-700" },
+        h(StageHeader, {
+            currentKey: 's3',
+            onChangeStage: props.onChangeStage,
+            onGoHome: props.onBack,
+            rightSlot: h("span", { className: "px-4 py-2 bg-white border-2 border-emerald-300 rounded-2xl font-black text-base text-emerald-700" },
                 subStep === 'start' ? "안내" :
                 subStep === 'compose' ? "1) 제목·본문·그림" :
                 subStep === 'review' ? "2) 미리보기" :
                 subStep === 'submit' ? "3) 보내는 중" :
                 "끝"
             )
-        ),
+        }),
         h("main", { className: "flex-1 overflow-hidden" }, content)
     );
 }
@@ -3989,7 +4260,21 @@ function App() {
                 .then(function(d) {
                     if (d && d.examplesTable && Object.keys(d.examplesTable).length > 0) {
                         Object.keys(d.examplesTable).forEach(function(k) {
-                            DEMO_EXAMPLES_TABLE[k] = d.examplesTable[k];
+                            var rows = d.examplesTable[k];
+                            if (!Array.isArray(rows)) return;
+                            // 각 행을 배열로 정규화 (객체로 와도 처리)
+                            var normalized = rows.map(function(row) {
+                                if (Array.isArray(row)) return row;
+                                if (row && typeof row === 'object') {
+                                    return [row.when || '', row.where || '', row.who || '', row.what || ''];
+                                }
+                                return null;
+                            }).filter(function(r) {
+                                return r && r.length >= 4 && r[0] && r[1] && r[2] && r[3];
+                            });
+                            if (normalized.length > 0) {
+                                DEMO_EXAMPLES_TABLE[k] = normalized;
+                            }
                         });
                     }
                 })
@@ -4034,6 +4319,7 @@ function App() {
     } else if (screen === 's1_1') {
         content = h(Stage1_1, {
             onBack: goMenu,
+            onChangeStage: function(key) { goTo(key); },
             onComplete: function(newCards) {
                 // 카드 수집 기록 → 학습카드 시트
                 try {
@@ -4055,6 +4341,7 @@ function App() {
     } else if (screen === 's1_2') {
         content = h(Stage1_2, {
             onBack: goMenu,
+            onChangeStage: function(key) { goTo(key); },
             onComplete: function(sentence) {
                 // 문장 완성 기록 → 학습문장 시트
                 try {
@@ -4075,6 +4362,7 @@ function App() {
     } else if (screen === 's2_1') {
         content = h(Stage2_1, {
             onBack: goMenu,
+            onChangeStage: function(key) { goTo(key); },
             onComplete: function(newCards) {
                 // 감정 카드 수집 기록 → 학습카드 시트
                 try {
@@ -4096,6 +4384,7 @@ function App() {
     } else if (screen === 's2_2') {
         content = h(Stage2_2, {
             onBack: goMenu,
+            onChangeStage: function(key) { goTo(key); },
             onComplete: function(result) {
                 // 감정 문장 완성 기록 → 학습문장 시트
                 try {
@@ -4116,6 +4405,7 @@ function App() {
     } else if (screen === 's3') {
         content = h(Stage3, {
             onBack: goMenu,
+            onChangeStage: function(key) { goTo(key); },
             progress: progress,
             gasPost: gasPost
         });
