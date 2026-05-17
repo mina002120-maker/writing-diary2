@@ -13,16 +13,16 @@
 <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html { height: 100%; width: 100%; }
+  html { overflow: hidden !important; height: 100dvh; max-height: 100dvh; width: 100vw; }
   body {
     margin: 0; padding: 0;
-    height: 100dvh; width: 100vw;
-    overflow: hidden;
+    height: 100dvh; max-height: 100dvh; width: 100vw;
+    overflow: hidden !important;
     font-family: 'Gowun Dodum', sans-serif;
     background: #F0F7FF;
   }
   #root {
-    width: 100%; height: 100%;
+    width: 100%; height: 100dvh; max-height: 100dvh;
     display: flex; flex-direction: column;
     overflow: hidden;
   }
@@ -59,24 +59,17 @@
 </head>
 <body>
 <div id="root"></div>
-<!-- ╔══════════════════════════════════════════════════════════════╗ -->
-<!-- ║  ★ GAS URL은 config.js 파일에 입력하세요 ★                       ║ -->
-<!-- ║  index.html은 새로 받아도 config.js만 유지하면 됨                  ║ -->
-<!-- ╚══════════════════════════════════════════════════════════════╝ -->
-<script src="config.js"></script>
 <script>
-// config.js가 없거나 GAS_URL 미설정이면 기본값
-if (typeof window.GAS_URL === 'undefined' || !window.GAS_URL) {
-    window.GAS_URL = 'https://script.google.com/macros/s/AKfycbzAYcqocPWWaaCShKXyCU4udCDuzw4zi2g6W4EztRQ2IgZXgrM3tA7VsaL-CJ0bzBH2cw/exec';
-}
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+// ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbzs-VTL2neHU-sFwfmN725hORRc-OyL1A9s3Qve-EGzZPlnBKkT0BumdpLIxshTqoxrSw/exec';
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
 // ═══════════════════════════════════════════════
 // 공통 설정
 // ═══════════════════════════════════════════════
-
-// GAS URL 가져오기
-var GAS_URL = window.GAS_URL || 'https://script.google.com/macros/s/AKfycbzAYcqocPWWaaCShKXyCU4udCDuzw4zi2g6W4EztRQ2IgZXgrM3tA7VsaL-CJ0bzBH2cw/exec';
 
 // ── React 별칭 ──
 var useState   = React.useState;
@@ -128,6 +121,8 @@ var INIT_PROGRESS = {
     studentName: '',
     cards1:      0,
     cards2:      0,
+    cards1List:  [],   // 1단계에서 수집한 카드 배열
+    cards2List:  [],   // 2단계에서 수집한 감정 카드 배열
     did1_2:      false,
     did2_2:      false,
     sentence1: { when: '', where: '', who: '', what: '' },
@@ -377,6 +372,79 @@ var STAGE_OPTIONS = [
     { key: 's3',   label: '3단계      일기쓰기',           bg: 'bg-pink-100',    text: 'text-pink-700',    border: 'border-pink-200' }
 ];
 
+// ═══════════════════════════════════════════════
+// 공용 튜토리얼 팝업 (처음 접속 시만 표시)
+// ═══════════════════════════════════════════════
+function Tutorial(props) {
+    var steps = props.steps || [];
+    var storageKey = props.storageKey || 'tutorial_done';
+    var accentColor = props.accentColor || 'orange';
+    var seen = false;
+    try { seen = !!localStorage.getItem(storageKey); } catch(e) {}
+    var sOpen = useState(!seen);
+    var open = sOpen[0], setOpen = sOpen[1];
+    var sStep = useState(0);
+    var step = sStep[0], setStep = sStep[1];
+    function close() {
+        try { localStorage.setItem(storageKey, '1'); } catch(e) {}
+        setOpen(false);
+    }
+    function next() { if (step + 1 < steps.length) setStep(step + 1); else close(); }
+    function prev() { if (step > 0) setStep(step - 1); }
+    if (!open || steps.length === 0) return null;
+    var cur = steps[step];
+    var isLast = step === steps.length - 1;
+    var colMap = {
+        orange:  { bg: 'bg-orange-500',  light: 'bg-orange-50',  border: 'border-orange-300',  btn: 'bg-orange-500 shadow-[0_5px_0_rgb(154,52,18)]' },
+        purple:  { bg: 'bg-purple-500',  light: 'bg-purple-50',  border: 'border-purple-300',  btn: 'bg-purple-500 shadow-[0_5px_0_rgb(107,33,168)]' },
+        emerald: { bg: 'bg-emerald-500', light: 'bg-emerald-50', border: 'border-emerald-300', btn: 'bg-emerald-500 shadow-[0_5px_0_rgb(4,120,87)]'  }
+    };
+    var col = colMap[accentColor] || colMap.orange;
+    return h(motion.div, {
+        initial: { opacity: 0 }, animate: { opacity: 1 },
+        className: "fixed inset-0 z-50 flex items-center justify-center",
+        style: { background: 'rgba(0,0,0,0.5)' }
+    },
+        h(motion.div, {
+            initial: { scale: 0.8, y: 30 }, animate: { scale: 1, y: 0 },
+            transition: { type: 'spring', stiffness: 280, damping: 22 },
+            className: "mx-4 w-full max-w-md bg-white rounded-[2rem] shadow-2xl border-4 " + col.border + " overflow-hidden"
+        },
+            h("div", { className: col.bg + " px-6 py-3 flex items-center justify-between" },
+                h("span", { className: "text-white font-black text-lg" }, "\uD83D\uDCCB \uC0AC\uC6A9 \uBC29\uBC95 (" + (step + 1) + "/" + steps.length + ")"),
+                h("button", { onClick: close, className: "text-white/80 hover:text-white text-2xl font-black" }, "\u00D7")
+            ),
+            h("div", { className: "px-6 py-5 flex flex-col items-center gap-3 text-center min-h-[240px] justify-center" },
+                h(motion.div, {
+                    key: step,
+                    initial: { opacity: 0, x: 30 }, animate: { opacity: 1, x: 0 },
+                    transition: { duration: 0.25 },
+                    className: "flex flex-col items-center gap-3"
+                },
+                    h("div", { className: col.light + " w-20 h-20 rounded-full flex items-center justify-center border-4 " + col.border },
+                        h("span", { className: "text-4xl" }, cur.emoji)
+                    ),
+                    h("h2", { className: "text-2xl font-black text-slate-800" }, cur.title),
+                    h("p", { className: "text-base font-bold text-slate-600 leading-relaxed max-w-xs" }, cur.desc)
+                )
+            ),
+            h("div", { className: "px-6 pb-5 flex flex-col items-center gap-3" },
+                h("div", { className: "flex gap-2" },
+                    steps.map(function(_, i) {
+                        return h("div", { key: i, className: "rounded-full transition-all " + (i === step ? col.bg + " w-6 h-2.5" : "bg-slate-200 w-2.5 h-2.5") });
+                    })
+                ),
+                h("div", { className: "flex gap-3 w-full" },
+                    step > 0 && h("button", { onClick: prev, className: "flex-1 py-3 rounded-2xl font-black text-lg border-2 border-slate-200 text-slate-600 bg-white" }, "\u2190 \uC774\uC804"),
+                    h("button", { onClick: next, className: "flex-1 py-3 rounded-2xl text-white font-black text-lg active:translate-y-1 " + col.btn },
+                        isLast ? "\uC2DC\uC791\uD558\uAE30! \uD83C\uDF89" : "\uB2E4\uC74C \u2192"
+                    )
+                )
+            )
+        )
+    );
+}
+
 function StageHeader(props) {
     var currentKey = props.currentKey;         // 's1_1' 등
     var onChangeStage = props.onChangeStage;   // 단계 전환 콜백
@@ -396,7 +464,7 @@ function StageHeader(props) {
         }
     }
 
-    return h("div", { className: "px-6 pt-4 pb-2 flex items-center gap-3" },
+    return h("div", { className: "px-4 pt-3 pb-2 flex items-center gap-3 shrink-0" },
         // 좌측: 단계 선택 드롭다운
         h("div", { className: "relative" },
             h("select", {
@@ -535,7 +603,7 @@ function MainMenu(props) {
     }
 
     return h("div", { className: "w-full flex flex-col relative overflow-hidden", style: { height: "100dvh" } },
-        h("div", { className: "px-4 md:px-8 pt-3 pb-2 flex items-center justify-between shrink-0" },
+        h("div", { className: "px-4 md:px-8 pt-2 pb-1 flex items-center justify-between shrink-0" },
             h("div", { className: "flex items-center gap-4" },
                 h(PencilFairy, null),
                 h("div", null,
@@ -558,7 +626,7 @@ function MainMenu(props) {
 
 
         h("main", { className: "flex-1 px-3 md:px-6 pb-2 overflow-hidden min-h-0" },
-            h("div", { className: "grid grid-cols-3 gap-2 md:gap-4 h-full" },
+            h("div", { className: "grid grid-cols-3 gap-2 md:gap-4 h-full min-h-0 overflow-hidden" },
                 STAGE_DATA.map(function (stage, i) {
                     // 각 단계의 sub1/sub2 이동 키 매핑
                     var subMap = [
@@ -951,6 +1019,112 @@ function fieldMatched(transcript, target) {
 }
 
 // 예시문장 4요소가 각각 음성에 들어갔는지 검사
+// ═══════════════════════════════════════════════
+// 한국어 TTS (자연스러운 Google/Neural 음성 우선)
+// ═══════════════════════════════════════════════
+var _ttsCache = { voice: null, ready: false };
+
+function _selectKoreanVoice() {
+    if (!window.speechSynthesis) return null;
+    var voices = window.speechSynthesis.getVoices();
+    if (!voices || voices.length === 0) return null;
+
+    // 1순위: Google 한국어 (클라우드 음성, 가장 자연스러움)
+    var v1 = voices.find(function(v) {
+        return v.lang === 'ko-KR' &&
+               v.name.toLowerCase().indexOf('google') !== -1 &&
+               !v.localService;
+    });
+    if (v1) return v1;
+
+    // 2순위: Wavenet/Neural2 (Google Cloud)
+    var v2 = voices.find(function(v) {
+        return v.lang === 'ko-KR' &&
+               (v.name.indexOf('Wavenet') !== -1 || v.name.indexOf('Neural') !== -1);
+    });
+    if (v2) return v2;
+
+    // 3순위: 자연스러움 키워드
+    var v3 = voices.find(function(v) {
+        return v.lang === 'ko-KR' &&
+               /wavenet|neural|premium|enhanced|natural/i.test(v.name);
+    });
+    if (v3) return v3;
+
+    // 4순위: 그냥 ko-KR
+    var v4 = voices.find(function(v) { return v.lang === 'ko-KR'; });
+    if (v4) return v4;
+
+    // 5순위: 한국어 비슷한 것
+    return voices.find(function(v) { return v.lang && v.lang.indexOf('ko') === 0; }) || null;
+}
+
+// 음성 목록 로드 (브라우저마다 비동기로 로드됨)
+if (window.speechSynthesis) {
+    var loadVoices = function() {
+        _ttsCache.voice = _selectKoreanVoice();
+        _ttsCache.ready = true;
+    };
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+// 음성 재생
+function speakKorean(text, opts) {
+    if (!text || !window.speechSynthesis) return;
+    opts = opts || {};
+    // 진행 중인 발화 중지
+    window.speechSynthesis.cancel();
+
+    var utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'ko-KR';
+    utter.pitch = opts.pitch != null ? opts.pitch : 1.0;  // 기본 1.0
+    utter.rate = opts.rate != null ? opts.rate : 0.95;    // 약간 천천히, 자연스럽게
+    utter.volume = opts.volume != null ? opts.volume : 1.0;
+
+    var voice = _ttsCache.voice || _selectKoreanVoice();
+    if (voice) utter.voice = voice;
+
+    if (opts.onstart) utter.onstart = opts.onstart;
+    if (opts.onend) utter.onend = opts.onend;
+
+    window.speechSynthesis.speak(utter);
+    return utter;
+}
+
+// 듣기 버튼 컴포넌트
+function ListenButton(props) {
+    var text = props.text || '';
+    var label = props.label || '🔊 들어보기';
+    var color = props.color || 'blue';
+    var s = useState(false);
+    var speaking = s[0], setSpeaking = s[1];
+
+    function handleClick(e) {
+        e.stopPropagation();
+        if (speaking) {
+            window.speechSynthesis.cancel();
+            setSpeaking(false);
+            return;
+        }
+        setSpeaking(true);
+        speakKorean(text, {
+            onend: function() { setSpeaking(false); }
+        });
+    }
+
+    var colorClass = {
+        blue:   'bg-blue-500 hover:bg-blue-600 shadow-[0_4px_0_rgb(29,78,216)]',
+        purple: 'bg-purple-500 hover:bg-purple-600 shadow-[0_4px_0_rgb(107,33,168)]',
+        emerald:'bg-emerald-500 hover:bg-emerald-600 shadow-[0_4px_0_rgb(4,120,87)]'
+    }[color] || 'bg-blue-500 shadow-[0_4px_0_rgb(29,78,216)]';
+
+    return h("button", {
+        onClick: handleClick,
+        className: "px-5 py-3 rounded-2xl text-white text-lg font-black active:translate-y-1 active:shadow-none " + colorClass
+    }, speaking ? "⏸️ 그만 듣기" : label);
+}
+
 function checkAllFields(transcript, exampleParts) {
     // exampleParts = [언제, 어디서, 누구와, 무엇을]
     var keys = ['when', 'where', 'who', 'what'];
@@ -1043,16 +1217,23 @@ function Stage1_1(props) {
 
     // 녹음 종료 시 매칭 결과 처리 (폭죽 / 재녹음 강제)
     useEffect(function() {
-        if (!transcript || recording || !currentExample) return;
-        var result = checkAllFields(transcript, currentExample);
-        var count = (result.when?1:0) + (result.where?1:0) + (result.who?1:0) + (result.what?1:0);
+        if (!transcript || recording) return;
+        // currentExample 없으면 그냥 전반적으로 OK 처리
+        var count;
+        if (!currentExample) {
+            // 예시 없으면 녹음만 했으면 통과
+            count = 4;
+        } else {
+            var result = checkAllFields(transcript, currentExample);
+            count = (result.when?1:0) + (result.where?1:0) + (result.who?1:0) + (result.what?1:0);
+        }
+
         if (count === 4) {
-            // 완벽! 폭죽 터트리기 + 1.8초 후 자동으로 다음으로
+            // 완벽! 폭죽 + 자동 진행
             setShowConfetti(true);
             setMustRetry(false);
             var t = setTimeout(function() {
                 setShowConfetti(false);
-                // 자동 진행
                 if (exampleIdx + 1 < examples.length) {
                     setExampleIdx(exampleIdx + 1);
                     setTranscript('');
@@ -1065,7 +1246,7 @@ function Stage1_1(props) {
             }, 1800);
             return function() { clearTimeout(t); };
         } else if (count <= 1) {
-            // 많이 틀림 → 재녹음 강제
+            // 거의 안 맞음 → 재녹음 강제
             setMustRetry(true);
             setShowConfetti(false);
         } else {
@@ -1155,8 +1336,8 @@ function Stage1_1(props) {
     else if (subStep === 'draw') {
         var cDraw = FIELD_COLORS[selectedCat];
         var pool = DEMO_POOL[selectedCat];
-        content = h("div", { className: "flex flex-col h-full p-3 md:p-4 gap-2 md:gap-3" },
-            h("div", { className: "flex items-start gap-4 shrink-0" },
+        content = h("div", { className: "flex flex-col h-full p-3 md:p-4 gap-2 md:gap-3 min-h-0 overflow-hidden" },
+            h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
                 h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-orange-200 mt-2" },
                     h("h2", { className: "text-2xl font-black text-slate-800" },
@@ -1170,7 +1351,7 @@ function Stage1_1(props) {
                     className: "ml-auto self-center px-4 py-2 bg-slate-100 text-slate-500 rounded-2xl font-black text-base hover:bg-slate-200"
                 }, "← 다시 고르기")
             ),
-            h("div", { className: "flex-1 flex items-center justify-center" },
+            h("div", { className: "flex-1 flex items-center justify-center min-h-0 overflow-hidden" },
                 h("div", { className: "grid grid-cols-5 gap-4 max-w-5xl" },
                     pool.map(function (card, idx) {
                         // 이미 수집한 카드인지 확인 (같은 카테고리 + 같은 단어)
@@ -1233,8 +1414,8 @@ function Stage1_1(props) {
     }
     // ───── subStep: study ─────
     else if (subStep === 'study') {
-        content = h("div", { className: "flex flex-col h-full p-3 md:p-4 gap-2" },
-            h("div", { className: "flex items-start gap-4 shrink-0" },
+        content = h("div", { className: "flex flex-col h-full p-3 md:p-4 gap-2 min-h-0 overflow-hidden" },
+            h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
                 h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-orange-200 mt-2" },
                     h("h2", { className: "text-3xl font-black text-slate-800" }, "예시 문장을 잘 봐요!"),
@@ -1247,7 +1428,7 @@ function Stage1_1(props) {
                     )
                 )
             ),
-            h("div", { className: "flex-1 flex items-center justify-center" },
+            h("div", { className: "flex-1 flex items-center justify-center min-h-0 overflow-hidden" },
                 h("div", { className: "bg-white p-8 rounded-[3rem] shadow-2xl border-4 border-orange-100 max-w-5xl w-full" },
                     h("div", { className: "text-center mb-5" },
                         h("span", { className: "inline-block px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-base font-black" },
@@ -1331,19 +1512,38 @@ function Stage1_1(props) {
             })
         );
 
-        content = h("div", { className: "flex flex-col h-full p-3 md:p-4 gap-2" },
-            h("div", { className: "flex items-start gap-4 shrink-0" },
+        // 자세한 피드백 (틀린 부분 알려주기)
+        var detailedFeedback = null;
+        if (transcript && !recording && currentExample && matchResult && matchCount < 4) {
+            var missingLabels = [];
+            var labels = { when: '언제', where: '어디서', who: '누구와', what: '무엇을' };
+            ['when', 'where', 'who', 'what'].forEach(function(k) {
+                if (!matchResult[k]) missingLabels.push(labels[k] + '(' + currentExample[{when:0,where:1,who:2,what:3}[k]] + ')');
+            });
+            if (missingLabels.length > 0) {
+                detailedFeedback = missingLabels.join(', ') + ' 을(를) 다시 말해봐요!';
+            }
+        }
+
+        content = h("div", { className: "flex flex-col h-full p-3 md:p-4 gap-2 min-h-0 overflow-hidden" },
+            h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true, isListening: recording }),
-                h("div", { className: "bg-white px-7 py-3 rounded-3xl shadow-xl border-2 mt-4 " + (recording ? "border-red-400 ring-4 ring-red-50" : "border-orange-200") },
+                h("div", { className: "flex-1 bg-white px-7 py-3 rounded-3xl shadow-xl border-2 mt-4 " + (recording ? "border-red-400 ring-4 ring-red-50" : "border-orange-200") },
                     h("h2", { className: "text-2xl font-black " + (recording ? "text-red-500" : "text-slate-800") },
                         recording ? "🎙️ 듣고 있어요!" : (mustRetry ? "음... 다시 또박또박 말해볼까요? 🌱" : "큰 소리로 따라 말해봐요! (예시 " + (exampleIdx + 1) + "/" + examples.length + ")")
                     )
-                )
+                ),
+                // 듣기 버튼 (TTS로 예시문장 읽어주기)
+                currentExample && h(ListenButton, {
+                    text: currentExample.join(' '),
+                    label: "🔊 듣기",
+                    color: "blue"
+                })
             ),
             h("div", { className: "bg-white p-3 rounded-2xl shadow-md border-2 border-orange-100" },
                 coloredWithCheck
             ),
-            h("div", { className: "flex-1 flex flex-col items-center justify-center gap-3" },
+            h("div", { className: "flex-1 flex flex-col items-center justify-center gap-2 min-h-0 overflow-hidden" },
                 h("div", { className: "w-full max-w-4xl" },
                     h("p", { className: "text-lg font-black text-slate-500 mb-2 text-center" }, "내가 말한 내용:"),
                     h("div", {
@@ -1353,19 +1553,40 @@ function Stage1_1(props) {
                             transcript || h("span", { className: "text-slate-300" }, "버튼을 누르고 말해보세요...")
                         )
                     )
-                ),
-                // 피드백 메시지
-                feedback && h(motion.div, {
-                    initial: { opacity: 0, y: 10 },
-                    animate: { opacity: 1, y: 0 },
-                    className: "px-6 py-3 rounded-2xl border-4 shadow-md flex items-center gap-3 " + feedback.bg + " " + feedback.border
-                },
-                    h("span", { className: "text-3xl" }, feedback.emoji),
-                    h("span", { className: "text-xl font-black " + feedback.textColor }, feedback.text),
-                    h("span", { className: "ml-3 px-3 py-1 bg-white rounded-full text-sm font-black " + feedback.textColor }, matchCount + "/4")
                 )
             ),
-            h("div", { className: "flex flex-col items-center gap-3" },
+            // ── 피드백 팝업 (화면 중앙 오버레이 + 배경 딤) ──
+            feedback && !showConfetti && h(motion.div, {
+                initial: { opacity: 0 },
+                animate: { opacity: 1 },
+                className: "fixed inset-0 flex items-center justify-center z-50",
+                style: { background: 'rgba(0,0,0,0.45)' },
+                onClick: function() { setTranscript(''); setHasTriedRecording(false); setMustRetry(false); }
+            },
+                h(motion.div, {
+                    initial: { scale: 0.75, y: 40 },
+                    animate: { scale: 1, y: 0 },
+                    transition: { type: 'spring', stiffness: 300, damping: 24 },
+                    className: "mx-6 rounded-[2rem] shadow-2xl border-4 p-6 max-w-lg w-full flex flex-col items-center gap-3 " + feedback.bg + " " + feedback.border,
+                    style: { boxShadow: '0 20px 60px rgba(0,0,0,0.3)' },
+                    onClick: function(e) { e.stopPropagation(); }
+                },
+                    h("span", { className: "text-6xl" }, feedback.emoji),
+                    h("p", { className: "text-2xl font-black text-center " + feedback.textColor }, feedback.text),
+                    currentExample && h("div", { className: "px-4 py-1.5 bg-white rounded-full text-base font-black " + feedback.textColor }, matchCount + "/4 맞았어요"),
+                    detailedFeedback && h("div", {
+                        className: "w-full px-4 py-3 bg-white/70 rounded-2xl text-center"
+                    },
+                        h("p", { className: "text-base font-black " + feedback.textColor }, "💡 " + detailedFeedback)
+                    ),
+                    // 닫기 버튼
+                    h("button", {
+                        onClick: function() { setTranscript(''); setHasTriedRecording(false); setMustRetry(false); },
+                        className: "mt-1 px-8 py-3 bg-white rounded-2xl font-black text-lg border-2 " + feedback.border + " " + feedback.textColor + " shadow-sm"
+                    }, "다시 해볼게요! 💪")
+                )
+            ),
+            h("div", { className: "flex flex-col items-center gap-2 shrink-0" },
                 // 1. 녹음 버튼 (가장 크게, 항상 보임)
                 h("button", {
                     onClick: toggleRec,
@@ -1411,17 +1632,17 @@ function Stage1_1(props) {
     }
     // ───── subStep: choose (마음에 드는 예시 고르기) ─────
     else if (subStep === 'choose') {
-        content = h("div", { className: "flex flex-col h-full p-3 gap-2" },
-            h("div", { className: "flex items-start gap-4 shrink-0" },
+        content = h("div", { className: "flex flex-col h-full p-3 gap-2 min-h-0 overflow-hidden" },
+            h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
                 h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-orange-200 mt-2" },
                     h("h2", { className: "text-3xl font-black text-slate-800" }, "마음에 드는 문장을 골라봐요!"),
                     h("p", { className: "text-lg text-slate-500 font-bold mt-1" }, "고른 문장을 공책에 직접 써볼 거예요 ✏️")
                 )
             ),
-            h("div", { className: "flex-1 overflow-y-auto" },
+            h("div", { className: "flex-1 overflow-y-auto min-h-0 max-h-full" },
                 examples.length === 0
-                    ? h("div", { className: "flex flex-col items-center justify-center h-full gap-4 text-slate-400" },
+                    ? h("div", { className: "flex flex-col items-center justify-center h-full gap-3 text-slate-400 overflow-hidden" },
                         h("div", { className: "text-6xl" }, "😢"),
                         h("p", { className: "text-2xl font-black" }, "예시 문장을 불러오지 못했어요"),
                         h("p", { className: "text-lg font-bold" }, "GAS 시트 데이터를 확인해주세요"),
@@ -1459,8 +1680,8 @@ function Stage1_1(props) {
         var totalCells = cells.length;
         var lineCount = Math.ceil(totalCells / 10);
 
-        content = h("div", { className: "flex flex-col h-full p-3 gap-2" },
-            h("div", { className: "flex items-start gap-4 shrink-0" },
+        content = h("div", { className: "flex flex-col h-full p-3 gap-2 min-h-0 overflow-hidden" },
+            h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
                 h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-orange-200 mt-2" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "공책에 한 글자씩 따라 써봐요!"),
@@ -1473,7 +1694,7 @@ function Stage1_1(props) {
                     className: "ml-auto self-center px-4 py-2 bg-slate-100 text-slate-500 rounded-2xl font-black text-base hover:bg-slate-200"
                 }, "← 다른 문장")
             ),
-            h("div", { className: "flex-1 flex items-center justify-center" },
+            h("div", { className: "flex-1 flex items-center justify-center min-h-0 overflow-hidden" },
                 h("div", { className: "bg-white p-6 rounded-[2rem] shadow-2xl border-4 border-orange-200" },
                     h(NotebookGrid, { cells: cells })
                 )
@@ -1495,7 +1716,7 @@ function Stage1_1(props) {
 
     // ───── subStep: complete ─────
     else if (subStep === 'complete') {
-        content = h("div", { className: "flex flex-col items-center justify-center h-full p-8 gap-6" },
+        content = h("div", { className: "flex flex-col items-center justify-center h-full p-4 gap-4 overflow-hidden" },
             h(motion.div, { initial: { scale: 0 }, animate: { scale: 1 }, className: "text-8xl" }, "🎉"),
             h("h2", { className: "text-5xl font-black text-orange-600" }, "1단계 끝! 정말 멋져요!"),
             h("p", { className: "text-2xl font-bold text-slate-600" },
@@ -1514,8 +1735,8 @@ function Stage1_1(props) {
             ),
             h("button", {
                 onClick: function() {
-                    var cnt = finalCards.length || collected.length;
-                    if (props.onComplete) props.onComplete(cnt);
+                    var cards = finalCards.length > 0 ? finalCards : collected;
+                    if (props.onComplete) props.onComplete(cards);
                     else restart();
                 },
                 className: "px-16 py-5 bg-orange-500 text-white rounded-2xl text-3xl font-black shadow-[0_8px_0_rgb(154,52,18)] active:translate-y-1 active:shadow-none"
@@ -1523,7 +1744,7 @@ function Stage1_1(props) {
         );
     }
 
-    return h("div", { className: "w-full bg-[#F0F7FF] flex flex-col overflow-hidden", style: { height: "100dvh" } },
+    return h("div", { className: "w-full bg-[#F0F7FF] flex flex-col overflow-hidden min-h-0", style: { height: "100dvh" } },
         h(StageHeader, {
             currentKey: 's1_1',
             onChangeStage: props.onChangeStage,
@@ -1533,7 +1754,7 @@ function Stage1_1(props) {
                 h("span", { className: "text-xl font-black text-orange-600" }, collected.length + "장")
             )
         }),
-        h("main", { className: "flex-1 overflow-hidden min-h-0" }, content),
+        h("main", { className: "flex-1 overflow-hidden min-h-0 flex flex-col" }, content),
         h(Confetti, { show: showConfetti })
     );
 }
@@ -1691,11 +1912,14 @@ function PencilFairy(props) {
 }
 
 function Stage1_2(props) {
-    // 데모용: 수집 카드 개수를 토글로 조절 (실제 앱은 collected가 1단계에서 전달됨)
-    var s0 = useState(DEMO_COLLECTED);            var collected = s0[0], setCollected = s0[1];
+    // props.collectedCards: 1단계에서 모은 카드 배열, 없으면 DEMO_COLLECTED 사용
+    var initCards = (props.collectedCards && props.collectedCards.length > 0)
+        ? props.collectedCards
+        : DEMO_COLLECTED;
+    var s0 = useState(initCards);                  var collected = s0[0], setCollected = s0[1];
 
     // subStep: 'start' → 'pickCard' → 'compose' → 'review' → 'complete'
-    var s1 = useState('start');                    var subStep = s1[0], setSubStep = s1[1];
+    var s1 = useState('pickCard');                 var subStep = s1[0], setSubStep = s1[1];
     var s2 = useState(null);                       var chosenCard = s2[0], setChosenCard = s2[1]; // {key, value, emoji}
     var s3 = useState({ when:'', where:'', who:'', what:'' });  var myParts = s3[0], setMyParts = s3[1];
     var s4 = useState(null);                       var activeField = s4[0], setActiveField = s4[1]; // 지금 채우는 칸
@@ -1787,7 +2011,7 @@ function Stage1_2(props) {
 
     // ───── start (잠금 안내 또는 시작 안내) ─────
     if (subStep === 'start') {
-        content = h("div", { className: "flex flex-col items-center justify-center h-full p-8 gap-6" },
+        content = h("div", { className: "flex flex-col items-center justify-center h-full p-4 gap-4 overflow-hidden" },
             h(PencilFairy, null),
             LOCKED
                 // 잠금 화면
@@ -1842,8 +2066,8 @@ function Stage1_2(props) {
 
     // ───── pickCard ─────
     else if (subStep === 'pickCard') {
-        content = h("div", { className: "flex flex-col h-full p-5 gap-4" },
-            h("div", { className: "flex items-start gap-4 shrink-0" },
+        content = h("div", { className: "flex flex-col h-full p-4 gap-3 min-h-0 overflow-hidden" },
+            h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
                 h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-orange-200 mt-2" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "어떤 카드로 문장을 만들까요?"),
@@ -1856,8 +2080,8 @@ function Stage1_2(props) {
                     className: "ml-auto self-center px-4 py-2 bg-slate-100 text-slate-500 rounded-2xl font-black text-base hover:bg-slate-200"
                 }, "← 처음으로")
             ),
-            h("div", { className: "flex-1 overflow-y-auto" },
-                h("div", { className: "grid grid-cols-4 gap-4 max-w-5xl mx-auto" },
+            h("div", { className: "flex-1 overflow-y-auto min-h-0 max-h-full" },
+                h("div", { className: "grid grid-cols-4 gap-3 max-w-5xl mx-auto" },
                     collected.map(function (card, i) {
                         var c = FIELD_COLORS[card.key];
                         return h(motion.button, {
@@ -1883,9 +2107,9 @@ function Stage1_2(props) {
         var fillCount = FIELD_KEYS.filter(function(k){ return myParts[k]; }).length;
         var cChosen = chosenCard ? FIELD_COLORS[chosenCard.key] : null;
 
-        content = h("div", { className: "flex flex-col h-full p-3 gap-2" },
+        content = h("div", { className: "flex flex-col h-full p-3 gap-2 min-h-0 overflow-hidden" },
             // 상단 안내
-            h("div", { className: "flex items-start gap-4 shrink-0" },
+            h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true, isListening: micRec }),
                 h("div", { className: "bg-white px-6 py-3 rounded-3xl shadow-xl border-2 border-orange-200 mt-4 flex-1" },
                     h("h2", { className: "text-2xl font-black text-slate-800" },
@@ -1963,7 +2187,7 @@ function Stage1_2(props) {
                 ),
 
                 // cards
-                inputMode === 'cards' && h("div", { className: "flex-1 overflow-y-auto" },
+                inputMode === 'cards' && h("div", { className: "flex-1 overflow-y-auto min-h-0 max-h-full" },
                     h("div", { className: "grid grid-cols-5 gap-2" },
                         DEMO_POOL[activeField].map(function (card, ci) {
                             return h(motion.button, {
@@ -2092,8 +2316,8 @@ function Stage1_2(props) {
         var cells = buildCellGrid(myParts);
         var lineCount = Math.ceil(cells.length / 10);
 
-        content = h("div", { className: "flex flex-col h-full p-3 gap-2" },
-            h("div", { className: "flex items-start gap-4 shrink-0" },
+        content = h("div", { className: "flex flex-col h-full p-3 gap-2 min-h-0 overflow-hidden" },
+            h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
                 h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-orange-200 mt-2" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "내가 만든 문장을 공책에 써봐요!"),
@@ -2108,7 +2332,7 @@ function Stage1_2(props) {
                     className: "ml-auto self-center px-4 py-2 bg-slate-100 text-slate-500 rounded-2xl font-black text-base hover:bg-slate-200"
                 }, "← 미리보기")
             ),
-            h("div", { className: "flex-1 flex items-center justify-center" },
+            h("div", { className: "flex-1 flex items-center justify-center min-h-0 overflow-hidden" },
                 h("div", { className: "bg-white p-6 rounded-[2rem] shadow-2xl border-4 border-orange-200" },
                     h(NotebookGrid, { cells: cells })
                 )
@@ -2130,7 +2354,7 @@ function Stage1_2(props) {
 
     // ───── complete ─────
     else if (subStep === 'complete') {
-        content = h("div", { className: "flex flex-col items-center justify-center h-full p-8 gap-6" },
+        content = h("div", { className: "flex flex-col items-center justify-center h-full p-4 gap-4 overflow-hidden" },
             h(motion.div, { initial: { scale: 0 }, animate: { scale: 1 }, className: "text-8xl" }, "🎊"),
             h("h2", { className: "text-5xl font-black text-orange-600" }, "1단계 ❷ 끝! 정말 멋져요!"),
             h("p", { className: "text-2xl font-bold text-slate-600" },
@@ -2159,7 +2383,16 @@ function Stage1_2(props) {
         );
     }
 
-    return h("div", { className: "w-full bg-[#F0F7FF] flex flex-col overflow-hidden", style: { height: "100dvh" } },
+    return h("div", { className: "w-full bg-[#F0F7FF] flex flex-col overflow-hidden min-h-0", style: { height: "100dvh" } },
+        h(Tutorial, {
+            storageKey: 'tutorial_s1_2',
+            accentColor: 'orange',
+            steps: [
+                { emoji: '🃏', title: '내가 모은 카드로!', desc: '1단계❶에서 모은 카드 중 마음에 드는 카드 한 장을 골라요.' },
+                { emoji: '✏️', title: '빈칸을 채워요!', desc: '고른 카드로 시작해서, 언제·어디서·누구와·무엇을 채우면 나만의 문장이 완성돼요!' },
+                { emoji: '📓', title: '공책에 써요!', desc: '완성된 문장을 화면에 있는 공책 칸에 직접 써보세요. 글씨를 예쁘게 써봐요!' }
+            ]
+        }),
         h(StageHeader, {
             currentKey: 's1_2',
             onChangeStage: props.onChangeStage,
@@ -2169,7 +2402,7 @@ function Stage1_2(props) {
                 h("span", { className: "text-xl font-black text-orange-600" }, "모은 카드: " + collected.length + "장")
             )
         }),
-        h("main", { className: "flex-1 overflow-hidden relative min-h-0" }, content)
+        h("main", { className: "flex-1 overflow-hidden relative min-h-0 flex flex-col" }, content)
     );
 }
 
@@ -2454,26 +2687,6 @@ function PencilFairy(props) {
     );
 }
 
-// 4요소 강조 한 줄
-function ColoredSentence(props) {
-    var parts = props.parts;
-    var size = props.size || 'lg';
-    // 5칸이 한 줄에 들어가야 하므로 텍스트 크기를 약간 줄임
-    var textSize = size === 'sm' ? 'text-lg' : 'text-2xl';
-    var pad = size === 'sm' ? 'px-3 py-2' : 'px-4 py-3';
-    return h("div", { className: "flex flex-wrap items-end gap-2 justify-center" },
-        FIELD_KEYS.map(function (k, i) {
-            var c = FIELD_COLORS[k];
-            return h("div", { key: i, className: "flex flex-col items-center gap-1" },
-                size === 'lg' && h("span", { className: "text-base font-black " + c.text }, c.name),
-                h("span", {
-                    className: pad + " rounded-2xl font-black shadow-md border-4 " + textSize + " " + c.bg + " " + c.text + " " + c.border
-                }, parts[i])
-            );
-        })
-    );
-}
-
 // 공책 그리기 (1단계와 동일)
 function NotebookGrid(props) {
     var cells = props.cells;
@@ -2582,13 +2795,17 @@ function Stage2_1(props) {
 
     // 녹음 종료 시 결과 처리 (폭죽 / 재녹음 강제)
     useEffect(function() {
-        if (!transcript || recording || !currentExample) return;
-        var result = checkAllFields(transcript, currentExample);
-        // 2단계는 5요소 (when, where, who, what, feeling)
+        if (!transcript || recording) return;
         var total = S2_FIELD_KEYS.length;
-        var count = 0;
-        for (var k = 0; k < S2_FIELD_KEYS.length; k++) {
-            if (result[S2_FIELD_KEYS[k]]) count++;
+        var count;
+        if (!currentExample) {
+            count = total; // 예시 없으면 그냥 통과
+        } else {
+            var result = checkAllFields(transcript, currentExample);
+            count = 0;
+            for (var k = 0; k < S2_FIELD_KEYS.length; k++) {
+                if (result[S2_FIELD_KEYS[k]]) count++;
+            }
         }
         var passThreshold = total - 1; // 5개 중 4개 이상 = 정답
         var failThreshold = Math.floor(total / 3); // 5개 중 1개 이하 = 너무 많이 틀림
@@ -2668,8 +2885,8 @@ function Stage2_1(props) {
             yellow: FEELINGS_POOL.filter(function(c){return c.group==='yellow';}),
             green:  FEELINGS_POOL.filter(function(c){return c.group==='green';})
         };
-        content = h("div", { className: "flex flex-col h-full p-3 gap-2" },
-            h("div", { className: "flex items-start gap-4 shrink-0" },
+        content = h("div", { className: "flex flex-col h-full p-3 gap-2 min-h-0 overflow-hidden" },
+            h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
                 h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-purple-200 mt-2" },
                     h("h2", { className: "text-2xl font-black text-slate-800" },
@@ -2683,7 +2900,7 @@ function Stage2_1(props) {
                 )
             ),
             // 신호등 분류별 카드
-            h("div", { className: "flex-1 overflow-y-auto" },
+            h("div", { className: "flex-1 overflow-y-auto min-h-0 max-h-full" },
                 ['red', 'yellow', 'green'].map(function (g) {
                     var gc = GROUP_COLORS[g];
                     return h("div", { key: g, className: "mb-3" },
@@ -2692,7 +2909,7 @@ function Stage2_1(props) {
                             h("span", { className: "text-sm font-black " + gc.text }, GROUP_LABELS[g]),
                             h("span", { className: "text-xs font-bold text-slate-400" }, "(" + groupedPool[g].length + ")")
                         ),
-                        h("div", { className: "grid grid-cols-10 gap-2" },
+                        h("div", { className: "grid grid-cols-10 gap-1.5" },
                             groupedPool[g].map(function (card, idx) {
                                 // 이미 수집한 카드인지 확인
                                 var isCollected = false;
@@ -2768,8 +2985,8 @@ function Stage2_1(props) {
 
     // ───── study ─────
     else if (subStep === 'study') {
-        content = h("div", { className: "flex flex-col h-full p-3 md:p-4 gap-2" },
-            h("div", { className: "flex items-start gap-4 shrink-0" },
+        content = h("div", { className: "flex flex-col h-full p-3 md:p-4 gap-2 min-h-0 overflow-hidden" },
+            h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
                 h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-purple-200 mt-2 flex-1" },
                     h("h2", { className: "text-2xl font-black text-slate-800" },
@@ -2783,7 +3000,7 @@ function Stage2_1(props) {
                     )
                 )
             ),
-            h("div", { className: "flex-1 flex items-center justify-center" },
+            h("div", { className: "flex-1 flex items-center justify-center min-h-0 overflow-hidden" },
                 h("div", { className: "bg-white p-3 md:p-5 rounded-2xl shadow-md border-2 border-purple-100 w-full" },
                     h("div", { className: "text-center mb-4" },
                         h("span", { className: "inline-block px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-base font-black" },
@@ -2854,19 +3071,38 @@ function Stage2_1(props) {
             })
         );
 
-        content = h("div", { className: "flex flex-col h-full p-3 md:p-4 gap-2" },
-            h("div", { className: "flex items-start gap-4 shrink-0" },
+        // 자세한 피드백 (2단계는 5요소)
+        var detailedFeedback = null;
+        if (transcript && !recording && currentExample && matchResult && matchCount < 5) {
+            var labels5 = { when: '언제', where: '어디서', who: '누구와', what: '무엇을', feeling: '감정' };
+            var idxMap5 = { when:0, where:1, who:2, what:3, feeling:4 };
+            var missing = [];
+            S2_FIELD_KEYS.forEach(function(k) {
+                if (!matchResult[k]) missing.push(labels5[k] + '(' + (currentExample[idxMap5[k]] || '') + ')');
+            });
+            if (missing.length > 0) {
+                detailedFeedback = missing.join(', ') + ' 을(를) 다시 말해봐요!';
+            }
+        }
+
+        content = h("div", { className: "flex flex-col h-full p-3 md:p-4 gap-2 min-h-0 overflow-hidden" },
+            h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true, isListening: recording }),
-                h("div", { className: "bg-white px-7 py-3 rounded-3xl shadow-xl border-2 mt-4 " + (recording ? "border-red-400 ring-4 ring-red-50" : "border-purple-200") },
+                h("div", { className: "flex-1 bg-white px-7 py-3 rounded-3xl shadow-xl border-2 mt-4 " + (recording ? "border-red-400 ring-4 ring-red-50" : "border-purple-200") },
                     h("h2", { className: "text-2xl font-black " + (recording ? "text-red-500" : "text-slate-800") },
                         recording ? "🎙️ 듣고 있어요!" : (mustRetry ? "음... 다시 또박또박 말해볼까요? 🌱" : "큰 소리로 따라 말해봐요! (예시 " + (exampleIdx + 1) + "/" + examples.length + ")")
                     )
-                )
+                ),
+                currentExample && h(ListenButton, {
+                    text: currentExample.join(' '),
+                    label: "🔊 듣기",
+                    color: "purple"
+                })
             ),
-            h("div", { className: "bg-white p-6 rounded-[2rem] shadow-xl border-2 border-purple-100" },
+            h("div", { className: "bg-white p-3 rounded-2xl shadow-md border-2 border-purple-100" },
                 coloredWithCheck
             ),
-            h("div", { className: "flex-1 flex flex-col items-center justify-center gap-3" },
+            h("div", { className: "flex-1 flex flex-col items-center justify-center gap-2 min-h-0 overflow-hidden" },
                 h("div", { className: "w-full max-w-4xl" },
                     h("p", { className: "text-lg font-black text-slate-500 mb-2 text-center" }, "내가 말한 내용:"),
                     h("div", {
@@ -2876,18 +3112,39 @@ function Stage2_1(props) {
                             transcript || h("span", { className: "text-slate-300" }, "버튼을 누르고 말해보세요...")
                         )
                     )
-                ),
-                feedback && h(motion.div, {
-                    initial: { opacity: 0, y: 10 },
-                    animate: { opacity: 1, y: 0 },
-                    className: "px-6 py-3 rounded-2xl border-4 shadow-md flex items-center gap-3 " + feedback.bg + " " + feedback.border
-                },
-                    h("span", { className: "text-3xl" }, feedback.emoji),
-                    h("span", { className: "text-xl font-black " + feedback.textColor }, feedback.text),
-                    h("span", { className: "ml-3 px-3 py-1 bg-white rounded-full text-sm font-black " + feedback.textColor }, matchCount + "/4")
                 )
             ),
-            h("div", { className: "flex flex-col items-center gap-3" },
+            // ── 피드백 팝업 ──
+            feedback && !showConfetti && h(motion.div, {
+                initial: { opacity: 0 },
+                animate: { opacity: 1 },
+                className: "fixed inset-0 flex items-center justify-center z-50",
+                style: { background: 'rgba(0,0,0,0.45)' },
+                onClick: function() { setTranscript(''); setHasTriedRecording(false); setMustRetry(false); }
+            },
+                h(motion.div, {
+                    initial: { scale: 0.75, y: 40 },
+                    animate: { scale: 1, y: 0 },
+                    transition: { type: 'spring', stiffness: 300, damping: 24 },
+                    className: "mx-6 rounded-[2rem] shadow-2xl border-4 p-6 max-w-lg w-full flex flex-col items-center gap-3 " + feedback.bg + " " + feedback.border,
+                    style: { boxShadow: '0 20px 60px rgba(0,0,0,0.3)' },
+                    onClick: function(e) { e.stopPropagation(); }
+                },
+                    h("span", { className: "text-6xl" }, feedback.emoji),
+                    h("p", { className: "text-2xl font-black text-center " + feedback.textColor }, feedback.text),
+                    currentExample && h("div", { className: "px-4 py-1.5 bg-white rounded-full text-base font-black " + feedback.textColor }, matchCount + "/5 맞았어요"),
+                    detailedFeedback && h("div", {
+                        className: "w-full px-4 py-3 bg-white/70 rounded-2xl text-center"
+                    },
+                        h("p", { className: "text-base font-black " + feedback.textColor }, "💡 " + detailedFeedback)
+                    ),
+                    h("button", {
+                        onClick: function() { setTranscript(''); setHasTriedRecording(false); setMustRetry(false); },
+                        className: "mt-1 px-8 py-3 bg-white rounded-2xl font-black text-lg border-2 " + feedback.border + " " + feedback.textColor + " shadow-sm"
+                    }, "다시 해볼게요! 💪")
+                )
+            ),
+            h("div", { className: "flex flex-col items-center gap-2 shrink-0" },
                 h("button", {
                     onClick: toggleRec,
                     className: "flex items-center gap-3 px-6 py-3 rounded-2xl font-black text-xl shadow-lg " +
@@ -2921,15 +3178,15 @@ function Stage2_1(props) {
 
     // ───── choose (3개 예시 중 골라 공책에 쓰기) ─────
     else if (subStep === 'choose') {
-        content = h("div", { className: "flex flex-col h-full p-3 gap-2" },
-            h("div", { className: "flex items-start gap-4 shrink-0" },
+        content = h("div", { className: "flex flex-col h-full p-3 gap-2 min-h-0 overflow-hidden" },
+            h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
                 h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-purple-200 mt-2" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "마음에 드는 문장을 골라봐요!"),
                     h("p", { className: "text-base text-slate-500 font-bold mt-1" }, "고른 문장을 공책에 직접 써볼 거예요 ✏️")
                 )
             ),
-            h("div", { className: "flex-1 overflow-y-auto" },
+            h("div", { className: "flex-1 overflow-y-auto min-h-0 max-h-full" },
                 h("div", { className: "grid grid-cols-1 gap-3 max-w-4xl mx-auto" },
                     examples.map(function (ex, i) {
                         return h(motion.button, {
@@ -2956,8 +3213,8 @@ function Stage2_1(props) {
         var cells = buildCellGrid(chosen);
         var lineCount = Math.ceil(cells.length / 10);
 
-        content = h("div", { className: "flex flex-col h-full p-3 gap-2" },
-            h("div", { className: "flex items-start gap-4 shrink-0" },
+        content = h("div", { className: "flex flex-col h-full p-3 gap-2 min-h-0 overflow-hidden" },
+            h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
                 h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-purple-200 mt-2" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "공책에 한 글자씩 따라 써봐요!"),
@@ -2970,7 +3227,7 @@ function Stage2_1(props) {
                     className: "ml-auto self-center px-4 py-2 bg-slate-100 text-slate-500 rounded-2xl font-black text-base hover:bg-slate-200"
                 }, "← 다른 문장")
             ),
-            h("div", { className: "flex-1 flex items-center justify-center" },
+            h("div", { className: "flex-1 flex items-center justify-center min-h-0 overflow-hidden" },
                 h("div", { className: "bg-white p-6 rounded-[2rem] shadow-2xl border-4 border-purple-200" },
                     h(NotebookGrid, { cells: cells })
                 )
@@ -2992,7 +3249,7 @@ function Stage2_1(props) {
 
     // ───── complete ─────
     else if (subStep === 'complete') {
-        content = h("div", { className: "flex flex-col items-center justify-center h-full p-8 gap-6" },
+        content = h("div", { className: "flex flex-col items-center justify-center h-full p-4 gap-4 overflow-hidden" },
             h(motion.div, { initial: { scale: 0 }, animate: { scale: 1 }, className: "text-8xl" }, "💖"),
             h("h2", { className: "text-5xl font-black text-purple-600" }, "감정 학습 끝! 정말 멋져요!"),
             h("p", { className: "text-2xl font-bold text-slate-600" },
@@ -3023,7 +3280,7 @@ function Stage2_1(props) {
         );
     }
 
-    return h("div", { className: "w-full bg-[#F0F7FF] flex flex-col overflow-hidden", style: { height: "100dvh" } },
+    return h("div", { className: "w-full bg-[#F0F7FF] flex flex-col overflow-hidden min-h-0", style: { height: "100dvh" } },
         h(StageHeader, {
             currentKey: 's2_1',
             onChangeStage: props.onChangeStage,
@@ -3033,7 +3290,7 @@ function Stage2_1(props) {
                 h("span", { className: "text-xl font-black text-purple-600" }, collected.length + "장")
             )
         }),
-        h("main", { className: "flex-1 overflow-hidden min-h-0" }, content),
+        h("main", { className: "flex-1 overflow-hidden min-h-0 flex flex-col" }, content),
         h(Confetti, { show: showConfetti })
     );
 }
@@ -3119,24 +3376,6 @@ function PencilFairy(props) {
     );
 }
 
-function ColoredSentence(props) {
-    var parts = props.parts;
-    var size = props.size || 'lg';
-    var textSize = size === 'sm' ? 'text-2xl' : 'text-4xl';
-    var pad = size === 'sm' ? 'px-4 py-2.5' : 'px-6 py-4';
-    return h("div", { className: "flex flex-wrap items-end gap-2 justify-center" },
-        S2_FIELD_KEYS.map(function (k, i) {
-            var c = S2_FIELD_COLORS[k];
-            return h("div", { key: i, className: "flex flex-col items-center gap-1" },
-                size === 'lg' && h("span", { className: "text-base font-black " + c.text }, c.name),
-                h("span", {
-                    className: pad + " rounded-2xl font-black shadow-md border-4 " + textSize + " " + c.bg + " " + c.text + " " + c.border
-                }, parts[k])
-            );
-        })
-    );
-}
-
 function TrafficLight(props) {
     var onClick = props.onClick;
     var counts = props.counts || {};
@@ -3177,7 +3416,7 @@ function TrafficLight(props) {
 }
 
 function Stage2_2(props) {
-    var s1 = useState('start');                    var subStep = s1[0], setSubStep = s1[1];
+    var s1 = useState('pickCard');                 var subStep = s1[0], setSubStep = s1[1];
     var s2 = useState(DEMO_BASE);                  var baseParts = s2[0];
     var s3 = useState([]);                         var chosenFeelings = s3[0], setChosenFeelings = s3[1];
     var s4 = useState(null);                       var openGroup = s4[0], setOpenGroup = s4[1];
@@ -3240,7 +3479,7 @@ function Stage2_2(props) {
     var content = null;
 
     if (subStep === 'start') {
-        content = h("div", { className: "flex flex-col items-center justify-center h-full p-8 gap-6" },
+        content = h("div", { className: "flex flex-col items-center justify-center h-full p-4 gap-4 overflow-hidden" },
             h(PencilFairy, null),
             h("div", { className: "bg-white px-10 py-7 rounded-[3rem] shadow-xl border-2 border-purple-200 text-center max-w-3xl" },
                 h("h1", { className: "text-5xl font-black text-slate-800 mb-3" }, "마음신호등으로"),
@@ -3262,8 +3501,8 @@ function Stage2_2(props) {
     }
 
     else if (subStep === 'feeling') {
-        content = h("div", { className: "flex flex-col h-full p-3 gap-2" },
-            h("div", { className: "flex items-start gap-4 shrink-0" },
+        content = h("div", { className: "flex flex-col h-full p-3 gap-2 min-h-0 overflow-hidden" },
+            h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
                 h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-purple-200 mt-2 flex-1" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "지금 마음의 색깔은 무엇인가요?"),
@@ -3331,8 +3570,8 @@ function Stage2_2(props) {
     }
 
     else if (subStep === 'reason') {
-        content = h("div", { className: "flex flex-col h-full p-3 gap-2" },
-            h("div", { className: "flex items-start gap-4 shrink-0" },
+        content = h("div", { className: "flex flex-col h-full p-3 gap-2 min-h-0 overflow-hidden" },
+            h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true, isListening: micRec }),
                 h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-purple-200 mt-2" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "왜 그런 마음이 들었어요?"),
@@ -3370,7 +3609,7 @@ function Stage2_2(props) {
                     }, opt.label + (opt.recommended ? " ⭐" : ""))
                 })
             ),
-            h("div", { className: "flex-1 flex items-center justify-center" },
+            h("div", { className: "flex-1 flex items-center justify-center min-h-0 overflow-hidden" },
                 h("div", { className: "bg-white p-6 rounded-[2rem] shadow-xl border-4 border-purple-200 max-w-3xl w-full" },
                     h("p", { className: "text-lg font-black text-slate-600 mb-3 text-center" }, "왜냐하면..."),
                     reasonMode === 'typing'
@@ -3421,7 +3660,7 @@ function Stage2_2(props) {
             },
                 h("div", { className: "mb-3" }, h(ColoredSentence, { parts: baseParts, size: 'lg' })),
                 h("div", { className: "h-1 bg-gradient-to-r from-transparent via-purple-200 to-transparent my-3" }),
-                h("div", { className: "flex flex-col items-center gap-3" },
+                h("div", { className: "flex flex-col items-center gap-2 shrink-0" },
                     h("div", { className: "flex items-center gap-3 flex-wrap justify-center" },
                         h("span", { className: "text-lg font-bold text-slate-500" }, "그래서"),
                         chosenFeelings.map(function (f, i) {
@@ -3494,7 +3733,7 @@ function Stage2_2(props) {
                     className: "bg-white/20 w-10 h-10 rounded-full text-2xl font-black hover:bg-white/30"
                 }, "×")
             ),
-            h("div", { className: "flex-1 overflow-y-auto p-6" },
+            h("div", { className: "flex-1 overflow-y-auto min-h-0 p-4" },
                 h("div", { className: "grid grid-cols-5 gap-3" },
                     available.filter(function (f) { return f.group === openGroup; }).map(function (f, i) {
                         var isSel = false;
@@ -3525,7 +3764,16 @@ function Stage2_2(props) {
         )
     );
 
-    return h("div", { className: "w-full bg-[#F0F7FF] flex flex-col overflow-hidden", style: { height: "100dvh" } },
+    return h("div", { className: "w-full bg-[#F0F7FF] flex flex-col overflow-hidden min-h-0", style: { height: "100dvh" } },
+        h(Tutorial, {
+            storageKey: 'tutorial_s2_2',
+            accentColor: 'purple',
+            steps: [
+                { emoji: '🚦', title: '마음신호등!', desc: '빨강·노랑·초록 신호등을 눌러서 지금 내 마음의 색깔을 골라봐요!' },
+                { emoji: '💜', title: '감정을 골라요!', desc: '신호등을 누르면 그 색깔의 감정 카드들이 나와요. 여러 가지 감정을 함께 고를 수 있어요!' },
+                { emoji: '💬', title: '왜 그랬는지 써요!', desc: '내 마음이 그랬던 이유를 짧게 써보세요. 왜냐하면... 이렇게 시작해봐요!' }
+            ]
+        }),
         h(StageHeader, {
             currentKey: 's2_2',
             onChangeStage: props.onChangeStage,
@@ -3537,7 +3785,7 @@ function Stage2_2(props) {
                 subStep === 'preview' ? "3) 미리보기" : "끝"
             )
         }),
-        h("main", { className: "flex-1 overflow-hidden min-h-0" }, content),
+        h("main", { className: "flex-1 overflow-hidden min-h-0 flex flex-col" }, content),
         modal
     );
 }
@@ -3842,7 +4090,7 @@ function Stage3(props) {
 
     // ───── start (잠금 또는 시작) ─────
     if (subStep === 'start') {
-        content = h("div", { className: "flex flex-col items-center justify-center h-full p-8 gap-6" },
+        content = h("div", { className: "flex flex-col items-center justify-center h-full p-4 gap-4 overflow-hidden" },
             h(PencilFairy, null),
             LOCKED
                 ? h("div", { className: "flex flex-col items-center gap-5" },
@@ -3885,7 +4133,7 @@ function Stage3(props) {
 
     // ───── compose ─────
     else if (subStep === 'compose') {
-        content = h("div", { className: "flex flex-col h-full p-3 gap-2" },
+        content = h("div", { className: "flex flex-col h-full p-3 gap-2 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
                 h("div", { className: "bg-white px-6 py-3 rounded-3xl shadow-xl border-2 border-emerald-200 mt-4" },
@@ -3945,7 +4193,7 @@ function Stage3(props) {
 
     // ───── review (일기지 미리보기) ─────
     else if (subStep === 'review') {
-        content = h("div", { className: "flex flex-col h-full p-3 gap-2" },
+        content = h("div", { className: "flex flex-col h-full p-3 gap-2 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
                 h("div", { className: "bg-white px-6 py-3 rounded-3xl shadow-xl border-2 border-emerald-200 mt-4" },
@@ -3955,7 +4203,7 @@ function Stage3(props) {
             ),
 
             // 일기지
-            h("div", { className: "flex-1 flex items-center justify-center" },
+            h("div", { className: "flex-1 flex items-center justify-center min-h-0 overflow-hidden" },
                 h(motion.div, {
                     initial: { rotateY: 30, opacity: 0 },
                     animate: { rotateY: 0, opacity: 1 },
@@ -3995,7 +4243,7 @@ function Stage3(props) {
 
     // ───── submit (제출 애니메이션) ─────
     else if (subStep === 'submit') {
-        content = h("div", { className: "flex flex-col items-center justify-center h-full p-8 gap-6" },
+        content = h("div", { className: "flex flex-col items-center justify-center h-full p-4 gap-4 overflow-hidden" },
             h(motion.div, {
                 initial: { y: 0, scale: 1, opacity: 1 },
                 animate: { y: -200, scale: 0.5, opacity: 0 },
@@ -4041,7 +4289,17 @@ function Stage3(props) {
         );
     }
 
-    return h("div", { className: "w-full bg-[#F0F7FF] flex flex-col overflow-hidden", style: { height: "100dvh" } },
+    return h("div", { className: "w-full bg-[#F0F7FF] flex flex-col overflow-hidden min-h-0", style: { height: "100dvh" } },
+        h(Tutorial, {
+            storageKey: 'tutorial_s3',
+            accentColor: 'emerald',
+            steps: [
+                { emoji: '📝', title: '일기 제목을 써요!', desc: '오늘 하루를 잘 표현하는 제목을 지어봐요. 짧고 재미있게!' },
+                { emoji: '📄', title: '일기 본문이에요!', desc: '1단계와 2단계에서 만든 문장이 자동으로 들어가 있어요. 고쳐도 좋아요!' },
+                { emoji: '🎨', title: '그림도 그려요!', desc: '오늘 있었던 일을 그림으로 표현해봐요. 마음대로 그려도 돼요!' },
+                { emoji: '📮', title: '선생님께 제출해요!', desc: '다 썼으면 제출 버튼을 눌러봐요. 선생님이 볼 수 있어요!' }
+            ]
+        }),
         h(StageHeader, {
             currentKey: 's3',
             onChangeStage: props.onChangeStage,
@@ -4054,7 +4312,7 @@ function Stage3(props) {
                 "끝"
             )
         }),
-        h("main", { className: "flex-1 overflow-hidden min-h-0" }, content)
+        h("main", { className: "flex-1 overflow-hidden min-h-0 flex flex-col" }, content)
     );
 }
 
@@ -4123,11 +4381,11 @@ function LoginScreen(props) {
     }
 
     return h("div", {
-        className: "w-full flex flex-col items-center justify-center gap-4 p-4 md:p-6 overflow-hidden", style: { height: "100dvh" },
+        className: "w-full flex flex-col items-center justify-center gap-4 p-4 md:p-6 overflow-hidden min-h-0", style: { height: "100dvh" },
         style: { background: 'linear-gradient(180deg, #FFF8E7 0%, #F0F7FF 50%, #FFF0F5 100%)' }
     },
         // 연필요정 + 제목
-        h("div", { className: "flex flex-col items-center gap-3" },
+        h("div", { className: "flex flex-col items-center gap-2 shrink-0" },
             h(motion.div, {
                 animate: { y: [0, -8, 0], rotate: [-2, 2, -2] },
                 transition: { repeat: Infinity, duration: 3, ease: "easeInOut" }
@@ -4273,20 +4531,44 @@ function App() {
                 .then(function(d) {
                     if (d && d.settings) {
                         Object.assign(LOCK_SETTINGS, d.settings);
-                        // 설정 반영해서 메뉴 다시 그리기
                         setLockVer(function(v) { return v + 1; });
                     }
                 })
                 .catch(function() {});
 
-            // 예시 데이터 로드
+            // 카드 풀 로드 (언제/어디/누구/무엇 — DEMO_POOL 교체)
+            gasGet('getCardPool')
+                .then(function(d) {
+                    if (d && d.cardPool && d.cardPool.length > 0) {
+                        var newPool = { when: [], where: [], who: [], what: [] };
+                        d.cardPool.forEach(function(card) {
+                            var k = card.key;
+                            if (newPool[k]) newPool[k].push({ value: card.value, emoji: card.emoji || '✨' });
+                        });
+                        ['when', 'where', 'who', 'what'].forEach(function(k) {
+                            if (newPool[k].length > 0) DEMO_POOL[k] = newPool[k];
+                        });
+                        // DEMO_COLLECTED도 GAS 카드로 교체
+                        var all = [];
+                        d.cardPool.forEach(function(card) {
+                            all.push({ key: card.key, value: card.value, emoji: card.emoji || '✨' });
+                        });
+                        if (all.length > 0) {
+                            // 전역 배열 교체
+                            DEMO_COLLECTED.length = 0;
+                            all.forEach(function(c) { DEMO_COLLECTED.push(c); });
+                        }
+                    }
+                })
+                .catch(function() {});
+
+            // 예시문장 테이블 로드 (4요소 — DEMO_EXAMPLES_TABLE 교체)
             gasGet('getExamplesTable')
                 .then(function(d) {
                     if (d && d.examplesTable && Object.keys(d.examplesTable).length > 0) {
                         Object.keys(d.examplesTable).forEach(function(k) {
                             var rows = d.examplesTable[k];
                             if (!Array.isArray(rows)) return;
-                            // 각 행을 배열로 정규화 (객체로 와도 처리)
                             var normalized = rows.map(function(row) {
                                 if (Array.isArray(row)) return row;
                                 if (row && typeof row === 'object') {
@@ -4296,27 +4578,46 @@ function App() {
                             }).filter(function(r) {
                                 return r && r.length >= 4 && r[0] && r[1] && r[2] && r[3];
                             });
-                            if (normalized.length > 0) {
-                                DEMO_EXAMPLES_TABLE[k] = normalized;
-                            }
+                            if (normalized.length > 0) DEMO_EXAMPLES_TABLE[k] = normalized;
                         });
                     }
                 })
                 .catch(function() {});
 
-            // 카드 풀 로드 (DEMO_POOL 교체)
-            gasGet('getCardPool')
+            // 감정 풀 로드 (FEELINGS_POOL 교체)
+            gasGet('getFeelingsPool')
                 .then(function(d) {
-                    if (d && d.cardPool && d.cardPool.length > 0) {
-                        // 카테고리별로 분류해서 DEMO_POOL 교체
-                        var newPool = { when: [], where: [], who: [], what: [] };
-                        d.cardPool.forEach(function(card) {
-                            var k = card.key;
-                            if (newPool[k]) newPool[k].push({ value: card.value, emoji: card.emoji || '✨' });
+                    if (d && d.feelingsPool && d.feelingsPool.length > 0) {
+                        FEELINGS_POOL.length = 0;
+                        d.feelingsPool.forEach(function(f) {
+                            FEELINGS_POOL.push({
+                                value: f.value,
+                                emoji: f.emoji || '💜',
+                                group: f.group || 'yellow',
+                                desc:  f.desc  || ''
+                            });
                         });
-                        // 데이터 있는 카테고리만 교체
-                        ['when', 'where', 'who', 'what'].forEach(function(k) {
-                            if (newPool[k].length > 0) DEMO_POOL[k] = newPool[k];
+                    }
+                })
+                .catch(function() {});
+
+            // 감정 예시문장 로드 (FEELINGS_EXAMPLES 교체)
+            gasGet('getFeelingsTable')
+                .then(function(d) {
+                    if (d && d.feelingsTable && Object.keys(d.feelingsTable).length > 0) {
+                        Object.keys(d.feelingsTable).forEach(function(k) {
+                            var rows = d.feelingsTable[k];
+                            if (!Array.isArray(rows) || rows.length === 0) return;
+                            var normalized = rows.map(function(row) {
+                                if (Array.isArray(row)) return row;
+                                if (row && typeof row === 'object') {
+                                    return [row.when || '', row.where || '', row.who || '', row.what || '', row.feeling || ''];
+                                }
+                                return null;
+                            }).filter(function(r) {
+                                return r && r.length >= 4 && r[0];
+                            });
+                            if (normalized.length > 0) FEELINGS_EXAMPLES[k] = normalized;
                         });
                     }
                 })
@@ -4377,7 +4678,12 @@ function App() {
                             : [{ key: '', value: newCards, emoji: '', group: '' }]
                     }).catch(function(){});
                 } catch(e) {}
-                updateProgress({ cards1: Math.max(progress.cards1, typeof newCards === 'number' ? newCards : progress.cards1 + 1) });
+                var cardArr = Array.isArray(newCards) ? newCards : [];
+                var newCount = cardArr.length || (typeof newCards === 'number' ? newCards : 0);
+                updateProgress({
+                    cards1: Math.max(progress.cards1, newCount),
+                    cards1List: cardArr.length > 0 ? cardArr : (progress.cards1List || [])
+                });
                 goMenu();
             }
         });
@@ -4400,7 +4706,8 @@ function App() {
                 updateProgress({ did1_2: true, sentence1: sentence });
                 goMenu();
             },
-            cards1: progress.cards1
+            cards1: progress.cards1,
+            collectedCards: progress.cards1List || []
         });
 
     } else if (screen === 's2_1') {
