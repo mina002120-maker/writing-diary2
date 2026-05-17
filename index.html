@@ -57,11 +57,11 @@
 <!-- ║  주의: 따옴표(')를 지우면 안 됩니다!                              ║ -->
 <!-- ╚══════════════════════════════════════════════════════════════╝ -->
 <script>
-window.GAS_URL = 'https://script.google.com/macros/s/AKfycbxG88DEeIpl5NwiVCjozXCtJimca2TsZFpnFcRct4wadFBjx-HKK55bXlQocb6Vr8LA9A/exec';
+window.GAS_URL = '여기에_배포된_GAS_URL을_입력하세요';
 </script>
 <!--
    ↑ 위의 줄을 이렇게 수정하세요 (URL 부분만 교체):
-   window.GAS_URL = 'https://script.google.com/macros/s/AKfycb..../exec';
+   window.GAS_URL = 'https://script.google.com/macros/s/AKfycbz1kdK8u4_pEUjbYN-0VBZxh-NZOweUMXownLWPNH1J8g_ZZ6kYh_xlen6wETVDqC7zVw/exec';
 
    주의사항:
    • 따옴표(')는 그대로 두기
@@ -124,14 +124,20 @@ function lsSet(key, val) {
 var INIT_PROGRESS = {
     studentId:   null,
     studentName: '',
-    cards1:      0,    // 1단계 수집 카드 수
-    cards2:      0,    // 2단계 수집 감정 카드 수
-    did1_2:      false,// 1단계❷ 완료 여부
-    did2_2:      false,// 2단계❷ 완료 여부
-    // 1단계❷에서 만든 문장
+    cards1:      0,
+    cards2:      0,
+    did1_2:      false,
+    did2_2:      false,
     sentence1: { when: '', where: '', who: '', what: '' },
-    // 2단계❷에서 만든 감정 + 이유
     sentence2: { feelings: [], reason: '' }
+};
+
+// ── 전역 잠금 설정 (GAS 설정 시트에서 로드) ──
+var LOCK_SETTINGS = {
+    lock_stage1_2: false,
+    lock_stage2_1: false,
+    lock_stage2_2: false,
+    lock_stage3:   false
 };
 
 // ── GAS 통신 ──
@@ -332,23 +338,26 @@ function MainMenu(props) {
         studentName: progress.studentName || '학생'
     };
 
-    // 잠금 계산
+    // 잠금 계산 (진행 상태 + GAS 설정 시트 조합)
     var stage1Sub1Done = state.cards1 > 0;
     var stage1Sub2Done = state.did1_2;
-    var stage1Sub2Locked = state.cards1 < 4;
-    var stage1Sub2LockReason = "1단계 카드 " + state.cards1 + "/4장 모으기";
+    var stage1Sub2Locked = LOCK_SETTINGS.lock_stage1_2;
+    var stage1Sub2LockReason = "선생님이 아직 잠가 놨어요 🔒";
 
     var stage2Sub1Done = state.cards2 > 0;
     var stage2Sub2Done = state.did2_2;
-    var stage2Sub2Locked = state.cards2 < 4;
-    var stage2Sub2LockReason = "마음 카드 " + state.cards2 + "/4장 모으기";
+    var stage2Sub2Locked = LOCK_SETTINGS.lock_stage2_2;
+    var stage2Sub2LockReason = "선생님이 아직 잠가 놨어요 🔒";
 
-    var stage3Locked = !(state.did1_2 && state.did2_2);
-    var stage3LockReason = "1단계와 2단계 '카드로 문장'을 먼저 해주세요!";
+    var stage2Locked = LOCK_SETTINGS.lock_stage2_1; // 2단계 전체 잠금
+    var stage3Locked = LOCK_SETTINGS.lock_stage3 || !(state.did1_2 && state.did2_2);
+    var stage3LockReason = LOCK_SETTINGS.lock_stage3
+        ? "선생님이 아직 잠가 놨어요 🔒"
+        : "1단계와 2단계 '카드로 문장'을 먼저 해주세요!";
 
     var progresses = [
         { sub1Done: stage1Sub1Done, sub2Done: stage1Sub2Done, sub2Locked: stage1Sub2Locked, sub2LockReason: stage1Sub2LockReason, stageLocked: false, stageLockReason: '' },
-        { sub1Done: stage2Sub1Done, sub2Done: stage2Sub2Done, sub2Locked: stage2Sub2Locked, sub2LockReason: stage2Sub2LockReason, stageLocked: false, stageLockReason: '' },
+        { sub1Done: stage2Sub1Done, sub2Done: stage2Sub2Done, sub2Locked: stage2Sub2Locked, sub2LockReason: stage2Sub2LockReason, stageLocked: stage2Locked, stageLockReason: "선생님이 아직 잠가 놨어요 🔒" },
         { sub1Done: false,          sub2Done: false,          sub2Locked: false,            sub2LockReason: '',                   stageLocked: stage3Locked, stageLockReason: stage3LockReason }
     ];
 
@@ -656,16 +665,20 @@ function ColoredSentence(props) {
     var parts = props.parts;
     var size = props.size || 'lg'; // 'sm' or 'lg'
     var keys = ['when', 'where', 'who', 'what'];
-    var textSize = size === 'sm' ? 'text-xl' : 'text-3xl';
-    var pad = size === 'sm' ? 'px-3 py-2' : 'px-5 py-3';
+    var textSize = size === 'sm' ? 'text-2xl' : 'text-4xl';
+    var pad = size === 'sm' ? 'px-4 py-2.5' : 'px-6 py-4';
+    // 배열이 아니거나 비어있으면 빈 표시
+    if (!parts || !Array.isArray(parts) || parts.length === 0) {
+        return h("span", { className: "text-slate-400 font-bold" }, "예시 없음");
+    }
     return h("div", { className: "flex flex-wrap items-end gap-2 justify-center" },
         parts.map(function (p, i) {
-            var c = FIELD_COLORS[keys[i]];
+            var c = FIELD_COLORS[keys[i]] || FIELD_COLORS['when'];
             return h("div", { key: i, className: "flex flex-col items-center gap-1" },
-                size === 'lg' && h("span", { className: "text-xs font-black " + c.text }, c.name),
+                size === 'lg' && h("span", { className: "text-base font-black " + c.text }, c.name),
                 h("span", {
                     className: pad + " rounded-2xl font-black shadow-md border-4 " + textSize + " " + c.bg + " " + c.text + " " + c.border
-                }, p)
+                }, p || '')
             );
         })
     );
@@ -818,7 +831,28 @@ function Stage1_1(props) {
     var st8 = useState(null);       var chosenForWriting = st8[0], setChosenForWriting = st8[1]; // 공책에 쓸 예시 인덱스
     var recRef = useRef(null);
 
-    var examples = drawn ? (DEMO_EXAMPLES_TABLE[drawn.value] || []) : [];
+    // examples: drawn 단어에 맞는 예시문장 배열
+    // DEMO_EXAMPLES_TABLE에서 찾고, 없으면 drawn 카드 정보로 자동 생성
+    var examples = (function() {
+        if (!drawn) return [];
+        var found = DEMO_EXAMPLES_TABLE[drawn.value];
+        if (found && found.length > 0) return found;
+        // 자동 생성: 선택한 카테고리 단어를 포함한 예시 3개
+        var catDefaults = {
+            when:  ['교실에서', '친구랑', '신나게 놀았다'],
+            where: ['오늘 아침에', '친구랑', '즐겁게 지냈다'],
+            who:   ['오늘', '교실에서', '함께 공부했다'],
+            what:  ['오늘', '교실에서', '친구랑']
+        };
+        var d = catDefaults[selectedCat] || ['오늘', '교실에서', '친구랑', '재미있게 놀았다'];
+        // 선택한 카테고리 위치에 drawn.value 넣기
+        var catIdx = { when: 0, where: 1, who: 2, what: 3 }[selectedCat] || 0;
+        var base = ['오늘', '교실에서', '친구랑', '재미있게 놀았다'];
+        var row1 = base.slice(); row1[catIdx] = drawn.value;
+        var row2 = ['학교 끝나고', '운동장에서', '친구들과', '신나게 놀았다']; row2[catIdx] = drawn.value;
+        var row3 = ['쉬는 시간에', '도서관에서', '혼자서', '책을 읽었다']; row3[catIdx] = drawn.value;
+        return [row1, row2, row3];
+    })();
     var currentExample = examples[exampleIdx];
 
     function selectCategory(cat) {
@@ -829,7 +863,7 @@ function Stage1_1(props) {
         setDrawn(card);
         setSubStep('flip');
     }
-    function confirmCard() { setSubStep('study'); }
+    function confirmCard() { setSubStep('record'); }
     function toRecord() { setSubStep('record'); }
 
     function toggleRec() {
@@ -861,7 +895,7 @@ function Stage1_1(props) {
             setExampleIdx(exampleIdx + 1);
             setTranscript('');
             setHasTriedRecording(false);
-            setSubStep('study');
+            setSubStep('record');
         } else {
             // 5개 학습 끝 → 마음에 드는 예시 고르기
             setHasTriedRecording(false);
@@ -921,7 +955,7 @@ function Stage1_1(props) {
                         whileHover: { scale: 1.05 },
                         whileTap: { scale: 0.95 },
                         onClick: function () { selectCategory(cat); },
-                        className: "p-8 rounded-[2rem] shadow-xl border-4 flex flex-col items-center gap-3 bg-gradient-to-b text-white " + c.from + " " + c.to + " " + c.border
+                        className: "p-8 rounded-[2rem] shadow-xl border-4 flex flex-col items-center gap-3 bg-white " + c.border + " " + c.text
                     },
                         h("span", { className: "text-7xl" }, CAT_EMOJI[cat]),
                         h("span", { className: "text-4xl font-black" }, c.name)
@@ -976,11 +1010,11 @@ function Stage1_1(props) {
                 initial: { rotateY: 90, scale: 0.5 },
                 animate: { rotateY: 0, scale: 1 },
                 transition: { duration: 0.6 },
-                className: "w-72 h-80 bg-gradient-to-b rounded-3xl flex flex-col items-center justify-center gap-4 shadow-2xl border-[6px] border-white/40 " + cFlip.from + " " + cFlip.to
+                className: "w-72 h-80 bg-white rounded-3xl flex flex-col items-center justify-center gap-4 shadow-2xl border-[6px] " + cFlip.border
             },
                 h("span", { className: "text-xl font-black px-5 py-1.5 rounded-full " + cFlip.bg + " " + cFlip.text }, cFlip.name),
                 h("span", { className: "text-8xl" }, drawn.emoji),
-                h("span", { className: "text-2xl font-black text-white" }, drawn.value)
+                h("span", { className: "text-2xl font-black text-slate-800" }, drawn.value)
             ),
             h("div", { className: "flex gap-4 pt-2" },
                 h("button", {
@@ -1000,8 +1034,8 @@ function Stage1_1(props) {
             h("div", { className: "flex items-start gap-4 shrink-0" },
                 h(PencilFairy, { mini: true }),
                 h("div", { className: "bg-white px-7 py-3 rounded-3xl shadow-xl border-2 border-orange-200 mt-4" },
-                    h("h2", { className: "text-2xl font-black text-slate-800" }, "예시 문장을 잘 봐요!"),
-                    h("p", { className: "text-sm text-slate-500 font-bold mt-1" },
+                    h("h2", { className: "text-3xl font-black text-slate-800" }, "예시 문장을 잘 봐요!"),
+                    h("p", { className: "text-base text-slate-500 font-bold mt-1" },
                         h("span", { className: "text-amber-600 font-black" }, "언제"), " · ",
                         h("span", { className: "text-blue-600 font-black" }, "어디에서"), " · ",
                         h("span", { className: "text-emerald-600 font-black" }, "누구와"), " · ",
@@ -1013,7 +1047,7 @@ function Stage1_1(props) {
             h("div", { className: "flex-1 flex items-center justify-center" },
                 h("div", { className: "bg-white p-8 rounded-[3rem] shadow-2xl border-4 border-orange-100 max-w-5xl w-full" },
                     h("div", { className: "text-center mb-5" },
-                        h("span", { className: "inline-block px-5 py-2 bg-orange-100 text-orange-700 rounded-full text-xl font-black" },
+                        h("span", { className: "inline-block px-5 py-2 bg-orange-100 text-orange-700 rounded-full text-2xl font-black" },
                             "예시 " + (exampleIdx + 1) + " / " + examples.length
                         )
                     ),
@@ -1032,7 +1066,7 @@ function Stage1_1(props) {
             h("div", { className: "flex justify-center" },
                 h("button", {
                     onClick: toRecord,
-                    className: "px-12 py-4 bg-blue-500 text-white rounded-2xl text-2xl font-black shadow-[0_8px_0_rgb(29,78,216)] active:translate-y-1 active:shadow-none"
+                    className: "px-14 py-5 bg-blue-500 text-white rounded-2xl text-3xl font-black shadow-[0_8px_0_rgb(29,78,216)] active:translate-y-1 active:shadow-none"
                 }, "🎤 따라 말해볼래요!")
             )
         );
@@ -1068,10 +1102,10 @@ function Stage1_1(props) {
                 var c = FIELD_COLORS[k];
                 var isMatched = matchResult ? matchResult[k] : null;
                 return h("div", { key: i, className: "flex flex-col items-center gap-1 relative" },
-                    h("span", { className: "text-sm font-black " + c.text }, c.name),
+                    h("span", { className: "text-base font-black " + c.text }, c.name),
                     h("div", { className: "relative" },
                         h("span", {
-                            className: "block px-5 py-3 rounded-2xl text-3xl font-black shadow-md border-4 " + c.bg + " " + c.text + " " + c.border
+                            className: "block px-5 py-4 rounded-2xl text-4xl font-black shadow-md border-4 " + c.bg + " " + c.text + " " + c.border
                         }, currentExample[i]),
                         // 매칭 결과 배지
                         matchResult && (isMatched
@@ -1125,40 +1159,47 @@ function Stage1_1(props) {
                     h("span", { className: "ml-3 px-3 py-1 bg-white rounded-full text-sm font-black " + feedback.textColor }, matchCount + "/4")
                 )
             ),
-            h("div", { className: "flex justify-center gap-3 items-center" },
+            h("div", { className: "flex flex-col items-center gap-3" },
+                // 1. 녹음 버튼 (가장 크게, 항상 보임)
                 h("button", {
                     onClick: toggleRec,
-                    className: "flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-xl shadow-md " + (recording ? "bg-red-600 text-white animate-pulse" : "bg-red-500 text-white")
-                }, "🎤 " + (recording ? "녹음 중..." : (transcript ? "다시 녹음" : "녹음 시작"))),
-                // 건너뛰기 버튼: 녹음 시도 후에만 활성화
-                h("button", {
-                    onClick: function () {
-                        if (!hasTriedRecording) return;
-                        // 녹음 없이 다음 예시로
-                        if (recRef.current && recording) recRef.current.stop();
-                        if (exampleIdx + 1 < examples.length) {
-                            setExampleIdx(exampleIdx + 1);
-                            setTranscript('');
-                            setHasTriedRecording(false);
-                            setSubStep('study');
-                        } else {
-                            setHasTriedRecording(false);
-                            setSubStep('choose');
-                        }
-                    },
-                    disabled: !hasTriedRecording,
-                    title: hasTriedRecording ? "녹음 없이 다음으로 넘어가요" : "녹음을 한 번 시도해보고 누를 수 있어요",
-                    className: "px-5 py-3 rounded-2xl font-black text-lg shadow-sm border-2 " +
-                        (hasTriedRecording
-                            ? "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"
-                            : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed")
-                }, "⏭️ 건너뛰기"),
-                h("button", {
-                    onClick: completeReading,
-                    disabled: !transcript || matchCount < 3,
-                    className: "px-10 py-3 rounded-2xl text-xl font-black shadow-md " +
-                        (transcript && matchCount >= 3 ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-400 cursor-not-allowed")
-                }, exampleIdx + 1 < examples.length ? "다음 예시로 →" : "✅ 다 따라 말했어요!")
+                    className: "flex items-center gap-3 px-10 py-5 rounded-3xl font-black text-3xl shadow-lg " +
+                        (recording ? "bg-red-600 text-white animate-pulse" : "bg-red-500 text-white")
+                }, recording ? "⏹️ 녹음 중... (눌러서 중지)" : (transcript ? "🎤 다시 녹음하기" : "🎤 녹음 시작")),
+
+                h("div", { className: "flex gap-3 items-center" },
+                    // 2. 건너뛰기 (녹음 시도 후 활성)
+                    h("button", {
+                        onClick: function () {
+                            if (!hasTriedRecording) return;
+                            if (recRef.current && recording) recRef.current.stop();
+                            if (exampleIdx + 1 < examples.length) {
+                                setExampleIdx(exampleIdx + 1);
+                                setTranscript('');
+                                setHasTriedRecording(false);
+                                setSubStep('record');
+                            } else {
+                                setHasTriedRecording(false);
+                                setSubStep('choose');
+                            }
+                        },
+                        disabled: !hasTriedRecording,
+                        className: "px-6 py-4 rounded-2xl font-black text-xl shadow-sm border-2 " +
+                            (hasTriedRecording
+                                ? "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"
+                                : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed")
+                    }, "⏭️ 건너뛰기"),
+
+                    // 3. 완료 버튼 — 녹음이 있으면 바로 눌를 수 있음
+                    h("button", {
+                        onClick: completeReading,
+                        disabled: !transcript && !hasTriedRecording,
+                        className: "px-10 py-4 rounded-2xl text-2xl font-black shadow-md border-4 " +
+                            (transcript || hasTriedRecording
+                                ? "bg-emerald-500 text-white border-emerald-600 shadow-[0_6px_0_rgb(4,120,87)] active:translate-y-1 active:shadow-none"
+                                : "bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed")
+                    }, "✅ 완료!")
+                )
             )
         );
     }
@@ -1173,24 +1214,34 @@ function Stage1_1(props) {
                 )
             ),
             h("div", { className: "flex-1 overflow-y-auto" },
-                h("div", { className: "grid grid-cols-1 gap-3 max-w-4xl mx-auto" },
-                    examples.map(function (ex, i) {
-                        return h(motion.button, {
-                            key: i,
-                            whileHover: { scale: 1.02, x: 5 },
-                            whileTap: { scale: 0.98 },
-                            onClick: function () { chooseSentence(i); },
-                            className: "p-4 bg-white rounded-3xl shadow-md border-4 border-orange-100 hover:border-orange-400 hover:bg-orange-50 flex items-center gap-4"
-                        },
-                            h("span", { className: "shrink-0 w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center text-xl font-black" },
-                                i + 1
-                            ),
-                            h("div", { className: "flex-1" },
-                                h(ColoredSentence, { parts: ex, size: 'sm' })
-                            )
-                        );
-                    })
-                )
+                examples.length === 0
+                    ? h("div", { className: "flex flex-col items-center justify-center h-full gap-4 text-slate-400" },
+                        h("div", { className: "text-6xl" }, "😢"),
+                        h("p", { className: "text-2xl font-black" }, "예시 문장을 불러오지 못했어요"),
+                        h("p", { className: "text-lg font-bold" }, "GAS 시트 데이터를 확인해주세요"),
+                        h("button", {
+                            onClick: function() { setSubStep('complete'); },
+                            className: "px-10 py-4 bg-orange-500 text-white rounded-2xl text-xl font-black shadow-md mt-2"
+                        }, "건너뛰고 완료하기")
+                    )
+                    : h("div", { className: "grid grid-cols-1 gap-3 max-w-4xl mx-auto" },
+                        examples.map(function (ex, i) {
+                            return h(motion.button, {
+                                key: i,
+                                whileHover: { scale: 1.02, x: 5 },
+                                whileTap: { scale: 0.98 },
+                                onClick: function () { chooseSentence(i); },
+                                className: "p-4 bg-white rounded-3xl shadow-md border-4 border-orange-100 hover:border-orange-400 hover:bg-orange-50 flex items-center gap-4"
+                            },
+                                h("span", { className: "shrink-0 w-12 h-12 rounded-full bg-orange-500 text-white flex items-center justify-center text-2xl font-black" },
+                                    i + 1
+                                ),
+                                h("div", { className: "flex-1" },
+                                    h(ColoredSentence, { parts: ex, size: 'sm' })
+                                )
+                            );
+                        })
+                    )
             )
         );
     }
@@ -1446,7 +1497,7 @@ function Stage1_2(props) {
     var s8 = useState(false);                      var celebrate = s8[0], setCelebrate = s8[1];
     var recRef = useRef(null);
 
-    var LOCKED = collected.length < 4;
+    var LOCKED = false; // 카드 개수와 상관없이 가능
 
     // 카드 선택 후 시작 — 카테고리 칸은 미리 채워짐
     function startCompose(card) {
@@ -1606,7 +1657,7 @@ function Stage1_2(props) {
                             whileHover: { scale: 1.05, y: -5 },
                             whileTap: { scale: 0.95 },
                             onClick: function () { startCompose(card); },
-                            className: "p-5 rounded-[2rem] border-4 shadow-lg flex flex-col items-center gap-2 bg-gradient-to-b text-white " + c.from + " " + c.to + " " + c.border
+                            className: "p-5 rounded-[2rem] border-4 shadow-lg flex flex-col items-center gap-2 bg-white " + c.border + " " + c.text
                         },
                             h("span", { className: "text-xs font-black bg-white/30 px-3 py-1 rounded-full" }, c.name),
                             h("span", { className: "text-5xl" }, card.emoji),
@@ -1786,7 +1837,7 @@ function Stage1_2(props) {
                     FIELD_KEYS.map(function (k, i) {
                         var c = FIELD_COLORS[k];
                         return h("div", { key: i, className: "flex flex-col items-center gap-1" },
-                            h("span", { className: "text-sm font-black " + c.text }, c.name),
+                            h("span", { className: "text-base font-black " + c.text }, c.name),
                             h("span", {
                                 className: "px-5 py-3 rounded-2xl text-3xl font-black shadow-md border-4 " + c.bg + " " + c.text + " " + c.border
                             }, myParts[k])
@@ -2200,13 +2251,13 @@ function ColoredSentence(props) {
     var parts = props.parts;
     var size = props.size || 'lg';
     // 5칸이 한 줄에 들어가야 하므로 텍스트 크기를 약간 줄임
-    var textSize = size === 'sm' ? 'text-base' : 'text-2xl';
-    var pad = size === 'sm' ? 'px-2 py-1.5' : 'px-4 py-2.5';
+    var textSize = size === 'sm' ? 'text-lg' : 'text-2xl';
+    var pad = size === 'sm' ? 'px-3 py-2' : 'px-4 py-3';
     return h("div", { className: "flex flex-wrap items-end gap-2 justify-center" },
         FIELD_KEYS.map(function (k, i) {
             var c = FIELD_COLORS[k];
             return h("div", { key: i, className: "flex flex-col items-center gap-1" },
-                size === 'lg' && h("span", { className: "text-xs font-black " + c.text }, c.name),
+                size === 'lg' && h("span", { className: "text-base font-black " + c.text }, c.name),
                 h("span", {
                     className: pad + " rounded-2xl font-black shadow-md border-4 " + textSize + " " + c.bg + " " + c.text + " " + c.border
                 }, parts[i])
@@ -2264,7 +2315,7 @@ function Stage2_1(props) {
         setDrawn(card);
         setSubStep('flip');
     }
-    function confirmCard() { setSubStep('study'); }
+    function confirmCard() { setSubStep('record'); }
     function toRecord() { setSubStep('record'); }
 
     function toggleRec() {
@@ -2293,7 +2344,7 @@ function Stage2_1(props) {
             setExampleIdx(exampleIdx + 1);
             setTranscript('');
             setHasTriedRecording(false);
-            setSubStep('study');
+            setSubStep('record');
         } else {
             setHasTriedRecording(false);
             setSubStep('choose');
@@ -2363,15 +2414,29 @@ function Stage2_1(props) {
                         ),
                         h("div", { className: "grid grid-cols-10 gap-2" },
                             groupedPool[g].map(function (card, idx) {
+                                // 이미 수집한 카드인지 확인
+                                var isCollected = false;
+                                for (var ci = 0; ci < collected.length; ci++) {
+                                    if (collected[ci].value === card.value) { isCollected = true; break; }
+                                }
                                 return h(motion.button, {
                                     key: idx,
                                     whileHover: { scale: 1.08, y: -3 },
                                     whileTap: { scale: 0.92 },
                                     onClick: function () { pickCard(card); },
-                                    className: "relative aspect-[3/4] bg-gradient-to-b from-slate-600 to-slate-900 rounded-xl shadow-md border-2 border-transparent hover:border-purple-300 flex items-center justify-center"
+                                    className: "relative aspect-[3/4] rounded-xl shadow-md border-2 flex flex-col items-center justify-center gap-1 " +
+                                        (isCollected
+                                            ? "bg-white border-purple-300 ring-2 ring-purple-200"
+                                            : "bg-gradient-to-b from-slate-600 to-slate-900 border-transparent hover:border-purple-300")
                                 },
                                     h("div", { className: "absolute top-1 left-1 right-1 h-1.5 rounded-full " + gc.stripe }),
-                                    h("span", { className: "text-2xl" }, "💜")
+                                    isCollected
+                                        ? h(React.Fragment, null,
+                                            h("span", { className: "text-2xl mt-1" }, card.emoji),
+                                            h("span", { className: "text-xs font-black " + gc.text + " text-center leading-tight px-0.5" }, card.value),
+                                            h("div", { className: "absolute top-0.5 right-0.5 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center text-white text-xs font-black" }, "✓")
+                                        )
+                                        : h("span", { className: "text-2xl" }, "💜")
                                 );
                             })
                         )
@@ -2390,11 +2455,11 @@ function Stage2_1(props) {
                 initial: { rotateY: 90, scale: 0.5 },
                 animate: { rotateY: 0, scale: 1 },
                 transition: { duration: 0.6 },
-                className: "w-72 h-80 bg-gradient-to-b rounded-3xl flex flex-col items-center justify-center gap-4 shadow-2xl border-[6px] border-white/40 " + fc.from + " " + fc.to
+                className: "w-72 h-80 bg-white rounded-3xl flex flex-col items-center justify-center gap-4 shadow-2xl border-[6px] " + fc.border
             },
                 h("span", { className: "text-sm font-black px-4 py-1 rounded-full " + fc.bg + " " + fc.text }, GROUP_LABELS[drawn.group]),
                 h("span", { className: "text-8xl" }, drawn.emoji),
-                h("span", { className: "text-3xl font-black text-white" }, drawn.value)
+                h("span", { className: "text-3xl font-black text-slate-800" }, drawn.value)
             ),
             // 감정 설명 박스
             drawn.desc && h(motion.div, {
@@ -2459,7 +2524,7 @@ function Stage2_1(props) {
             h("div", { className: "flex justify-center" },
                 h("button", {
                     onClick: toRecord,
-                    className: "px-12 py-4 bg-blue-500 text-white rounded-2xl text-2xl font-black shadow-[0_8px_0_rgb(29,78,216)] active:translate-y-1 active:shadow-none"
+                    className: "px-14 py-5 bg-blue-500 text-white rounded-2xl text-3xl font-black shadow-[0_8px_0_rgb(29,78,216)] active:translate-y-1 active:shadow-none"
                 }, "🎤 따라 말해볼래요!")
             )
         );
@@ -2540,29 +2605,34 @@ function Stage2_1(props) {
                     h("span", { className: "ml-3 px-3 py-1 bg-white rounded-full text-sm font-black " + feedback.textColor }, matchCount + "/4")
                 )
             ),
-            h("div", { className: "flex justify-center gap-3 items-center" },
+            h("div", { className: "flex flex-col items-center gap-3" },
                 h("button", {
                     onClick: toggleRec,
-                    className: "flex items-center gap-2 px-6 py-3 rounded-2xl font-black text-xl shadow-md " + (recording ? "bg-red-600 text-white animate-pulse" : "bg-red-500 text-white")
-                }, "🎤 " + (recording ? "녹음 중..." : (transcript ? "다시 녹음" : "녹음 시작"))),
-                h("button", {
-                    onClick: function () {
-                        if (!hasTriedRecording) return;
-                        if (recRef.current && recording) recRef.current.stop();
-                        if (exampleIdx + 1 < examples.length) {
-                            setExampleIdx(exampleIdx + 1); setTranscript(''); setHasTriedRecording(false); setSubStep('study');
-                        } else { setHasTriedRecording(false); setSubStep('choose'); }
-                    },
-                    disabled: !hasTriedRecording,
-                    className: "px-5 py-3 rounded-2xl font-black text-lg shadow-sm border-2 " +
-                        (hasTriedRecording ? "bg-white text-slate-600 border-slate-300 hover:bg-slate-50" : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed")
-                }, "⏭️ 건너뛰기"),
-                h("button", {
-                    onClick: completeReading,
-                    disabled: !transcript || matchCount < 3,
-                    className: "px-10 py-3 rounded-2xl text-xl font-black shadow-md " +
-                        (transcript && matchCount >= 3 ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-400 cursor-not-allowed")
-                }, exampleIdx + 1 < examples.length ? "다음 예시로 →" : "✅ 다 따라 말했어요!")
+                    className: "flex items-center gap-3 px-10 py-5 rounded-3xl font-black text-3xl shadow-lg " +
+                        (recording ? "bg-red-600 text-white animate-pulse" : "bg-red-500 text-white")
+                }, recording ? "⏹️ 녹음 중... (눌러서 중지)" : (transcript ? "🎤 다시 녹음하기" : "🎤 녹음 시작")),
+                h("div", { className: "flex gap-3 items-center" },
+                    h("button", {
+                        onClick: function () {
+                            if (!hasTriedRecording) return;
+                            if (recRef.current && recording) recRef.current.stop();
+                            if (exampleIdx + 1 < examples.length) {
+                                setExampleIdx(exampleIdx + 1); setTranscript(''); setHasTriedRecording(false); setSubStep('record');
+                            } else { setHasTriedRecording(false); setSubStep('choose'); }
+                        },
+                        disabled: !hasTriedRecording,
+                        className: "px-6 py-4 rounded-2xl font-black text-xl shadow-sm border-2 " +
+                            (hasTriedRecording ? "bg-white text-slate-600 border-slate-300 hover:bg-slate-50" : "bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed")
+                    }, "⏭️ 건너뛰기"),
+                    h("button", {
+                        onClick: completeReading,
+                        disabled: !transcript && !hasTriedRecording,
+                        className: "px-10 py-4 rounded-2xl text-2xl font-black shadow-md border-4 " +
+                            (transcript || hasTriedRecording
+                                ? "bg-emerald-500 text-white border-emerald-600 shadow-[0_6px_0_rgb(4,120,87)] active:translate-y-1 active:shadow-none"
+                                : "bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed")
+                    }, "✅ 완료!")
+                )
             )
         );
     }
@@ -2769,13 +2839,13 @@ function PencilFairy(props) {
 function ColoredSentence(props) {
     var parts = props.parts;
     var size = props.size || 'lg';
-    var textSize = size === 'sm' ? 'text-xl' : 'text-3xl';
-    var pad = size === 'sm' ? 'px-3 py-2' : 'px-5 py-3';
+    var textSize = size === 'sm' ? 'text-2xl' : 'text-4xl';
+    var pad = size === 'sm' ? 'px-4 py-2.5' : 'px-6 py-4';
     return h("div", { className: "flex flex-wrap items-end gap-2 justify-center" },
         FIELD_KEYS.map(function (k, i) {
             var c = FIELD_COLORS[k];
             return h("div", { key: i, className: "flex flex-col items-center gap-1" },
-                size === 'lg' && h("span", { className: "text-xs font-black " + c.text }, c.name),
+                size === 'lg' && h("span", { className: "text-base font-black " + c.text }, c.name),
                 h("span", {
                     className: pad + " rounded-2xl font-black shadow-md border-4 " + textSize + " " + c.bg + " " + c.text + " " + c.border
                 }, parts[k])
@@ -3875,9 +3945,13 @@ function App() {
     var s2 = useState(null);
     var student = s2[0], setStudent = s2[1];
 
-    // 진행 상태 — 학생별로 별도 저장 (key: diary_progress_{studentId})
+    // 진행 상태
     var s3 = useState(INIT_PROGRESS);
     var progress = s3[0], setProgress = s3[1];
+
+    // 잠금 설정 버전 (LOCK_SETTINGS 변경 시 리렌더 트리거)
+    var s4 = useState(0);
+    var lockVer = s4[0], setLockVer = s4[1];
 
     function updateProgress(patch) {
         var next = Object.assign({}, progress, patch);
@@ -3887,16 +3961,40 @@ function App() {
 
     function doLogin(st) {
         setStudent(st);
-        // 해당 학생의 진행 상태 로드
         var saved = lsGet('diary_progress_' + st.id, null);
         var prog = saved
             ? Object.assign({}, INIT_PROGRESS, saved)
             : Object.assign({}, INIT_PROGRESS, { studentId: st.id, studentName: st.name });
-        // 학생 이름 항상 최신으로
         prog.studentName = st.name;
         prog.studentId = st.id;
         setProgress(prog);
         setScreen('menu');
+
+        var isGasOk = GAS_URL.indexOf('여기에') === -1 &&
+                      GAS_URL.indexOf('script.google.com') !== -1;
+        if (isGasOk) {
+            // 잠금 설정 로드
+            gasGet('getSettings')
+                .then(function(d) {
+                    if (d && d.settings) {
+                        Object.assign(LOCK_SETTINGS, d.settings);
+                        // 설정 반영해서 메뉴 다시 그리기
+                        setLockVer(function(v) { return v + 1; });
+                    }
+                })
+                .catch(function() {});
+
+            // 예시 데이터 로드
+            gasGet('getExamplesTable')
+                .then(function(d) {
+                    if (d && d.examplesTable && Object.keys(d.examplesTable).length > 0) {
+                        Object.keys(d.examplesTable).forEach(function(k) {
+                            DEMO_EXAMPLES_TABLE[k] = d.examplesTable[k];
+                        });
+                    }
+                })
+                .catch(function() {});
+        }
     }
 
     function goTo(sc) { setScreen(sc); }
@@ -3915,7 +4013,13 @@ function App() {
     } else if (screen === 'menu') {
         content = h(MainMenu, {
             progress: progress,
+            lockVer: lockVer,
             onNavigate: function(stageNum, sub) {
+                // 잠금 체크
+                if (stageNum === '1' && sub === '2' && LOCK_SETTINGS.lock_stage1_2) return;
+                if (stageNum === '2' && LOCK_SETTINGS.lock_stage2_1) return;
+                if (stageNum === '2' && sub === '2' && LOCK_SETTINGS.lock_stage2_2) return;
+                if (stageNum === '3' && (LOCK_SETTINGS.lock_stage3 || !(progress.did1_2 && progress.did2_2))) return;
                 var map = {
                     '1_1': 's1_1', '1_2': 's1_2',
                     '2_1': 's2_1', '2_2': 's2_2',
