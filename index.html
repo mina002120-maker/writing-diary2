@@ -63,7 +63,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbz-Of8EVQySuPX7XWDNthLsf1TB_Im7Wj8ePIbu71j87sgFh81xrw9XT2vyjkBGK3Iq6Q/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbxZMgPMbnnJABemWNi-nYv8UYAXeFU56pDbhWjgMKwOnvSjhPhJP-f1G1KJPzotE2NRTg/exec';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -1795,6 +1795,16 @@ function Stage1_1(props) {
     }
 
     return h("div", { className: "w-full bg-[#F0F7FF] flex flex-col overflow-hidden min-h-0", style: { height: "100dvh" } },
+        h(Tutorial, {
+            storageKey: 'tutorial_s1_1',
+            accentColor: 'orange',
+            steps: [
+                { emoji: '🃏', title: '카드를 골라요!', desc: '언제·어디서·누구와·무엇을 중에서 배우고 싶은 카드 종류를 골라봐요.' },
+                { emoji: '✨', title: '카드를 뽑아요!', desc: '카드를 꾹 누르면 카드가 뒤집혀요. 어떤 단어가 나올까요?' },
+                { emoji: '🎤', title: '따라 말해봐요!', desc: '예시 문장을 들으면서 마이크로 따라 말해봐요. 천천히 말해도 돼요!' },
+                { emoji: '📓', title: '공책에 써봐요!', desc: '좋아하는 문장을 골라서 공책에 직접 써봐요. 글씨를 예쁘게!' }
+            ]
+        }),
         h(StageHeader, {
             currentKey: 's1_1',
             onChangeStage: props.onChangeStage,
@@ -3464,6 +3474,16 @@ function Stage2_1(props) {
     }
 
     return h("div", { className: "w-full bg-[#F0F7FF] flex flex-col overflow-hidden min-h-0", style: { height: "100dvh" } },
+        h(Tutorial, {
+            storageKey: 'tutorial_s2_1',
+            accentColor: 'purple',
+            steps: [
+                { emoji: '🚦', title: '신호등을 골라요!', desc: '빨강·노랑·초록 신호등 중에서 배우고 싶은 마음 색깔을 골라봐요.' },
+                { emoji: '💜', title: '감정 카드를 뽑아요!', desc: '카드를 꾹 누르면 뒤집혀요. 어떤 감정인지 읽어봐요!' },
+                { emoji: '🎤', title: '따라 말해봐요!', desc: '예시 문장을 들으면서 마이크로 따라 말해봐요. 천천히 말해도 돼요!' },
+                { emoji: '📓', title: '공책에 써봐요!', desc: '감정이 들어간 문장을 골라서 공책에 직접 써봐요!' }
+            ]
+        }),
         h(StageHeader, {
             currentKey: 's2_1',
             onChangeStage: props.onChangeStage,
