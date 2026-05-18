@@ -63,7 +63,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbyZCACvQXs22WD0f55f23aNqvh1M2GU2UWaVZHu_Q9rTjwS78RSCb7-aT0u3BKF35W4kg/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbwfWO7HRP-C1aQTYurCsRd3KrkQy1wDYRbU06n9215A_TcAZAUcizwG-LNMSS-x_MqHkQ/exec';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -433,12 +433,14 @@ function Tutorial(props) {
     if (action === 'none') canProceed = true;
     else if (action === 'tap' || action === 'select') canProceed = selected !== null;
     else if (action === 'type') canProceed = userInput.trim().length > 0;
+    else if (action === 'notebook') canProceed = userInput === 'done';
+    else if (action === 'trafficlight') canProceed = selected !== null;
 
     // ── 인터랙션 영역 렌더링 ──
     function renderInteraction() {
         if (action === 'tap' || action === 'select') {
             var options = cur.options || [];
-            return h("div", { style: { display:'flex', gap:'0.7rem', justifyContent:'center', flexWrap:'wrap' } },
+            return h("div", { style: { display:'flex', gap:'0.85rem', justifyContent:'center', flexWrap:'wrap' } },
                 options.map(function(opt, i) {
                     var isSel = selected === (opt.value || opt.label);
                     return h("button", {
@@ -452,19 +454,19 @@ function Tutorial(props) {
                         style: {
                             background: isSel ? col.btn : (opt.bg || 'white'),
                             color: isSel ? 'white' : (opt.color || '#374151'),
-                            padding: '0.85rem 1.4rem',
-                            borderRadius: '1rem',
+                            padding: '1rem 1.6rem',
+                            borderRadius: '1.1rem',
                             fontWeight: 900,
-                            fontSize: '1.3rem',
+                            fontSize: '1.5rem',
                             border: isSel ? ('3px solid ' + col.btn) : '3px solid #e2e8f0',
                             cursor: 'pointer',
                             transform: isSel ? 'scale(1.05)' : 'scale(1)',
                             transition: 'all 0.2s',
                             boxShadow: isSel ? '0 4px 12px ' + col.btn + '44' : 'none',
-                            display: 'flex', alignItems: 'center', gap: '0.5rem'
+                            display: 'flex', alignItems: 'center', gap: '0.55rem'
                         }
                     },
-                        opt.emoji && h("span", { style: { fontSize: '1.5rem' } }, opt.emoji),
+                        opt.emoji && h("span", { style: { fontSize: '1.7rem' } }, opt.emoji),
                         h("span", null, opt.label)
                     );
                 })
@@ -472,7 +474,7 @@ function Tutorial(props) {
         }
 
         if (action === 'type') {
-            return h("div", { style: { display:'flex', flexDirection:'column', gap:'0.7rem', width: '100%' } },
+            return h("div", { style: { display:'flex', flexDirection:'column', gap:'0.85rem', width: '100%' } },
                 h("input", {
                     type: "text",
                     value: userInput,
@@ -481,28 +483,153 @@ function Tutorial(props) {
                     placeholder: cur.placeholder || '여기에 써보세요',
                     autoFocus: true,
                     style: {
-                        width: '100%', padding: '1rem 1.2rem',
-                        fontSize: '1.4rem', fontWeight: 900,
+                        width: '100%', padding: '1.1rem 1.3rem',
+                        fontSize: '1.6rem', fontWeight: 900,
                         borderRadius: '1rem',
                         border: '3px solid ' + col.ring,
                         outline: 'none',
-                        background: col.light
+                        background: 'white'
                     }
                 }),
-                cur.examples && h("div", { style: { display:'flex', gap:'0.5rem', flexWrap:'wrap', justifyContent:'center' } },
+                cur.examples && h("div", { style: { display:'flex', gap:'0.6rem', flexWrap:'wrap', justifyContent:'center' } },
                     cur.examples.map(function(ex, i) {
                         return h("button", {
                             key: i,
                             onClick: (function(t) { return function() { setUserInput(t); }; })(ex),
                             style: {
                                 background: col.bg, color: col.text,
-                                padding: '0.45rem 0.9rem', borderRadius: '0.7rem',
-                                fontWeight: 700, fontSize: '1.05rem',
+                                padding: '0.55rem 1.1rem', borderRadius: '0.8rem',
+                                fontWeight: 700, fontSize: '1.2rem',
                                 border: 'none', cursor: 'pointer'
                             }
                         }, '💡 ' + ex);
                     })
                 )
+            );
+        }
+
+        // 📓 공책 10칸 — 학생이 직접 공책에 쓰고 확인 버튼 누르기
+        if (action === 'notebook') {
+            var chars = (cur.chars || '오늘 아침에').split('');
+            // 색깔: 단어별로 구분
+            var wordColors = [col.btn, '#3b82f6', '#10b981', '#ef4444', '#a855f7'];
+            var wordIdx = 0;
+            var colored = [];
+            var currentColor = wordColors[0];
+            chars.forEach(function(ch) {
+                if (ch === ' ') { wordIdx++; currentColor = wordColors[Math.min(wordIdx, wordColors.length - 1)]; colored.push({ ch: ' ', color: currentColor }); }
+                else { colored.push({ ch: ch, color: currentColor }); }
+            });
+            // 10칸 고정 (나머지는 빈 칸)
+            var cells = [];
+            for (var i = 0; i < 10; i++) {
+                cells.push(colored[i] || { ch: '', color: '#e2e8f0' });
+            }
+
+            return h("div", { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', width: '100%' } },
+                // 안내
+                h("p", { style: { fontSize: '1.3rem', fontWeight: 700, color: '#64748b' } },
+                    "✏️ 아래 칸을 보면서 공책에 한 글자씩 써봐요!"
+                ),
+                // 공책 10칸
+                h("div", { style: { display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' } },
+                    cells.map(function(cell, i) {
+                        if (cell.ch === ' ') {
+                            return h("div", { key: i, style: { width: '16px' } });
+                        }
+                        return h("div", { key: i, style: {
+                            width: '64px', height: '72px',
+                            border: '3px solid ' + (cell.ch ? cell.color : '#d1d5db'),
+                            borderRadius: '10px',
+                            background: cell.ch ? cell.color + '18' : '#f8fafc',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '2rem', fontWeight: 900,
+                            color: cell.ch ? cell.color : '#d1d5db',
+                            boxShadow: cell.ch ? ('0 2px 8px ' + cell.color + '33') : 'none',
+                            position: 'relative'
+                        } },
+                            h("span", null, cell.ch || ''),
+                            // 칸 번호 (작게)
+                            h("span", { style: { position: 'absolute', bottom: '3px', right: '5px', fontSize: '0.65rem', color: cell.ch ? cell.color : '#d1d5db', fontWeight: 700, opacity: 0.7 } }, i + 1)
+                        );
+                    })
+                ),
+                // 확인 버튼
+                h("button", {
+                    onClick: function() { setUserInput('done'); next(); },
+                    style: {
+                        background: col.btn,
+                        color: 'white',
+                        padding: '0.85rem 2.5rem',
+                        borderRadius: '1rem',
+                        fontWeight: 900,
+                        fontSize: '1.4rem',
+                        border: 'none',
+                        cursor: 'pointer',
+                        boxShadow: '0 5px 0 ' + col.shadow
+                    }
+                }, "✅ 공책에 다 썼어요!")
+            );
+        }
+
+        // 🚦 실제 신호등 화면과 동일한 렌더링
+        if (action === 'trafficlight') {
+            var lights = [
+                { g: 'red',    label: '속상하거나\n화나는 마음', color: '#EF4444', glow: 'rgba(239,68,68,0.7)'   },
+                { g: 'yellow', label: '평범하거나\n궁금한 마음', color: '#F59E0B', glow: 'rgba(245,158,11,0.7)'  },
+                { g: 'green',  label: '기쁘고\n즐거운 마음',    color: '#10B981', glow: 'rgba(16,185,129,0.7)'  }
+            ];
+            return h("div", {
+                style: {
+                    background: '#1e293b',
+                    borderRadius: '2.5rem',
+                    padding: '1.2rem 2rem',
+                    display: 'flex',
+                    gap: '2rem',
+                    justifyContent: 'center',
+                    alignItems: 'flex-end'
+                }
+            },
+                lights.map(function(item) {
+                    var isActive = selected === item.g;
+                    return h("button", {
+                        key: item.g,
+                        onClick: (function(g) { return function() {
+                            setSelected(g);
+                            setTimeout(function() { next(); }, 500);
+                        }; })(item.g),
+                        style: {
+                            display: 'flex', flexDirection: 'column',
+                            alignItems: 'center', gap: '0.6rem',
+                            background: 'none', border: 'none', cursor: 'pointer'
+                        }
+                    },
+                        h("div", {
+                            style: {
+                                width: '90px', height: '90px',
+                                borderRadius: '50%',
+                                background: 'radial-gradient(circle at 35% 35%, ' + item.color + 'ff, ' + item.color + '88)',
+                                boxShadow: isActive
+                                    ? '0 0 35px ' + item.glow + ', inset -8px -8px 20px rgba(0,0,0,0.3), inset 8px 8px 20px rgba(255,255,255,0.2)'
+                                    : 'inset -8px -8px 20px rgba(0,0,0,0.4), inset 8px 8px 20px rgba(255,255,255,0.15)',
+                                border: isActive ? '3px solid rgba(255,255,255,0.8)' : '2px solid rgba(255,255,255,0.1)',
+                                transform: isActive ? 'scale(1.1)' : 'scale(1)',
+                                transition: 'all 0.2s',
+                                opacity: isActive ? 1 : 0.75
+                            }
+                        }),
+                        h("p", {
+                            style: {
+                                color: item.color,
+                                fontWeight: 900,
+                                fontSize: '1.1rem',
+                                textAlign: 'center',
+                                whiteSpace: 'pre-line',
+                                lineHeight: 1.4
+                            }
+                        }, item.label)
+                    );
+                })
             );
         }
 
@@ -529,19 +656,16 @@ function Tutorial(props) {
 
         h(motion.div, {
             key: step,
-            initial: { opacity: 0, y: pos === 'top' ? -20 : 20, scale: 0.95 },
-            animate: { opacity: 1, y: 0, scale: 1 },
+            initial: { opacity: 0, scale: 0.95 },
+            animate: { opacity: 1, scale: 1 },
             transition: { type: 'spring', stiffness: 300, damping: 24 },
             style: {
                 position: 'absolute',
+                top: '50%',
                 left: '50%',
-                transform: 'translateX(-50%)',
-                top: pos === 'top' ? '8%' : pos === 'bottom' ? 'auto' : '50%',
-                bottom: pos === 'bottom' ? '8%' : 'auto',
-                marginTop: pos === 'center' ? '-12rem' : 0,
-                width: '100%',
-                maxWidth: '600px',
-                padding: '0 1rem',
+                transform: 'translate(-50%, -50%)',
+                width: '92%',
+                maxWidth: '820px',
                 pointerEvents: 'auto',
                 zIndex: 51
             }
@@ -559,110 +683,132 @@ function Tutorial(props) {
                 h("div", {
                     style: {
                         background: col.btn,
-                        padding: '1rem 1.5rem',
+                        padding: '1.2rem 1.8rem',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between'
                     }
                 },
-                    h("div", { style: { display: 'flex', alignItems: 'center', gap: '0.6rem' } },
-                        h("span", { style: { fontSize: '1.8rem' } }, cur.emoji),
-                        h("span", { style: { color: 'white', fontWeight: 900, fontSize: '1.4rem' } }, cur.title)
+                    h("div", { style: { display: 'flex', alignItems: 'center', gap: '0.7rem' } },
+                        h("span", { style: { fontSize: '2.2rem' } }, cur.emoji),
+                        h("span", { style: { color: 'white', fontWeight: 900, fontSize: '1.75rem' } }, cur.title)
                     ),
-                    h("span", { style: { color: 'rgba(255,255,255,0.85)', fontWeight: 700, fontSize: '1.05rem' } },
+                    h("span", { style: { color: 'rgba(255,255,255,0.85)', fontWeight: 700, fontSize: '1.2rem' } },
                         (step + 1) + " / " + steps.length
                     )
                 ),
 
                 // 본문 — 설명 + 인터랙션
-                h("div", { style: { padding: '1.5rem 1.75rem' } },
+                h("div", { style: { padding: '1.75rem 2rem', position: 'relative' } },
                     // 설명 텍스트
                     h("p", {
                         style: {
-                            fontSize: '1.4rem',
+                            fontSize: '1.65rem',
                             fontWeight: 700,
                             color: '#374151',
-                            lineHeight: 1.7,
+                            lineHeight: 1.6,
                             wordBreak: 'keep-all',
                             overflowWrap: 'break-word',
                             whiteSpace: 'pre-line',
-                            marginBottom: '1.2rem',
+                            marginBottom: '1.3rem',
                             textAlign: 'center'
                         }
                     }, cur.desc),
 
-                    // 인터랙션 영역
-                    h("div", {
+                    // 인터랙션 영역 — action이 'none'이 아니거나 preview가 있을 때만
+                    (action !== 'none' || cur.preview) && h("div", {
                         style: {
-                            background: feedback ? '#d1fae5' : col.light,
-                            border: '2px dashed ' + (feedback ? '#10b981' : col.ring),
+                            background: col.light,
+                            border: '2px dashed ' + col.ring,
                             borderRadius: '1rem',
-                            padding: '1.3rem',
+                            padding: '1.4rem',
                             transition: 'all 0.3s',
-                            minHeight: '100px',
+                            minHeight: '110px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center'
                         }
+                    }, renderInteraction()),
+
+                    // ✨ 잘했어요 토스트 — 인터랙션 위에 작은 오버레이
+                    feedback && h(motion.div, {
+                        initial: { opacity: 0, scale: 0.5, y: 10 },
+                        animate: { opacity: 1, scale: 1, y: 0 },
+                        transition: { type: 'spring', stiffness: 500, damping: 25 },
+                        style: {
+                            position: 'absolute',
+                            left: '50%',
+                            top: '60%',
+                            transform: 'translate(-50%, -50%)',
+                            background: '#10b981',
+                            color: 'white',
+                            padding: '0.9rem 2rem',
+                            borderRadius: '999px',
+                            fontWeight: 900,
+                            fontSize: '1.5rem',
+                            boxShadow: '0 8px 25px rgba(16,185,129,0.5)',
+                            zIndex: 10,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem'
+                        }
                     },
-                        feedback
-                            ? h("div", { style: { textAlign:'center' } },
-                                h("div", { style: { fontSize: '3.5rem' } }, '✨'),
-                                h("p", { style: { fontWeight: 900, fontSize: '1.5rem', color: '#065f46' } }, '잘했어요!')
-                            )
-                            : renderInteraction()
+                        h("span", { style: { fontSize: '1.75rem' } }, '✨'),
+                        h("span", null, '잘했어요!')
                     ),
 
                     // 액션 안내
                     !feedback && action !== 'none' && h("p", {
                         style: {
                             textAlign: 'center',
-                            fontSize: '1.1rem',
+                            fontSize: '1.2rem',
                             fontWeight: 700,
                             color: '#94a3b8',
-                            marginTop: '0.85rem'
+                            marginTop: '1rem'
                         }
                     },
-                        action === 'tap'    ? '👆 위의 카드 중 하나를 눌러보세요' :
-                        action === 'select' ? '👆 하나를 골라보세요' :
-                        action === 'type'   ? '✏️ 직접 입력하거나 예시를 눌러보세요' : ''
+                        action === 'tap'          ? '👆 위의 카드 중 하나를 눌러보세요' :
+                        action === 'select'        ? '👆 하나를 골라보세요' :
+                        action === 'type'          ? '✏️ 직접 입력하거나 예시를 눌러보세요' :
+                        action === 'notebook'      ? '📓 공책에 다 썼으면 버튼을 눌러요' :
+                        action === 'trafficlight'  ? '🚦 신호등을 눌러봐요' : ''
                     )
                 ),
 
                 // 하단 버튼 + 도트
-                h("div", { style: { padding: '0 1.75rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' } },
-                    h("div", { style: { display: 'flex', justifyContent: 'center', gap: '0.4rem' } },
+                h("div", { style: { padding: '0 2rem 1.75rem', display: 'flex', flexDirection: 'column', gap: '1rem' } },
+                    h("div", { style: { display: 'flex', justifyContent: 'center', gap: '0.5rem' } },
                         steps.map(function(_, i) {
                             return h("div", {
                                 key: i,
                                 style: {
                                     borderRadius: '999px',
-                                    height: '12px',
-                                    width: i === step ? '32px' : '12px',
+                                    height: '14px',
+                                    width: i === step ? '38px' : '14px',
                                     background: i === step ? col.btn : '#e2e8f0',
                                     transition: 'all 0.3s'
                                 }
                             });
                         })
                     ),
-                    h("div", { style: { display: 'flex', gap: '0.75rem' } },
+                    h("div", { style: { display: 'flex', gap: '0.85rem' } },
                         step > 0 && h("button", {
                             onClick: prev,
                             disabled: feedback,
                             style: {
-                                flex: 1, padding: '1rem', borderRadius: '1rem',
-                                fontWeight: 900, fontSize: '1.3rem',
+                                flex: 1, padding: '1.2rem', borderRadius: '1.1rem',
+                                fontWeight: 900, fontSize: '1.5rem',
                                 border: '2px solid #e2e8f0', background: 'white', color: '#64748b',
                                 cursor: feedback ? 'not-allowed' : 'pointer',
                                 opacity: feedback ? 0.5 : 1
                             }
                         }, "← 이전"),
-                        action !== 'tap' && h("button", {
+                        action !== 'tap' && action !== 'notebook' && h("button", {
                             onClick: next,
                             disabled: !canProceed || feedback,
                             style: {
-                                flex: 1, padding: '1rem', borderRadius: '1rem',
-                                fontWeight: 900, fontSize: '1.3rem',
+                                flex: 1, padding: '1.2rem', borderRadius: '1.1rem',
+                                fontWeight: 900, fontSize: '1.5rem',
                                 background: (canProceed && !feedback) ? col.btn : '#cbd5e1',
                                 color: 'white', border: 'none',
                                 cursor: (canProceed && !feedback) ? 'pointer' : 'not-allowed',
@@ -790,6 +936,7 @@ function MainMenu(props) {
     var onNavigate = props.onNavigate || function(){};
     var onChangeStudent = props.onChangeStudent || function(){};
     var s2 = useState(null);                          var navTarget = s2[0], setNavTarget = s2[1];
+    var sBox = useState(false);                       var showBox = sBox[0], setShowBox = sBox[1]; // 카드 보관함
     // progress에서 실제 상태 읽기
     var state = {
         cards1: progress.cards1 || 0,
@@ -863,6 +1010,17 @@ function MainMenu(props) {
                 }, "다른 학생")
             )
         ),
+        // 📦 카드 보관함 버튼
+        h("button", {
+            onClick: function(){ setShowBox(true); },
+            className: "flex items-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-2xl font-black text-lg shadow-md hover:bg-indigo-600 active:scale-95 transition ml-3"
+        },
+            h("span", null, "📦"),
+            h("span", null, "내 카드 보관함"),
+            h("span", { className: "bg-white text-indigo-600 px-2 py-0.5 rounded-lg text-base font-black" },
+                (progress.cards1 || 0) + (progress.cards2 || 0) + "장"
+            )
+        ),
 
 
         h("main", { className: "flex-1 px-3 md:px-6 pb-2 overflow-hidden min-h-0" },
@@ -898,7 +1056,120 @@ function MainMenu(props) {
             className: "absolute bottom-20 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-2xl text-base font-black z-50"
         }, "→ " + navTarget.stage + "단계로 이동합니다"),
 
-        
+        // ── 카드 보관함 패널 ──
+        showBox && h("div", {
+            className: "fixed inset-0 z-50 flex",
+            style: { background: 'rgba(0,0,0,0.5)' },
+            onClick: function(e) { if (e.target === e.currentTarget) setShowBox(false); }
+        },
+            h(motion.div, {
+                initial: { x: '100%' },
+                animate: { x: 0 },
+                exit: { x: '100%' },
+                transition: { type: 'spring', stiffness: 300, damping: 30 },
+                className: "ml-auto w-full max-w-2xl h-full bg-white flex flex-col shadow-2xl",
+                onClick: function(e) { e.stopPropagation(); }
+            },
+                // 헤더
+                h("div", { className: "flex items-center justify-between px-6 py-4 bg-indigo-500 text-white shrink-0" },
+                    h("div", { className: "flex items-center gap-3" },
+                        h("span", { className: "text-3xl" }, "📦"),
+                        h("h2", { className: "text-2xl font-black" }, "내 카드 보관함")
+                    ),
+                    h("button", {
+                        onClick: function(){ setShowBox(false); },
+                        className: "w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-2xl font-black hover:bg-white/30"
+                    }, "×")
+                ),
+
+                // 탭 or 스크롤 내용
+                h("div", { className: "flex-1 overflow-y-auto p-5 flex flex-col gap-6 min-h-0" },
+
+                    // ── 1단계 카드 (언제·어디서·누구와·무엇을) ──
+                    h("div", null,
+                        h("h3", { className: "text-xl font-black text-slate-700 mb-3 flex items-center gap-2" },
+                            h("span", null, "🃏"),
+                            h("span", null, "1단계에서 모은 카드"),
+                            h("span", { className: "ml-auto text-base font-black text-amber-600 bg-amber-50 px-3 py-1 rounded-xl" },
+                                (progress.cards1 || 0) + "장"
+                            )
+                        ),
+                        (progress.cards1List && progress.cards1List.length > 0)
+                            ? h("div", { className: "grid grid-cols-2 gap-2" },
+                                ['when','where','who','what'].map(function(cat) {
+                                    var cc = FIELD_COLORS[cat];
+                                    var catCards = (progress.cards1List || []).filter(function(c){ return c.key === cat; });
+                                    if (catCards.length === 0) return null;
+                                    return h("div", { key: cat, className: "bg-white rounded-2xl border-2 " + cc.border + " p-3" },
+                                        h("p", { className: "text-base font-black " + cc.text + " mb-2 flex items-center gap-1" },
+                                            CAT_EMOJI[cat], " ", cc.name
+                                        ),
+                                        h("div", { className: "flex flex-wrap gap-1.5" },
+                                            catCards.map(function(card, i) {
+                                                return h("div", { key: i, className: "flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-base font-black " + cc.bg + " " + cc.text },
+                                                    h("span", null, card.emoji || ''),
+                                                    h("span", null, card.value)
+                                                );
+                                            })
+                                        )
+                                    );
+                                })
+                            )
+                            : h("div", { className: "text-center py-6 text-slate-400" },
+                                h("p", { className: "text-4xl mb-2" }, "📦"),
+                                h("p", { className: "text-base font-black" }, "아직 모은 카드가 없어요"),
+                                h("p", { className: "text-sm font-bold mt-1" }, "1단계❶에서 카드를 모아봐요!")
+                            )
+                    ),
+
+                    // ── 2단계 감정 카드 ──
+                    h("div", null,
+                        h("h3", { className: "text-xl font-black text-slate-700 mb-3 flex items-center gap-2" },
+                            h("span", null, "💜"),
+                            h("span", null, "2단계에서 모은 감정 카드"),
+                            h("span", { className: "ml-auto text-base font-black text-purple-600 bg-purple-50 px-3 py-1 rounded-xl" },
+                                (progress.cards2 || 0) + "장"
+                            )
+                        ),
+                        (progress.cards2List && progress.cards2List.length > 0)
+                            ? h("div", { className: "flex flex-col gap-3" },
+                                [
+                                    { g: 'red',    label: '속상하거나 화나는 마음', color: 'text-red-600',    bg: 'bg-red-50',    border: 'border-red-200' },
+                                    { g: 'yellow', label: '평범하거나 궁금한 마음', color: 'text-amber-600',  bg: 'bg-amber-50',  border: 'border-amber-200' },
+                                    { g: 'green',  label: '기쁘고 즐거운 마음',    color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' }
+                                ].map(function(grp) {
+                                    var grpCards = (progress.cards2List || []).filter(function(c){ return c.group === grp.g; });
+                                    if (grpCards.length === 0) return null;
+                                    return h("div", { key: grp.g, className: "bg-white rounded-2xl border-2 " + grp.border + " p-3" },
+                                        h("p", { className: "text-base font-black " + grp.color + " mb-2" }, grp.label),
+                                        h("div", { className: "flex flex-wrap gap-2" },
+                                            grpCards.map(function(card, i) {
+                                                return h("div", { key: i, className: "flex items-center gap-1.5 px-3 py-2 rounded-xl text-base font-black " + grp.bg + " " + grp.color + " border " + grp.border },
+                                                    h("span", { className: "text-2xl" }, card.emoji || '💜'),
+                                                    h("span", null, card.value)
+                                                );
+                                            })
+                                        )
+                                    );
+                                })
+                            )
+                            : h("div", { className: "text-center py-6 text-slate-400" },
+                                h("p", { className: "text-4xl mb-2" }, "💜"),
+                                h("p", { className: "text-base font-black" }, "아직 모은 감정 카드가 없어요"),
+                                h("p", { className: "text-sm font-bold mt-1" }, "2단계❶에서 감정 카드를 모아봐요!")
+                            )
+                    )
+                ),
+
+                // 닫기 버튼
+                h("div", { className: "p-4 shrink-0 border-t border-slate-100" },
+                    h("button", {
+                        onClick: function(){ setShowBox(false); },
+                        className: "w-full py-4 bg-indigo-500 text-white rounded-2xl text-xl font-black hover:bg-indigo-600"
+                    }, "닫기")
+                )
+            )
+        )
     );
 }
 
@@ -1561,7 +1832,7 @@ function Stage1_1(props) {
         content = h("div", { className: "flex-1 flex flex-col items-center justify-center gap-6 p-4" },
             h("div", { className: "flex items-start gap-4" },
                 h(PencilFairy, null),
-                h("div", { className: "bg-white px-7 py-4 rounded-3xl shadow-xl border-2 border-orange-200 mt-6" },
+                h("div", { className: "bg-white px-7 py-4 rounded-3xl shadow-xl border-2 border-orange-200 mt-6 whitespace-nowrap" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "어떤 단어를 배워볼까요?"),
                     h("p", { className: "text-2xl text-slate-500 font-bold mt-1" }, "4가지 중에서 하나를 골라봐요!")
                 )
@@ -1608,7 +1879,7 @@ function Stage1_1(props) {
         content = h("div", { className: "flex-1 flex flex-col p-3 md:p-4 gap-2 md:gap-3 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
-                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-orange-200 mt-2" },
+                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-orange-200 mt-2 whitespace-nowrap" },
                     h("h2", { className: "text-2xl font-black text-slate-800" },
                         h("span", { className: cDraw.text }, cDraw.name),
                         " 카드를 한 장 골라봐요!"
@@ -1686,7 +1957,7 @@ function Stage1_1(props) {
         content = h("div", { className: "flex-1 flex flex-col p-3 md:p-4 gap-2 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
-                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-orange-200 mt-2" },
+                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-orange-200 mt-2 whitespace-nowrap" },
                     h("h2", { className: "text-3xl font-black text-slate-800" }, "예시 문장을 잘 봐요!"),
                     h("p", { className: "text-2xl text-slate-500 font-bold mt-1" },
                         h("span", { className: "text-amber-600 font-black" }, "언제"), " · ",
@@ -1797,7 +2068,7 @@ function Stage1_1(props) {
         content = h("div", { className: "flex-1 flex flex-col p-3 md:p-4 gap-2 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true, isListening: recording }),
-                h("div", { className: "flex-1 bg-white px-7 py-3 rounded-3xl shadow-xl border-2 mt-4 " + (recording ? "border-red-400 ring-4 ring-red-50" : "border-orange-200") },
+                h("div", { className: "flex-1 bg-white px-7 py-3 rounded-3xl shadow-xl border-2 mt-4 whitespace-nowrap " + (recording ? "border-red-400 ring-4 ring-red-50" : "border-orange-200") },
                     h("h2", { className: "text-2xl font-black " + (recording ? "text-red-500" : "text-slate-800") },
                         recording ? "🎙️ 듣고 있어요!" : (mustRetry ? "음... 다시 또박또박 말해볼까요? 🌱" : "큰 소리로 따라 말해봐요! (예시 " + (exampleIdx + 1) + "/" + examples.length + ")")
                     )
@@ -1917,7 +2188,7 @@ function Stage1_1(props) {
         content = h("div", { className: "flex-1 flex flex-col p-3 gap-2 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
-                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-orange-200 mt-2" },
+                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-orange-200 mt-2 whitespace-nowrap" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "마음에 드는 문장을 골라봐요!"),
                     h("p", { className: "text-2xl text-slate-500 font-bold mt-1" }, "고른 문장을 공책에 직접 써볼 거예요 ✏️")
                 )
@@ -1965,7 +2236,7 @@ function Stage1_1(props) {
         content = h("div", { className: "flex-1 flex flex-col p-3 gap-2 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
-                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-orange-200 mt-2" },
+                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-orange-200 mt-2 whitespace-nowrap" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "공책에 한 글자씩 따라 써봐요!"),
                     h("p", { className: "text-2xl text-slate-500 font-bold mt-1" },
                         "화면을 보면서 ", h("span", { className: "text-orange-600 font-black" }, "내 공책에 직접"), " 써보세요"
@@ -2068,10 +2339,9 @@ function Stage1_1(props) {
                 },
                 {
                     emoji: '📓', title: '공책에 한 글자씩 써봐요!', pos: 'center',
-                    desc: '색깔 칸을 보면서 글자를 써요.\n"오" 자를 한번 써볼까요?\n(또는 "예시"를 눌러봐요)',
-                    action: 'type',
-                    placeholder: '여기에 글자를 써보세요',
-                    examples: ['오', '늘', '아침']
+                    desc: '색깔 칸을 보면서 공책에 한 글자씩 써봐요!',
+                    action: 'notebook',
+                    chars: '오늘 아침에'
                 },
                 {
                     emoji: '🎉', title: '준비 끝! 시작해봐요!', pos: 'center',
@@ -2411,7 +2681,7 @@ function Stage1_2(props) {
         content = h("div", { className: "flex-1 flex flex-col p-4 gap-3 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
-                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-orange-200 mt-2 flex-1" },
+                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-orange-200 mt-2 flex-1 whitespace-nowrap" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "어떤 카드로 문장을 만들까요?"),
                     h("p", { className: "text-2xl text-slate-500 font-bold mt-1" },
                         "마음에 드는 카드 한 장을 골라봐요!"
@@ -2679,7 +2949,7 @@ function Stage1_2(props) {
         content = h("div", { className: "flex-1 flex flex-col p-3 gap-2 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
-                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-orange-200 mt-2" },
+                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-orange-200 mt-2 whitespace-nowrap" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "내가 만든 문장을 공책에 써봐요!"),
                     h("p", { className: "text-2xl text-slate-500 font-bold mt-1" },
                         "화면을 보면서 ",
@@ -2784,10 +3054,9 @@ function Stage1_2(props) {
                 },
                 {
                     emoji: '📓', title: '공책에 한 글자씩 써봐요!', pos: 'center',
-                    desc: '완성된 문장의 색깔 칸을 보면서 글자를 써봐요.\n한 글자만 써볼까요?',
-                    action: 'type',
-                    placeholder: '글자를 한 자 써보세요',
-                    examples: ['오', '학', '친']
+                    desc: '완성된 문장의 색깔 칸을 보면서 공책에 써봐요!',
+                    action: 'notebook',
+                    chars: '오늘 학교에서 친구랑'
                 },
                 {
                     emoji: '🎉', title: '준비 끝! 문장을 만들어봐요!', pos: 'center',
@@ -3296,7 +3565,7 @@ function Stage2_1(props) {
         content = h("div", { className: "flex-1 flex flex-col items-center justify-center p-6 gap-6 overflow-hidden" },
             h("div", { className: "flex items-start gap-4" },
                 h(PencilFairy, null),
-                h("div", { className: "bg-white px-7 py-4 rounded-3xl shadow-xl border-2 border-purple-200 mt-4" },
+                h("div", { className: "bg-white px-7 py-4 rounded-3xl shadow-xl border-2 border-purple-200 mt-4 whitespace-nowrap" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "어떤 마음의 카드를 배워볼까요?"),
                     h("p", { className: "text-2xl text-slate-500 font-bold mt-1" }, "신호등 색깔을 골라봐요!")
                 )
@@ -3352,7 +3621,7 @@ function Stage2_1(props) {
         content = h("div", { className: "flex-1 flex flex-col p-3 gap-2 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
-                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 " + gc2.border + " mt-2 flex-1" },
+                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 " + gc2.border + " mt-2 flex-1 whitespace-nowrap" },
                     h("h2", { className: "text-2xl font-black text-slate-800" },
                         GROUP_LABELS[drawGroup], " 카드를 한 장 골라봐요!"
                     ),
@@ -3496,7 +3765,7 @@ function Stage2_1(props) {
         content = h("div", { className: "flex-1 flex flex-col p-3 md:p-4 gap-2 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
-                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-purple-200 mt-2 flex-1" },
+                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-purple-200 mt-2 flex-1 whitespace-nowrap" },
                     h("h2", { className: "text-2xl font-black text-slate-800" },
                         "「", h("span", { className: "text-purple-600" }, drawn.emoji + " " + drawn.value), "」 — 어떤 상황에서 쓸까요?"
                     ),
@@ -3596,7 +3865,7 @@ function Stage2_1(props) {
         content = h("div", { className: "flex-1 flex flex-col p-3 md:p-4 gap-2 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true, isListening: recording }),
-                h("div", { className: "flex-1 bg-white px-7 py-3 rounded-3xl shadow-xl border-2 mt-4 " + (recording ? "border-red-400 ring-4 ring-red-50" : "border-purple-200") },
+                h("div", { className: "flex-1 bg-white px-7 py-3 rounded-3xl shadow-xl border-2 mt-4 whitespace-nowrap " + (recording ? "border-red-400 ring-4 ring-red-50" : "border-purple-200") },
                     h("h2", { className: "text-2xl font-black " + (recording ? "text-red-500" : "text-slate-800") },
                         recording ? "🎙️ 듣고 있어요!" : (mustRetry ? "음... 다시 또박또박 말해볼까요? 🌱" : "큰 소리로 따라 말해봐요! (예시 " + (exampleIdx + 1) + "/" + examples.length + ")")
                     )
@@ -3711,7 +3980,7 @@ function Stage2_1(props) {
         content = h("div", { className: "flex-1 flex flex-col p-3 gap-2 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
-                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-purple-200 mt-2" },
+                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-purple-200 mt-2 whitespace-nowrap" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "마음에 드는 문장을 골라봐요!"),
                     h("p", { className: "text-2xl text-slate-500 font-bold mt-1" }, "고른 문장을 공책에 직접 써볼 거예요 ✏️")
                 )
@@ -3746,7 +4015,7 @@ function Stage2_1(props) {
         content = h("div", { className: "flex-1 flex flex-col p-3 gap-2 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
-                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-purple-200 mt-2" },
+                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-purple-200 mt-2 whitespace-nowrap" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "공책에 한 글자씩 따라 써봐요!"),
                     h("p", { className: "text-2xl text-slate-500 font-bold mt-1" },
                         "화면을 보면서 ", h("span", { className: "text-purple-600 font-black" }, "내 공책에 직접"), " 써보세요"
@@ -3824,12 +4093,7 @@ function Stage2_1(props) {
                 {
                     emoji: '🚦', title: '신호등 색깔을 골라요!', pos: 'center',
                     desc: '내 마음의 색깔은 무엇일까요?\n신호등 하나를 눌러봐요!',
-                    action: 'tap',
-                    options: [
-                        { label: '속상·화남',     emoji: '🔴', bg: '#fee2e2', color: '#991b1b' },
-                        { label: '평범·궁금',     emoji: '🟡', bg: '#fef3c7', color: '#92400e' },
-                        { label: '기쁨·즐거움',   emoji: '🟢', bg: '#d1fae5', color: '#065f46' }
-                    ]
+                    action: 'trafficlight'
                 },
                 {
                     emoji: '💜', title: '감정 카드를 뽑아요!', pos: 'center',
@@ -3851,11 +4115,10 @@ function Stage2_1(props) {
                     ]
                 },
                 {
-                    emoji: '📓', title: '공책에 글자를 써봐요!', pos: 'center',
-                    desc: '문장의 색깔 칸을 보면서 글자를 써요.\n한 글자 써볼까요?',
-                    action: 'type',
-                    placeholder: '글자를 한 자 써보세요',
-                    examples: ['친', '속', '일']
+                    emoji: '📓', title: '공책에 한 글자씩 써봐요!', pos: 'center',
+                    desc: '감정이 들어간 문장을 공책에 써봐요!',
+                    action: 'notebook',
+                    chars: '친구랑 속상한 일'
                 },
                 {
                     emoji: '🎉', title: '감정 카드 모험 시작!', pos: 'center',
@@ -4095,45 +4358,58 @@ function Stage2_2(props) {
     if (subStep === 'trafficlight') {
         var prev2 = props.previousSentence;
         var hasPrev2 = prev2 && ((prev2.feelings && prev2.feelings.length > 0) || prev2.reason);
-        var curGroup = openGroup || 'red'; // 기본 빨강
+        var curGroup = openGroup || 'red';
         var curGc = GROUP_COLORS[curGroup] || {};
         var curLabel = GROUP_LABELS[curGroup] || '감정';
 
-        // 해당 그룹에서 학생이 모은 카드만 표시
+        // 학생이 모은 카드
         var groupCards = FEELINGS_POOL.filter(function(f) {
             return f.group === curGroup && collectedValues.indexOf(f.value) !== -1;
         });
 
-        content = h("div", { className: "flex-1 flex flex-col p-3 gap-3 min-h-0 overflow-hidden" },
+        // 선택된 카드의 예시 문장 (FEELINGS_EXAMPLES에서)
+        var shownCard = groupCards.length > 0 ? groupCards[0] : null;
+        var exampleRows = [];
+        chosenFeelings.concat(shownCard ? [{ value: shownCard.value || shownCard.word, emoji: shownCard.emoji, group: shownCard.group }] : [])
+            .slice(0, 1).forEach(function(cf) {
+                var key = cf.value || cf.word || '';
+                var exList = FEELINGS_EXAMPLES[key] || [];
+                exList.slice(0, 3).forEach(function(ex) {
+                    if (ex && ex.length >= 5) exampleRows.push({ ex: ex, feeling: key, emoji: cf.emoji });
+                });
+            });
+        // fallback: 아무 선택 없으면 첫 그룹 카드 예시
+        if (exampleRows.length === 0 && groupCards.length > 0) {
+            var fc = groupCards[0];
+            var fkey = fc.value || fc.word || '';
+            (FEELINGS_EXAMPLES[fkey] || []).slice(0, 3).forEach(function(ex) {
+                if (ex && ex.length >= 5) exampleRows.push({ ex: ex, feeling: fkey, emoji: fc.emoji });
+            });
+        }
+
+        var FIELD_LABEL_COLORS = {
+            0: { label: '언제',    bg: 'bg-amber-100',   text: 'text-amber-700',   border: 'border-amber-300' },
+            1: { label: '어디서',  bg: 'bg-blue-100',    text: 'text-blue-700',    border: 'border-blue-300' },
+            2: { label: '누구와',  bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-300' },
+            3: { label: '무엇을',  bg: 'bg-red-100',     text: 'text-red-700',     border: 'border-red-300' },
+            4: { label: '감정',    bg: 'bg-purple-100',  text: 'text-purple-700',  border: 'border-purple-300' }
+        };
+
+        content = h("div", { className: "flex-1 flex flex-col p-3 gap-2 min-h-0 overflow-hidden" },
             // 상단 안내
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
-                h("div", { className: "bg-white px-5 py-2 rounded-2xl shadow-md border-2 border-purple-200 mt-2 flex-1" },
+                h("div", { className: "bg-white px-5 py-2 rounded-2xl shadow-md border-2 border-purple-200 mt-2 flex-1 whitespace-nowrap" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "지금 내 마음의 색깔은 무엇인가요?"),
-                    h("p", { className: "text-xl text-slate-500 font-bold mt-0.5" }, "왼쪽 신호등을 누르고, 오른쪽에서 감정 카드를 골라봐요!")
+                    h("p", { className: "text-xl text-slate-500 font-bold mt-0.5" }, "신호등을 누르고, 내가 모은 카드를 골라봐요!")
                 )
             ),
 
-            // 이전 만든 문장
-            hasPrev2 && h("div", { className: "bg-purple-50 border-2 border-purple-200 rounded-2xl p-3 shrink-0" },
-                h("p", { className: "text-base font-black text-purple-700 mb-2" }, "📝 지난번에 만든 문장:"),
-                h("div", { className: "flex flex-wrap items-center gap-2" },
-                    (prev2.feelings || []).map(function(f, i) {
-                        return h("span", { key: i, className: "px-3 py-1 rounded-xl text-lg font-black bg-pink-100 text-pink-700 border-2 border-pink-300" },
-                            (f.emoji || '') + ' ' + (f.word || f.text || '')
-                        );
-                    }),
-                    prev2.reason && h("span", { className: "px-3 py-1 rounded-xl text-base font-bold bg-white text-purple-700 border-2 border-purple-300" },
-                        '왜냐하면 ' + prev2.reason
-                    )
-                )
-            ),
+            // ─ 메인 3단 레이아웃: 신호등 | 카드 | 예시문장 ─
+            h("div", { className: "flex-1 grid gap-3 min-h-0 overflow-hidden", style: { gridTemplateColumns: 'auto 1fr 1fr' } },
 
-            // ───── 좌(신호등) + 우(감정카드) 2단 레이아웃 ─────
-            h("div", { className: "flex-1 grid grid-cols-[auto_1fr] gap-4 min-h-0 overflow-hidden" },
-
-                // 왼쪽: 마음신호등 (세로 배치)
-                h("div", { className: "bg-slate-800 rounded-[2rem] px-5 py-5 shadow-2xl flex flex-col gap-5 items-center justify-center" },
+                // ① 신호등 (세로)
+                h("div", { className: "bg-slate-800 rounded-[2rem] px-4 py-5 shadow-2xl flex flex-col gap-4 items-center justify-center shrink-0" },
                     [
                         { g: 'red',    label: '속상하거나\n화나는 마음', color: '#EF4444', glow: 'rgba(239,68,68,0.6)' },
                         { g: 'yellow', label: '평범하거나\n궁금한 마음', color: '#F59E0B', glow: 'rgba(245,158,11,0.6)' },
@@ -4146,54 +4422,41 @@ function Stage2_2(props) {
                             whileHover: { scale: 1.05 },
                             whileTap: { scale: 0.95 },
                             onClick: (function(g) { return function() { setOpenGroup(g); }; })(item.g),
-                            className: "flex flex-col items-center gap-1.5"
+                            className: "flex flex-col items-center gap-1"
                         },
                             h(motion.div, {
-                                animate: isActive
-                                    ? { boxShadow: ['0 0 25px ' + item.glow, '0 0 50px ' + item.glow, '0 0 25px ' + item.glow] }
-                                    : {},
+                                animate: isActive ? { boxShadow: ['0 0 25px '+item.glow,'0 0 50px '+item.glow,'0 0 25px '+item.glow] } : {},
                                 transition: { repeat: Infinity, duration: 1.5 },
                                 style: {
-                                    width: '85px', height: '85px',
-                                    borderRadius: '50%',
-                                    background: 'radial-gradient(circle at 35% 35%, ' + item.color + 'ff, ' + item.color + '88)',
+                                    width: '75px', height: '75px', borderRadius: '50%',
+                                    background: 'radial-gradient(circle at 35% 35%, '+item.color+'ff, '+item.color+'88)',
                                     boxShadow: isActive
-                                        ? '0 0 30px ' + item.glow + ', inset -6px -6px 15px rgba(0,0,0,0.3), inset 6px 6px 15px rgba(255,255,255,0.2)'
+                                        ? '0 0 30px '+item.glow+', inset -6px -6px 15px rgba(0,0,0,0.3), inset 6px 6px 15px rgba(255,255,255,0.2)'
                                         : 'inset -6px -6px 15px rgba(0,0,0,0.4), inset 6px 6px 15px rgba(255,255,255,0.15)',
                                     border: isActive ? '3px solid white' : '2px solid rgba(255,255,255,0.1)',
-                                    opacity: isActive ? 1 : 0.7
+                                    opacity: isActive ? 1 : 0.65
                                 }
                             }),
-                            h("p", {
-                                className: "text-sm font-black text-center whitespace-pre-line",
-                                style: { color: item.color }
-                            }, item.label),
-                            pickedCnt > 0 && h("div", {
-                                className: "px-2.5 py-0.5 rounded-full text-xs font-black text-white",
-                                style: { background: item.color }
-                            }, pickedCnt + "개")
+                            h("p", { className: "text-xs font-black text-center whitespace-pre-line", style: { color: item.color } }, item.label),
+                            pickedCnt > 0 && h("div", { className: "px-2 py-0.5 rounded-full text-xs font-black text-white", style: { background: item.color } }, pickedCnt + "개")
                         );
                     })
                 ),
 
-                // 오른쪽: 선택한 그룹의 감정 카드 그리드
-                h("div", { className: "bg-white rounded-[2rem] shadow-md border-4 " + (curGc.border || 'border-purple-200') + " p-4 flex flex-col gap-3 overflow-hidden min-h-0" },
-                    // 그룹 헤더
+                // ② 모은 카드 목록
+                h("div", { className: "bg-white rounded-[2rem] shadow-md border-4 " + (curGc.border || 'border-purple-200') + " p-3 flex flex-col gap-2 overflow-hidden min-h-0" },
                     h("div", { className: "flex items-center justify-between shrink-0" },
-                        h("h3", { className: "text-xl font-black " + (curGc.text || 'text-purple-700') }, curLabel),
-                        h("span", { className: "text-base font-bold text-slate-400" }, "내가 모은 카드: " + groupCards.length + "장")
+                        h("h3", { className: "text-lg font-black " + (curGc.text || 'text-purple-700') }, curLabel),
+                        h("span", { className: "text-sm font-bold text-slate-400" }, groupCards.length + "장")
                     ),
-
-                    // 카드 그리드
                     h("div", { className: "flex-1 overflow-y-auto min-h-0" },
                         groupCards.length === 0
-                            ? h("div", { className: "flex flex-col items-center justify-center h-full gap-3 text-slate-400 p-8" },
-                                h("span", { className: "text-6xl" }, "📦"),
-                                h("p", { className: "text-xl font-black" }, "이 색깔 그룹에서"),
-                                h("p", { className: "text-xl font-black" }, "모은 카드가 없어요!"),
-                                h("p", { className: "text-base font-bold mt-2" }, "2단계❶에서 감정 카드를 먼저 모아봐요")
+                            ? h("div", { className: "flex flex-col items-center justify-center h-full gap-2 text-slate-400 p-4" },
+                                h("span", { className: "text-5xl" }, "📦"),
+                                h("p", { className: "text-base font-black text-center" }, "이 그룹에서 모은\n카드가 없어요!"),
+                                h("p", { className: "text-sm font-bold text-center" }, "2단계❶에서 먼저 모아봐요")
                             )
-                            : h("div", { className: "grid gap-3", style: { gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))" } },
+                            : h("div", { className: "grid gap-2", style: { gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))" } },
                                 groupCards.map(function(f, i) {
                                     var word = f.value || f.word || '';
                                     var emoji = f.emoji || '💜';
@@ -4215,18 +4478,48 @@ function Stage2_2(props) {
                                             else newList.push(feeling);
                                             setChosenFeelings(newList);
                                         }; })(f),
-                                        className: "flex flex-col items-center gap-2 p-4 rounded-2xl border-4 shadow-md transition " +
+                                        className: "flex flex-col items-center gap-1.5 p-3 rounded-2xl border-4 shadow-md transition " +
                                             (isChosen ? tl.chip + " scale-105" : "bg-white border-slate-200 hover:border-purple-300")
                                     },
-                                        h("span", { className: "text-4xl" }, emoji),
-                                        h("span", { className: "text-lg font-black text-slate-800 text-center break-keep" }, word),
-                                        isChosen && h("div", {
-                                            className: "w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs font-black"
-                                        }, "✓")
+                                        h("span", { className: "text-3xl" }, emoji),
+                                        h("span", { className: "text-base font-black text-slate-800 text-center break-keep" }, word),
+                                        isChosen && h("div", { className: "w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs font-black" }, "✓")
                                     );
                                 })
                             )
                     )
+                ),
+
+                // ③ 예시 문장 (2단계❶ 형식: 언제·어디서·누구와·무엇을·감정 5칸)
+                h("div", { className: "bg-white rounded-[2rem] shadow-md border-4 border-purple-100 p-3 flex flex-col gap-2 overflow-hidden min-h-0" },
+                    h("h3", { className: "text-lg font-black text-purple-700 shrink-0" }, "💡 예시 문장"),
+                    exampleRows.length === 0
+                        ? h("div", { className: "flex-1 flex items-center justify-center text-slate-400" },
+                            h("p", { className: "text-base font-bold text-center" }, "카드를 골라보면\n예시 문장이 나와요!")
+                          )
+                        : h("div", { className: "flex-1 overflow-y-auto flex flex-col gap-3 min-h-0" },
+                            exampleRows.map(function(row, ri) {
+                                var parts = row.ex; // [when, where, who, what, feeling]
+                                return h("div", { key: ri, className: "bg-purple-50 rounded-2xl p-3 border-2 border-purple-100 flex flex-col gap-2" },
+                                    // 5칸 색깔 태그
+                                    h("div", { className: "flex flex-wrap gap-1.5" },
+                                        [0,1,2,3,4].map(function(idx) {
+                                            var fc = FIELD_LABEL_COLORS[idx];
+                                            var val = parts[idx] || '';
+                                            if (!val) return null;
+                                            return h("div", { key: idx, className: "flex flex-col items-center gap-0.5" },
+                                                h("span", { className: "text-xs font-black " + fc.text }, fc.label),
+                                                h("span", { className: "px-2.5 py-1.5 rounded-xl text-base font-black border-2 " + fc.bg + " " + fc.text + " " + fc.border }, val)
+                                            );
+                                        })
+                                    ),
+                                    // 합쳐진 문장
+                                    h("p", { className: "text-base font-bold text-slate-600 leading-relaxed", style: { wordBreak: 'keep-all' } },
+                                        parts.filter(Boolean).join(' ') + '.'
+                                    )
+                                );
+                            })
+                          )
                 )
             ),
 
@@ -4258,6 +4551,7 @@ function Stage2_2(props) {
             )
         );
     }
+
 
     // ───── feelingCards: 더 이상 사용 안 함 (trafficlight 내에서 통합) ─────
     else if (subStep === 'feelingCards') {
@@ -4356,122 +4650,138 @@ function Stage2_2(props) {
     }
 
     else if (subStep === 'reason') {
-        // 예시 문장 생성: 선택한 감정의 FEELINGS_EXAMPLES에서 이유 부분 추출
+        // 선택된 감정에서 예시 문장 (FEELINGS_EXAMPLES)
         var reasonExamples = [];
         chosenFeelings.forEach(function(f) {
             var key = f.word || f.value || '';
             var exList = FEELINGS_EXAMPLES[key] || [];
-            exList.forEach(function(ex) {
-                // ex = [when, where, who, what, feeling] 형식
-                if (ex && ex.length >= 4) {
-                    // 이유 힌트: "~했기 때문이에요" 형태 예시 자동 생성
-                    var action = [ex[0], ex[1], ex[2], ex[3]].filter(Boolean).join(' ');
-                    if (action) reasonExamples.push({ feeling: key, emoji: f.emoji || '', action: action });
-                }
+            exList.slice(0, 2).forEach(function(ex) {
+                if (ex && ex.length >= 5) reasonExamples.push({ ex: ex, emoji: f.emoji || '' });
             });
         });
-        // 최대 2개만
-        reasonExamples = reasonExamples.slice(0, 2);
+        reasonExamples = reasonExamples.slice(0, 3);
 
-        // baseParts로 기본 힌트 만들기
-        var bpHint = '';
-        if (baseParts && (baseParts.when || baseParts.what)) {
-            bpHint = [baseParts.when, baseParts.where, baseParts.who, baseParts.what].filter(Boolean).join(' ');
-        }
+        var FLC2 = [
+            { label: '언제',  bg: 'bg-amber-100',   text: 'text-amber-700',   border: 'border-amber-300'   },
+            { label: '어디서',bg: 'bg-blue-100',    text: 'text-blue-700',    border: 'border-blue-300'    },
+            { label: '누구와',bg: 'bg-emerald-100', text: 'text-emerald-700', border: 'border-emerald-300' },
+            { label: '무엇을',bg: 'bg-red-100',     text: 'text-red-700',     border: 'border-red-300'     },
+            { label: '감정',  bg: 'bg-purple-100',  text: 'text-purple-700',  border: 'border-purple-300'  }
+        ];
 
         content = h("div", { className: "flex-1 flex flex-col p-3 gap-2 min-h-0 overflow-hidden" },
+            // 상단 안내
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true, isListening: micRec }),
-                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-purple-200 mt-2" },
+                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-purple-200 mt-2 flex-1 whitespace-nowrap" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "왜 그런 마음이 들었어요?"),
-                    h("p", { className: "text-2xl text-slate-500 font-bold mt-1" }, "이유를 자유롭게 표현해봐요!")
+                    h("p", { className: "text-xl text-slate-500 font-bold mt-1" }, "이유를 자유롭게 표현해봐요!")
                 ),
                 h("button", {
                     onClick: function () { setSubStep('trafficlight'); },
-                    className: "ml-auto self-center px-4 py-2 bg-slate-100 text-slate-500 rounded-2xl font-black text-base hover:bg-slate-200"
+                    className: "ml-auto self-center px-4 py-2 bg-slate-100 text-slate-500 rounded-2xl font-black text-base hover:bg-slate-200 shrink-0"
                 }, "← 감정 다시")
             ),
 
-            // 선택한 감정 + 예시 문장 힌트
-            h("div", { className: "bg-white p-4 rounded-[1.5rem] shadow-md border-2 border-purple-100 flex flex-col gap-2 shrink-0" },
-                // 선택 감정 표시
-                h("div", { className: "flex items-center gap-2 flex-wrap" },
-                    h("span", { className: "text-base font-black text-slate-500" }, "💖 내 마음:"),
-                    chosenFeelings.map(function (f, i) {
-                        var t = TRAFFIC_LIGHTS[f.group];
-                        return h("div", { key: i, className: "flex items-center gap-1 px-3 py-1 rounded-xl border-2 " + t.chip },
-                            h("span", { className: "text-xl" }, f.emoji),
-                            h("span", { className: "text-base font-black" }, f.word || f.value)
-                        );
-                    })
-                ),
+            // 좌우 2단: 왼쪽(선택감정+예시) | 오른쪽(입력)
+            h("div", { className: "flex-1 grid grid-cols-2 gap-3 min-h-0 overflow-hidden" },
 
-                // 예시 문장
-                h("div", { className: "border-t border-dashed border-purple-100 pt-2 flex flex-col gap-1.5" },
-                    h("p", { className: "text-sm font-black text-purple-500" }, "💡 이런 이유를 말할 수 있어요:"),
-                    reasonExamples.length > 0
-                        ? reasonExamples.map(function(ex, i) {
-                            return h("div", { key: i, className: "bg-purple-50 px-4 py-2 rounded-xl border-l-4 border-purple-300" },
-                                h("p", { className: "text-lg font-bold text-slate-700", style: { wordBreak: 'keep-all' } },
-                                    ex.action + "을(를) 했기 때문이에요."
-                                )
+                // 왼쪽: 선택한 감정 + 예시 문장
+                h("div", { className: "bg-white rounded-[2rem] border-4 border-purple-100 p-4 flex flex-col gap-3 overflow-hidden min-h-0" },
+                    // 선택 감정 칩
+                    h("div", { className: "flex items-center gap-2 flex-wrap shrink-0" },
+                        h("span", { className: "text-base font-black text-slate-500" }, "💖 내 마음:"),
+                        chosenFeelings.map(function (f, i) {
+                            var t = TRAFFIC_LIGHTS[f.group];
+                            return h("div", { key: i, className: "flex items-center gap-1 px-3 py-1.5 rounded-xl border-2 " + t.chip },
+                                h("span", { className: "text-xl" }, f.emoji),
+                                h("span", { className: "text-lg font-black" }, f.word || f.value)
                             );
                         })
-                        : bpHint
-                            ? h("div", { className: "bg-purple-50 px-4 py-2 rounded-xl border-l-4 border-purple-300" },
-                                h("p", { className: "text-lg font-bold text-slate-700" }, bpHint + "을(를) 했기 때문이에요.")
-                              )
-                            : h("p", { className: "text-base font-bold text-slate-400" }, "예) 친구가 내 장난감을 빼앗아 갔기 때문이에요.")
-                )
-            ),
+                    ),
 
-            h("div", { className: "flex gap-2 max-w-2xl mx-auto w-full shrink-0" },
-                [
-                    { mode: 'mic', label: '🎤 녹음하기', recommended: true },
-                    { mode: 'typing', label: '✏️ 직접 쓰기' }
-                ].map(function (opt) {
-                    var isOn = reasonMode === opt.mode;
-                    return h("button", {
-                        key: opt.mode,
-                        onClick: (function(m) { return function() { setReasonMode(m); }; })(opt.mode),
-                        className: "flex-1 px-4 py-2 rounded-xl font-black text-base shadow-sm border-2 " +
-                            (isOn ? "bg-purple-100 text-purple-700 border-purple-400" : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100")
-                    }, opt.label + (opt.recommended ? " ⭐" : ""))
-                })
-            ),
-            h("div", { className: "flex-1 flex items-center justify-center min-h-0 overflow-hidden" },
-                h("div", { className: "bg-white p-5 rounded-[2rem] shadow-xl border-4 border-purple-200 max-w-3xl w-full" },
-                    h("p", { className: "text-xl font-black text-purple-600 mb-3 text-center" }, "왜냐하면..."),
-                    reasonMode === 'typing'
-                        ? h("textarea", {
-                            value: reason,
-                            onChange: function (e) { setReason(e.target.value); },
-                            placeholder: "예) 친구가 내 장난감을 빼앗아 갔기 때문이에요.",
-                            autoFocus: true,
-                            rows: 3,
-                            className: "w-full px-5 py-4 text-2xl font-black rounded-2xl border-4 border-slate-200 focus:border-purple-400 outline-none resize-none"
+                    // 예시 문장 (2단계❶ 형식)
+                    h("div", { className: "border-t border-dashed border-purple-100 pt-3 flex-1 overflow-y-auto min-h-0 flex flex-col gap-3" },
+                        h("p", { className: "text-base font-black text-purple-600 shrink-0" }, "💡 이런 이유를 말할 수 있어요:"),
+                        reasonExamples.length > 0
+                            ? reasonExamples.map(function(row, ri) {
+                                var parts = row.ex;
+                                return h("div", { key: ri, className: "bg-purple-50 rounded-2xl p-3 border-2 border-purple-100 flex flex-col gap-2 shrink-0" },
+                                    // 5칸 색깔 태그
+                                    h("div", { className: "flex flex-wrap gap-1.5" },
+                                        FLC2.map(function(fc, idx) {
+                                            var val = parts[idx] || '';
+                                            if (!val) return null;
+                                            return h("div", { key: idx, className: "flex flex-col items-center gap-0.5" },
+                                                h("span", { className: "text-xs font-black " + fc.text }, fc.label),
+                                                h("span", { className: "px-2 py-1 rounded-lg text-sm font-black border-2 " + fc.bg + " " + fc.text + " " + fc.border }, val)
+                                            );
+                                        })
+                                    ),
+                                    h("p", { className: "text-base font-bold text-slate-600", style: { wordBreak: 'keep-all' } },
+                                        parts.filter(Boolean).join(' ') + '.'
+                                    )
+                                );
+                            })
+                            : h("div", { className: "flex-1 flex items-center justify-center" },
+                                h("p", { className: "text-base font-bold text-slate-400 text-center" }, "예) 친구가 내 장난감을\n빼앗아 갔기 때문이에요.")
+                              )
+                    )
+                ),
+
+                // 오른쪽: 입력 영역
+                h("div", { className: "bg-white rounded-[2rem] border-4 border-purple-200 p-4 flex flex-col gap-3 overflow-hidden min-h-0" },
+                    // 입력 탭
+                    h("div", { className: "flex gap-2 shrink-0" },
+                        [
+                            { mode: 'mic', label: '🎤 녹음하기', recommended: true },
+                            { mode: 'typing', label: '✏️ 직접 쓰기' }
+                        ].map(function (opt) {
+                            var isOn = reasonMode === opt.mode;
+                            return h("button", {
+                                key: opt.mode,
+                                onClick: (function(m) { return function() { setReasonMode(m); }; })(opt.mode),
+                                className: "flex-1 px-4 py-2 rounded-xl font-black text-lg border-2 " +
+                                    (isOn ? "bg-purple-100 text-purple-700 border-purple-400" : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100")
+                            }, opt.label + (opt.recommended ? " ⭐" : ""));
                         })
-                        : h("div", { className: "flex flex-col items-center gap-4" },
-                            h("div", {
-                                className: "w-full px-5 py-4 text-2xl font-black rounded-2xl border-4 bg-yellow-50 min-h-[5rem] flex items-center justify-center text-center " +
-                                    (micRec ? "border-red-400 ring-4 ring-red-50" : "border-slate-200")
-                            },
-                                reason || h("span", { className: "text-slate-300 text-lg" }, "버튼을 누르고 말해보세요...")
-                            ),
-                            h("button", {
-                                onClick: toggleMic,
-                                className: "px-7 py-3 rounded-2xl font-black text-xl shadow-md " + (micRec ? "bg-red-600 text-white animate-pulse" : "bg-red-500 text-white")
-                            }, "🎤 " + (micRec ? "녹음 중..." : "녹음 시작"))
-                        )
+                    ),
+
+                    // 입력 칸 레이블
+                    h("p", { className: "text-xl font-black text-purple-600 text-center shrink-0" }, "왜냐하면..."),
+
+                    // 입력 영역
+                    h("div", { className: "flex-1 flex flex-col items-center justify-center gap-3 min-h-0" },
+                        reasonMode === 'typing'
+                            ? h("textarea", {
+                                value: reason,
+                                onChange: function (e) { setReason(e.target.value); },
+                                placeholder: "예) 친구가 내 장난감을 빼앗아 갔기 때문이에요.",
+                                autoFocus: true,
+                                className: "w-full flex-1 min-h-0 px-5 py-4 text-2xl font-black rounded-2xl border-4 border-slate-200 focus:border-purple-400 outline-none resize-none"
+                            })
+                            : h(React.Fragment, null,
+                                h("div", {
+                                    className: "w-full px-5 py-4 text-2xl font-black rounded-2xl border-4 bg-yellow-50 flex-1 min-h-0 flex items-center justify-center text-center " +
+                                        (micRec ? "border-red-400 ring-4 ring-red-50" : "border-slate-200")
+                                },
+                                    reason || h("span", { className: "text-slate-300 text-lg" }, "버튼을 누르고 말해보세요...")
+                                ),
+                                h("button", {
+                                    onClick: toggleMic,
+                                    className: "px-8 py-4 rounded-2xl font-black text-xl shadow-md shrink-0 " + (micRec ? "bg-red-600 text-white animate-pulse" : "bg-red-500 text-white")
+                                }, "🎤 " + (micRec ? "녹음 중..." : "녹음 시작"))
+                            )
+                    ),
+
+                    // 완료 버튼
+                    h("button", {
+                        onClick: function () { setSubStep('preview'); },
+                        disabled: !reason.trim(),
+                        className: "shrink-0 py-4 rounded-2xl text-2xl font-black shadow-md " +
+                            (reason.trim() ? "bg-emerald-500 text-white shadow-[0_6px_0_rgb(4,120,87)] active:translate-y-1 active:shadow-none" : "bg-slate-200 text-slate-400 cursor-not-allowed")
+                    }, "완성된 문장 보기 →")
                 )
-            ),
-            h("div", { className: "flex justify-center shrink-0" },
-                h("button", {
-                    onClick: function () { setSubStep('preview'); },
-                    disabled: !reason.trim(),
-                    className: "px-12 py-3 rounded-2xl text-2xl font-black shadow-md " +
-                        (reason.trim() ? "bg-emerald-500 text-white shadow-[0_6px_0_rgb(4,120,87)] active:translate-y-1 active:shadow-none" : "bg-slate-200 text-slate-400 cursor-not-allowed")
-                }, "완성된 일기 보기 →")
             )
         );
     }
@@ -4561,12 +4871,7 @@ function Stage2_2(props) {
                 {
                     emoji: '🚦', title: '신호등으로 마음 색깔을!', pos: 'center',
                     desc: '지금 내 마음의 색깔은?\n신호등을 눌러봐요!',
-                    action: 'tap',
-                    options: [
-                        { label: '속상·화남',     emoji: '🔴', bg: '#fee2e2', color: '#991b1b' },
-                        { label: '평범·궁금',     emoji: '🟡', bg: '#fef3c7', color: '#92400e' },
-                        { label: '기쁨·즐거움',   emoji: '🟢', bg: '#d1fae5', color: '#065f46' }
-                    ]
+                    action: 'trafficlight'
                 },
                 {
                     emoji: '💜', title: '감정 카드를 골라봐요!', pos: 'center',
@@ -4981,7 +5286,7 @@ function Stage3(props) {
             // 안내 말풍선
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
-                h("div", { className: "bg-white px-6 py-3 rounded-3xl shadow-xl border-2 border-emerald-200 mt-4 flex-1" },
+                h("div", { className: "bg-white px-6 py-3 rounded-3xl shadow-xl border-2 border-emerald-200 mt-4 flex-1 whitespace-nowrap" },
                     h("h2", { className: "text-2xl font-black text-slate-800" },
                         celebrate ? "👏 잘했어요!" :
                         activeField ? "「" + (myParts[S3_FIELDS[0]] || '오늘') + "」의 일기를 완성해요!" : "모두 채웠어요! ✨"
@@ -5140,7 +5445,7 @@ function Stage3(props) {
         content = h("div", { className: "flex-1 flex flex-col p-3 gap-3 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
-                h("div", { className: "bg-white px-6 py-3 rounded-3xl shadow-xl border-2 border-emerald-200 mt-4" },
+                h("div", { className: "bg-white px-6 py-3 rounded-3xl shadow-xl border-2 border-emerald-200 mt-4 whitespace-nowrap" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "내 일기를 확인해봐요! 👀"),
                     h("p", { className: "text-2xl text-slate-500 font-bold mt-1" }, "마음에 들면 선생님께 보내봐요 📮")
                 )
