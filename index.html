@@ -63,7 +63,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbw0Oh_mzoIEl_wdfNI3KH6GC5Wu1k1UvdkFujbQJCcVB8DVkwiYspIglzbstvKB0xJ6qg/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbz-Of8EVQySuPX7XWDNthLsf1TB_Im7Wj8ePIbu71j87sgFh81xrw9XT2vyjkBGK3Iq6Q/exec';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -216,8 +216,9 @@ var STAGE_DATA = [
         innerBg: '#E0FBF1',
         accentBg: '#10B981', accentText: '#065F46',
         sticker1: '✏️', sticker3: '📮',
-        sub1: '일기 쓰고 그림 그려요',
-        sub2: '선생님께 보내요',
+        single: true,
+        sub1: '일기 쓰러 가기',
+        sub2: '',
         shadowClass: 'puffy-shadow-green'
     }
 ];
@@ -271,8 +272,8 @@ function StageCard(props) {
 
         // 제목
         h("div", { className: "px-5 text-center pb-3" },
-            h("h3", { className: "text-lg md:text-xl font-black mb-0.5", style: { color: titleColor } }, stage.title),
-            h("p", { className: "text-base font-bold", style: { color: titleColor, opacity: 0.7 } }, stage.subtitle)
+            h("h3", { className: "text-xl md:text-2xl font-black mb-1", style: { color: titleColor } }, stage.title),
+            h("p", { className: "text-base md:text-lg font-bold", style: { color: titleColor, opacity: 0.7 } }, stage.subtitle)
         ),
 
         // 하위 항목
@@ -289,14 +290,14 @@ function StageCard(props) {
             },
                 h("div", { className: "flex items-center gap-3" },
                     h("div", {
-                        className: "w-7 h-7 rounded-full flex items-center justify-center text-xs font-black border-2 shrink-0 " +
+                        className: "w-8 h-8 rounded-full flex items-center justify-center text-sm font-black border-2 shrink-0 " +
                             (progress.sub1Done ? "bg-emerald-400 text-white border-emerald-500" : "bg-white text-slate-400 border-slate-300")
                     }, progress.sub1Done ? "✓" : "1"),
-                    h("p", { className: "text-xs md:text-sm font-black flex-1", style: { color: titleColor } }, stage.sub1),
-                    progress.sub1Count > 0 && h("span", { className: "text-sm font-black", style: { color: titleColor } },
+                    h("p", { className: "text-sm md:text-base font-black flex-1", style: { color: titleColor } }, stage.sub1),
+                    progress.sub1Count > 0 && h("span", { className: "text-base font-black", style: { color: titleColor } },
                         progress.sub1Count + (progress.sub1Total > 1 ? "/" + progress.sub1Total : "")
                     ),
-                    !stageLocked && h("span", { className: "text-slate-400 text-sm" }, "→")
+                    !stageLocked && h("span", { className: "text-slate-400 text-base" }, "→")
                 ),
                 // 진행바
                 progress.sub1Total > 1 && h("div", { className: "mt-2 w-full h-2 rounded-full bg-slate-100 overflow-hidden" },
@@ -309,8 +310,8 @@ function StageCard(props) {
                     })
                 )
             ),
-            // 하위 2 — 클릭 가능한 버튼
-            h("button", {
+            // 하위 2 — 클릭 가능한 버튼 (single이 아닐 때만)
+            !stage.single && h("button", {
                 onClick: function(e) { e.stopPropagation(); if (!stageLocked && !progress.sub2Locked) onClickSub2(); },
                 disabled: stageLocked || progress.sub2Locked,
                 className: "w-full text-left bg-white/80 backdrop-blur rounded-xl px-3 py-2 border-2 transition " +
@@ -321,17 +322,17 @@ function StageCard(props) {
             },
                 h("div", { className: "flex items-center gap-3" },
                     h("div", {
-                        className: "w-7 h-7 rounded-full flex items-center justify-center text-xs font-black border-2 shrink-0 " +
+                        className: "w-8 h-8 rounded-full flex items-center justify-center text-sm font-black border-2 shrink-0 " +
                             (progress.sub2Done ? "bg-emerald-400 text-white border-emerald-500" :
                                 progress.sub2Locked ? "bg-slate-200 text-slate-400 border-slate-300" : "bg-white text-slate-400 border-slate-300")
                     }, progress.sub2Done ? "✓" : progress.sub2Locked ? "🔒" : "2"),
                     h("div", { className: "flex-1" },
                         h("p", { className: "text-base font-black " + (progress.sub2Locked ? "text-slate-400" : ""), style: progress.sub2Locked ? {} : { color: titleColor } }, stage.sub2),
-                        progress.sub2Locked && h("p", { className: "text-xs text-slate-400 font-bold mt-0.5" }, progress.sub2LockReason)
+                        progress.sub2Locked && h("p", { className: "text-sm text-slate-400 font-bold mt-0.5" }, progress.sub2LockReason)
                     ),
                     progress.sub2Done
                         ? h("span", { className: "text-xl" }, "⭐")
-                        : !progress.sub2Locked && !stageLocked && h("span", { className: "text-slate-400 text-sm" }, "→")
+                        : !progress.sub2Locked && !stageLocked && h("span", { className: "text-slate-400 text-base" }, "→")
                 ),
                 // 진행바
                 !progress.sub2Locked && h("div", { className: "mt-2 w-full h-2 rounded-full bg-slate-100 overflow-hidden" },
@@ -582,11 +583,21 @@ function MainMenu(props) {
     var stage3Locked = LOCK_SETTINGS.lock_stage3;    // 스프레드시트 설정만으로 제어
     var stage3LockReason = "선생님이 아직 잠가 놨어요 🔒";
 
+    // 1단계 전체 카드 수 (DEMO_POOL 4개 카테고리 합산)
+    var total1 = (DEMO_POOL.when ? DEMO_POOL.when.length : 0)
+               + (DEMO_POOL.where ? DEMO_POOL.where.length : 0)
+               + (DEMO_POOL.who ? DEMO_POOL.who.length : 0)
+               + (DEMO_POOL.what ? DEMO_POOL.what.length : 0);
+    if (total1 === 0) total1 = 10;
+
+    // 2단계 전체 감정 카드 수
+    var total2 = FEELINGS_POOL.length || 28;
+
     var progresses = [
         { sub1Done: stage1Sub1Done, sub2Done: stage1Sub2Done, sub2Locked: stage1Sub2Locked, sub2LockReason: stage1Sub2LockReason, stageLocked: false, stageLockReason: '',
-          sub1Count: state.cards1, sub1Total: 10, sub2Count: state.did1_2 ? 1 : 0, sub2Total: 1 },
+          sub1Count: state.cards1, sub1Total: total1, sub2Count: state.did1_2 ? 1 : 0, sub2Total: 1 },
         { sub1Done: stage2Sub1Done, sub2Done: stage2Sub2Done, sub2Locked: stage2Sub2Locked, sub2LockReason: stage2Sub2LockReason, stageLocked: stage2Locked, stageLockReason: "선생님이 아직 잠가 놨어요 🔒",
-          sub1Count: state.cards2, sub1Total: 28, sub2Count: state.did2_2 ? 1 : 0, sub2Total: 1 },
+          sub1Count: state.cards2, sub1Total: total2, sub2Count: state.did2_2 ? 1 : 0, sub2Total: 1 },
         { sub1Done: false, sub2Done: false, sub2Locked: false, sub2LockReason: '', stageLocked: stage3Locked, stageLockReason: stage3LockReason,
           sub1Count: 0, sub1Total: 1, sub2Count: 0, sub2Total: 1 }
     ];
@@ -1620,9 +1631,14 @@ function Stage1_1(props) {
                         h("p", { className: "text-base font-bold text-slate-500" }, "🎙️ 말하고 있어요... 다 말했으면 아래 버튼을 눌러요!"),
                         h("div", { className: "flex gap-3 items-center" },
                             h("button", {
-                                onClick: toggleRec,
+                                onClick: function() {
+                                    if (recRef.current && recording) recRef.current.stop();
+                                    if (exampleIdx + 1 < examples.length) {
+                                        setExampleIdx(exampleIdx + 1); setTranscript(''); setHasTriedRecording(false); setSubStep('record');
+                                    } else { setHasTriedRecording(false); setSubStep('choose'); }
+                                },
                                 className: "flex items-center gap-2 px-6 py-4 rounded-2xl font-black text-xl bg-slate-200 text-slate-600 border-2 border-slate-300"
-                            }, "⏹️ 잠깐 멈추기"),
+                            }, "⏭️ 건너뛰기"),
                             h("button", {
                                 onClick: function() { if (recRef.current) recRef.current.stop(); },
                                 className: "flex items-center gap-2 px-8 py-4 rounded-2xl font-black text-xl bg-emerald-500 text-white shadow-[0_5px_0_rgb(4,120,87)] active:translate-y-1 active:shadow-none"
@@ -2803,7 +2819,8 @@ function Stage2_1(props) {
     var s7 = useState(null);       var chosenForWriting = s7[0], setChosenForWriting = s7[1];
     var s8 = useState(false);      var showConfetti = s8[0], setShowConfetti = s8[1];
     var s9 = useState(false);      var mustRetry = s9[0], setMustRetry = s9[1];
-    var s10 = useState([]);        var finalCards = s10[0], setFinalCards = s10[1]; // 완료 시 전달용
+    var s10 = useState([]);        var finalCards = s10[0], setFinalCards = s10[1];
+    var s11 = useState(null);      var drawGroup = s11[0], setDrawGroup = s11[1]; // 선택한 신호등 그룹
     var recRef = useRef(null);
 
     var examples = drawn ? (FEELINGS_EXAMPLES[drawn.value] || []) : [];
@@ -2921,103 +2938,112 @@ function Stage2_1(props) {
 
     var content = null;
 
-    // ───── draw (15장 중 한 장 뽑기) ─────
+    // ───── draw: 신호등 선택 ─────
     if (subStep === 'draw') {
-        // 신호등 그룹별로 정렬
-        var groupedPool = {
-            red:    FEELINGS_POOL.filter(function(c){return c.group==='red';}),
-            yellow: FEELINGS_POOL.filter(function(c){return c.group==='yellow';}),
-            green:  FEELINGS_POOL.filter(function(c){return c.group==='green';})
+        var collectedByGroup = { red: 0, yellow: 0, green: 0 };
+        collected.forEach(function(c) { if (c.group && collectedByGroup[c.group] !== undefined) collectedByGroup[c.group]++; });
+        var totalByGroup = {
+            red:    FEELINGS_POOL.filter(function(c){ return c.group==='red'; }).length,
+            yellow: FEELINGS_POOL.filter(function(c){ return c.group==='yellow'; }).length,
+            green:  FEELINGS_POOL.filter(function(c){ return c.group==='green'; }).length
         };
+
+        content = h("div", { className: "flex-1 flex flex-col items-center justify-center p-6 gap-6 overflow-hidden" },
+            h("div", { className: "flex items-start gap-4" },
+                h(PencilFairy, null),
+                h("div", { className: "bg-white px-7 py-4 rounded-3xl shadow-xl border-2 border-purple-200 mt-4" },
+                    h("h2", { className: "text-2xl font-black text-slate-800" }, "어떤 마음의 카드를 배워볼까요?"),
+                    h("p", { className: "text-2xl text-slate-500 font-bold mt-1" }, "신호등 색깔을 골라봐요!")
+                )
+            ),
+            // 마음신호등 — 크게 표시
+            h("div", { className: "bg-slate-800 rounded-[3rem] px-10 py-7 shadow-2xl flex gap-10 items-end" },
+                [
+                    { g: 'red',    color: '#EF4444', glow: 'rgba(239,68,68,0.6)',  label: '속상하거나\n화나는 마음'  },
+                    { g: 'yellow', color: '#F59E0B', glow: 'rgba(245,158,11,0.6)', label: '평범하거나\n궁금한 마음'  },
+                    { g: 'green',  color: '#10B981', glow: 'rgba(16,185,129,0.6)', label: '기쁘고\n즐거운 마음'    }
+                ].map(function(item) {
+                    var cnt = collectedByGroup[item.g];
+                    var tot = totalByGroup[item.g];
+                    var pct = tot > 0 ? Math.round((cnt / tot) * 100) : 0;
+                    return h(motion.button, {
+                        key: item.g,
+                        whileHover: { scale: 1.08, y: -8 },
+                        whileTap: { scale: 0.95 },
+                        onClick: function() { setDrawGroup(item.g); setSubStep('drawCards'); },
+                        className: "flex flex-col items-center gap-3"
+                    },
+                        h("div", {
+                            style: {
+                                width: '110px', height: '110px', borderRadius: '50%',
+                                background: 'radial-gradient(circle at 35% 35%, ' + item.color + 'ff, ' + item.color + '88)',
+                                boxShadow: '0 0 30px ' + item.glow + ', inset -8px -8px 20px rgba(0,0,0,0.3), inset 8px 8px 20px rgba(255,255,255,0.2)',
+                                border: '3px solid rgba(255,255,255,0.2)'
+                            }
+                        }),
+                        h("p", { className: "text-base font-black text-center whitespace-pre-line", style: { color: item.color } }, item.label),
+                        // 진행 배지
+                        h("div", { className: "flex flex-col items-center gap-1" },
+                            h("div", { className: "text-xs font-black text-white/70" }, cnt + "/" + tot + " 장"),
+                            h("div", { className: "w-24 h-2 rounded-full bg-white/20 overflow-hidden" },
+                                h("div", {
+                                    className: "h-full rounded-full",
+                                    style: { width: pct + "%", background: item.color }
+                                })
+                            )
+                        )
+                    );
+                })
+            )
+        );
+    }
+
+    // ───── drawCards: 선택한 그룹 카드 목록 ─────
+    else if (subStep === 'drawCards') {
+        var gc2 = GROUP_COLORS[drawGroup];
+        var groupCards = FEELINGS_POOL.filter(function(c){ return c.group === drawGroup; });
+        var flexVal = groupCards.length >= 10 ? 10 : groupCards.length >= 8 ? 8 : 6;
+
         content = h("div", { className: "flex-1 flex flex-col p-3 gap-2 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
-                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-purple-200 mt-2" },
+                h("div", { className: "bg-white px-4 py-2 rounded-2xl shadow-md border-2 " + gc2.border + " mt-2 flex-1" },
                     h("h2", { className: "text-2xl font-black text-slate-800" },
-                        "마음신호등 28가지 ", h("span", { className: "text-purple-600" }, "감정 카드"), "를 한 장 골라봐요!"
+                        GROUP_LABELS[drawGroup], " 카드를 한 장 골라봐요!"
                     ),
-                    h("p", { className: "text-xl text-slate-500 font-bold mt-1" },
-                        h("span", { className: "text-red-500 font-black" }, "🔴 빨강"), " · ",
-                        h("span", { className: "text-amber-500 font-black" }, "🟡 노랑"), " · ",
-                        h("span", { className: "text-emerald-500 font-black" }, "🟢 초록"), " 신호등 색깔로 마음을 나눠봐요"
-                    )
-                )
+                    h("p", { className: "text-xl text-slate-500 font-bold mt-1" }, "마음에 드는 카드를 꾹 눌러봐요")
+                ),
+                h("button", {
+                    onClick: function() { setSubStep('draw'); },
+                    className: "ml-auto self-center px-4 py-2 bg-slate-100 text-slate-500 rounded-2xl font-black text-base hover:bg-slate-200"
+                }, "← 신호등")
             ),
-            // 신호등 분류별 카드 — 스크롤 없이 flex 비율로 배분
-            h("div", { className: "flex-1 flex flex-col gap-1 min-h-0 overflow-hidden" },
-                ['red', 'yellow', 'green'].map(function (g) {
-                    var gc = GROUP_COLORS[g];
-                    var cards = groupedPool[g];
-                    // 그룹별 카드 수에 비례해서 flex 배분
-                    var flexVal = cards.length >= 10 ? 10 : cards.length >= 8 ? 8 : 6;
-                    return h("div", { key: g, className: "flex flex-col gap-1 min-h-0", style: { flex: flexVal } },
-                        // 그룹 라벨 + 진행바
-                        h("div", { className: "flex items-center gap-2 px-1 shrink-0" },
-                            h("div", { className: "w-3 h-3 rounded-full shrink-0 " + gc.stripe }),
-                            h("span", { className: "text-xs font-black " + gc.text }, GROUP_LABELS[g]),
-                            // 수집 진행바
-                            h("div", { className: "flex-1 flex items-center gap-1.5" },
-                                h("div", { className: "flex-1 h-2 rounded-full bg-slate-100 overflow-hidden border border-slate-200" },
-                                    (function() {
-                                        var groupCollected = 0;
-                                        cards.forEach(function(card) {
-                                            for (var ci = 0; ci < collected.length; ci++) {
-                                                if (collected[ci].value === card.value) { groupCollected++; break; }
-                                            }
-                                        });
-                                        var gpct = Math.min(100, Math.round((groupCollected / cards.length) * 100));
-                                        return h(motion.div, {
-                                            initial: { width: 0 },
-                                            animate: { width: gpct + "%" },
-                                            transition: { duration: 0.6 },
-                                            className: "h-full rounded-full " + gc.stripe
-                                        });
-                                    })()
-                                ),
-                                h("span", { className: "text-xs text-slate-400 shrink-0" },
-                                    (function() {
-                                        var cnt = 0;
-                                        cards.forEach(function(card) {
-                                            for (var ci = 0; ci < collected.length; ci++) {
-                                                if (collected[ci].value === card.value) { cnt++; break; }
-                                            }
-                                        });
-                                        return cnt + "/" + cards.length;
-                                    })()
-                                )
+            h("div", { className: "flex-1 min-h-0 grid gap-1 overflow-hidden",
+                style: { gridTemplateColumns: "repeat(" + groupCards.length + ", 1fr)" }
+            },
+                groupCards.map(function(card, idx) {
+                    var isCollected = false;
+                    for (var ci = 0; ci < collected.length; ci++) {
+                        if (collected[ci].value === card.value) { isCollected = true; break; }
+                    }
+                    return h(motion.button, {
+                        key: idx,
+                        whileHover: { scale: 1.08, y: -2 },
+                        whileTap: { scale: 0.92 },
+                        onClick: function() { pickCard(card); },
+                        className: "relative w-full h-full rounded-lg shadow-sm border-2 flex flex-col items-center justify-center gap-0.5 overflow-hidden " +
+                            (isCollected
+                                ? "bg-white border-purple-300 ring-1 ring-purple-200"
+                                : "bg-gradient-to-b from-slate-600 to-slate-900 border-transparent hover:border-purple-300")
+                    },
+                        h("div", { className: "absolute top-0.5 left-0.5 right-0.5 h-1 rounded-full " + gc2.stripe }),
+                        isCollected
+                            ? h(React.Fragment, null,
+                                h("span", { className: "text-3xl leading-none" }, card.emoji),
+                                h("span", { className: "text-sm font-black " + gc2.text + " text-center leading-tight px-1" }, card.value),
+                                h("div", { className: "absolute top-1 right-1 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center text-white font-black text-xs" }, "✓")
                             )
-                        ),
-                        // 카드 그리드 — flex-1로 남은 공간 채움
-                        h("div", {
-                            className: "flex-1 min-h-0 grid gap-1",
-                            style: { gridTemplateColumns: "repeat(" + cards.length + ", 1fr)" }
-                        },
-                            cards.map(function (card, idx) {
-                                var isCollected = false;
-                                for (var ci = 0; ci < collected.length; ci++) {
-                                    if (collected[ci].value === card.value) { isCollected = true; break; }
-                                }
-                                return h(motion.button, {
-                                    key: idx,
-                                    whileHover: { scale: 1.08, y: -2 },
-                                    whileTap: { scale: 0.92 },
-                                    onClick: function () { pickCard(card); },
-                                    className: "relative w-full h-full rounded-lg shadow-sm border-2 flex flex-col items-center justify-center gap-0.5 overflow-hidden " +
-                                        (isCollected
-                                            ? "bg-white border-purple-300 ring-1 ring-purple-200"
-                                            : "bg-gradient-to-b from-slate-600 to-slate-900 border-transparent hover:border-purple-300")
-                                },
-                                    h("div", { className: "absolute top-0.5 left-0.5 right-0.5 h-1 rounded-full " + gc.stripe }),
-                                    isCollected
-                                        ? h(React.Fragment, null,
-                                            h("span", { className: "text-lg leading-none" }, card.emoji),
-                                            h("span", { className: "text-[9px] font-black " + gc.text + " text-center leading-tight px-0.5 line-clamp-2" }, card.value),
-                                            h("div", { className: "absolute top-0.5 right-0.5 w-3 h-3 bg-emerald-500 rounded-full flex items-center justify-center text-white font-black", style: { fontSize: '7px' } }, "✓")
-                                        )
-                                        : h("span", { className: "text-lg" }, "💜")
-                                );
-                            })
-                        )
+                            : h("span", { className: "text-lg" }, "💜")
                     );
                 })
             )
@@ -3286,9 +3312,14 @@ function Stage2_1(props) {
                         h("p", { className: "text-base font-bold text-slate-500" }, "🎙️ 말하고 있어요... 다 말했으면 아래 버튼을 눌러요!"),
                         h("div", { className: "flex gap-3 items-center" },
                             h("button", {
-                                onClick: toggleRec,
+                                onClick: function() {
+                                    if (recRef.current && recording) recRef.current.stop();
+                                    if (exampleIdx + 1 < examples.length) {
+                                        setExampleIdx(exampleIdx + 1); setTranscript(''); setHasTriedRecording(false); setSubStep('record');
+                                    } else { setHasTriedRecording(false); setSubStep('choose'); }
+                                },
                                 className: "flex items-center gap-2 px-6 py-4 rounded-2xl font-black text-xl bg-slate-200 text-slate-600 border-2 border-slate-300"
-                            }, "⏹️ 잠깐 멈추기"),
+                            }, "⏭️ 건너뛰기"),
                             h("button", {
                                 onClick: function() { if (recRef.current) recRef.current.stop(); },
                                 className: "flex items-center gap-2 px-8 py-4 rounded-2xl font-black text-xl bg-emerald-500 text-white shadow-[0_5px_0_rgb(4,120,87)] active:translate-y-1 active:shadow-none"
@@ -3575,10 +3606,18 @@ function Stage2_2(props) {
     var s5 = useState('');                         var reason = s5[0], setReason = s5[1];
     var s6 = useState('mic');                      var reasonMode = s6[0], setReasonMode = s6[1];
     var s7 = useState(false);                      var micRec = s7[0], setMicRec = s7[1];
-    var s8 = useState(DEMO_COLLECTED);             var collected = s8[0], setCollected = s8[1];
+    // 수집한 감정 카드 (props에서 받거나 FEELINGS_POOL 전체 사용)
+    var collectedCards = (props.collectedCards && props.collectedCards.length > 0)
+        ? props.collectedCards
+        : FEELINGS_POOL; // GAS 미연결 시 전체 풀 사용
     var recRef = useRef(null);
 
-    var available = ALL_FEELINGS.filter(function (f) { return collected.indexOf(f.word) !== -1; });
+    // 수집한 카드의 value 목록
+    var collectedValues = collectedCards.map(function(c) { return c.value || c; });
+
+    var available = FEELINGS_POOL.filter(function(f) {
+        return collectedValues.indexOf(f.value) !== -1;
+    });
     var counts = { red: 0, yellow: 0, green: 0 };
     for (var i = 0; i < available.length; i++) counts[available[i].group]++;
 
@@ -3737,7 +3776,14 @@ function Stage2_2(props) {
     // ───── feelingCards: 해당 그룹 감정 카드 선택 ─────
     else if (subStep === 'feelingCards') {
         var gc = openGroup ? GROUP_COLORS[openGroup] : {};
-        var groupCards = ALL_FEELINGS.filter(function(f){ return f.group === openGroup; });
+        // 해당 그룹에서 수집한 카드만 표시
+        var groupCards = FEELINGS_POOL.filter(function(f) {
+            return f.group === openGroup && collectedValues.indexOf(f.value) !== -1;
+        });
+        // 수집한 카드가 없으면 전체 그룹 카드 표시 (GAS 미연결 대비)
+        if (groupCards.length === 0) {
+            groupCards = FEELINGS_POOL.filter(function(f){ return f.group === openGroup; });
+        }
 
         content = h("div", { className: "flex-1 flex flex-col p-4 gap-3 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
@@ -3753,26 +3799,44 @@ function Stage2_2(props) {
             ),
             // 감정 카드 그리드
             h("div", { className: "flex-1 grid gap-3 overflow-y-auto min-h-0", style: { gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))" } },
-                groupCards.map(function(f, i) {
-                    var isChosen = chosenFeelings.some(function(cf){ return cf.word === f.word; });
-                    var tl = TRAFFIC_LIGHTS[f.group];
-                    return h(motion.button, {
-                        key: i,
-                        whileHover: { scale: 1.05, y: -4 },
-                        whileTap: { scale: 0.95 },
-                        onClick: function(){ toggleFeeling(f); },
-                        className: "flex flex-col items-center gap-2 p-4 rounded-2xl border-4 shadow-md transition " +
-                            (isChosen
-                                ? tl.chip + " scale-105"
-                                : "bg-white border-slate-200 hover:border-purple-300")
-                    },
-                        h("span", { className: "text-4xl" }, f.emoji),
-                        h("span", { className: "text-lg font-black text-slate-800" }, f.word),
-                        isChosen && h("div", {
-                            className: "w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs font-black"
-                        }, "✓")
-                    );
-                })
+                groupCards.length === 0
+                    ? h("div", { className: "col-span-full flex flex-col items-center justify-center gap-3 text-slate-400 p-8" },
+                        h("span", { className: "text-5xl" }, "📦"),
+                        h("p", { className: "text-lg font-black" }, "이 그룹에 모은 카드가 없어요!"),
+                        h("p", { className: "text-base font-bold" }, "2단계❶에서 감정 카드를 먼저 모아봐요")
+                    )
+                    : groupCards.map(function(f, i) {
+                        var word = f.value || f.word || '';
+                        var emoji = f.emoji || '💜';
+                        var isChosen = chosenFeelings.some(function(cf){ return (cf.word || cf.value) === word; });
+                        var tl = TRAFFIC_LIGHTS[f.group];
+                        return h(motion.button, {
+                            key: i,
+                            whileHover: { scale: 1.05, y: -4 },
+                            whileTap: { scale: 0.95 },
+                            onClick: function(){
+                                var feeling = { word: word, emoji: emoji, group: f.group };
+                                var idx = -1;
+                                for (var k = 0; k < chosenFeelings.length; k++) {
+                                    if ((chosenFeelings[k].word || chosenFeelings[k].value) === word) { idx = k; break; }
+                                }
+                                var newList = chosenFeelings.slice();
+                                if (idx >= 0) newList.splice(idx, 1);
+                                else newList.push(feeling);
+                                setChosenFeelings(newList);
+                            },
+                            className: "flex flex-col items-center gap-2 p-4 rounded-2xl border-4 shadow-md transition " +
+                                (isChosen
+                                    ? tl.chip + " scale-105"
+                                    : "bg-white border-slate-200 hover:border-purple-300")
+                        },
+                            h("span", { className: "text-4xl" }, emoji),
+                            h("span", { className: "text-lg font-black text-slate-800" }, word),
+                            isChosen && h("div", {
+                                className: "w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs font-black"
+                            }, "✓")
+                        );
+                    })
             ),
             // 선택 확인 + 다음 버튼
             h("div", { className: "flex items-center justify-between shrink-0" },
@@ -4255,13 +4319,6 @@ function Stage3(props) {
     }
 
     function goReview() {
-        // 그림 캡처
-        if (canvasRef.current) {
-            try {
-                var url = canvasRef.current.toDataURL('image/png');
-                setDrawingImage(url);
-            } catch (e) {}
-        }
         setSubStep('review');
     }
 
@@ -4342,80 +4399,100 @@ function Stage3(props) {
 
     // ───── compose ─────
     else if (subStep === 'compose') {
-        content = h("div", { className: "flex-1 flex flex-col p-3 gap-2 min-h-0 overflow-hidden" },
+        content = h("div", { className: "flex-1 flex flex-col p-3 gap-3 min-h-0 overflow-hidden" },
+            // 큰 안내 말풍선
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
                 h("div", { className: "bg-white px-6 py-3 rounded-3xl shadow-xl border-2 border-emerald-200 mt-4" },
-                    h("h2", { className: "text-2xl font-black text-slate-800" }, "오늘의 일기를 직접 써봐요!"),
-                    h("p", { className: "text-2xl text-slate-500 font-bold mt-1" }, "1단계와 2단계에서 배운 것을 떠올리며 자유롭게 적어봐요.")
+                    h("h2", { className: "text-2xl font-black text-slate-800" }, "오늘 일기를 써봐요! ✏️"),
+                    h("p", { className: "text-2xl text-slate-500 font-bold mt-1" }, "선생님이 도와줄게요. 천천히 한 칸씩 적어봐요!")
                 )
             ),
 
-            // 2칸 레이아웃: 왼쪽 = 제목+본문, 오른쪽 = 그림
-            h("div", { className: "flex-1 grid grid-cols-2 gap-3 overflow-hidden min-h-0" },
-                // 왼쪽: 제목 + 본문 (한 일 + 마음 분리)
-                h("div", { className: "bg-white p-4 rounded-[2rem] shadow-xl border-4 border-emerald-200 flex flex-col gap-2 overflow-hidden" },
-                    // 제목
-                    h("div", { className: "shrink-0" },
-                        h("label", { className: "text-sm font-black text-slate-600 mb-1 block" }, "📝 제목"),
-                        h("input", {
-                            type: "text",
-                            value: title,
-                            onChange: function (e) { setTitle(e.target.value); },
-                            placeholder: "예) 친구랑 놀았던 날",
-                            className: "w-full px-3 py-2 text-lg font-black rounded-xl border-2 border-slate-200 focus:border-emerald-400 outline-none"
-                        })
+            // 일기지 — 한 칸으로 통합 (1단계❷ 공책 스타일)
+            h("div", { className: "flex-1 bg-white p-5 md:p-6 rounded-[2rem] shadow-xl border-4 border-emerald-200 flex flex-col gap-4 overflow-y-auto min-h-0" },
+                // 제목 칸
+                h("div", { className: "shrink-0" },
+                    h("label", { className: "text-2xl font-black text-emerald-700 mb-2 flex items-center gap-2" },
+                        h("span", { className: "text-3xl" }, "📝"),
+                        h("span", null, "오늘 일기 제목은?")
                     ),
-                    // 한 일 (언제·어디·누구·무엇)
-                    h("div", { className: "flex-1 flex flex-col min-h-0" },
-                        h("label", { className: "text-sm font-black mb-1 flex items-center gap-1.5" },
-                            h("span", { className: "px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 text-xs" }, "언제"),
-                            h("span", { className: "px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 text-xs" }, "어디서"),
-                            h("span", { className: "px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-xs" }, "누구와"),
-                            h("span", { className: "px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-xs" }, "무엇을"),
-                            h("span", { className: "text-slate-600" }, "한 일")
-                        ),
-                        h("textarea", {
-                            value: bodyAction,
-                            onChange: function (e) { setBodyAction(e.target.value); },
-                            placeholder: "오늘 언제, 어디서, 누구와, 무엇을 했나요?\n예) 오늘 아침에 학교에서 친구들과 책을 읽었다.",
-                            className: "flex-1 min-h-0 px-3 py-2 text-base font-bold rounded-xl border-2 border-amber-200 focus:border-amber-400 outline-none resize-none leading-relaxed bg-amber-50/30"
-                        })
-                    ),
-                    // 마음 (감정)
-                    h("div", { className: "flex-1 flex flex-col min-h-0" },
-                        h("label", { className: "text-sm font-black mb-1 flex items-center gap-1.5" },
-                            h("span", { className: "px-2 py-0.5 rounded-md bg-purple-100 text-purple-700 text-xs" }, "💜 마음"),
-                            h("span", { className: "text-slate-600" }, "내 기분은 어땠을까?")
-                        ),
-                        h("textarea", {
-                            value: bodyFeeling,
-                            onChange: function (e) { setBodyFeeling(e.target.value); },
-                            placeholder: "그때 어떤 마음이 들었나요? 왜 그런 마음이 들었나요?\n예) 책을 읽으니까 마음이 편안하고 즐거웠다.",
-                            className: "flex-1 min-h-0 px-3 py-2 text-base font-bold rounded-xl border-2 border-purple-200 focus:border-purple-400 outline-none resize-none leading-relaxed bg-purple-50/30"
-                        })
-                    ),
-                    h("div", { className: "text-xs text-slate-400 font-bold shrink-0" },
-                        "한 일: " + bodyAction.length + "자 · 마음: " + bodyFeeling.length + "자"
-                    )
+                    h("input", {
+                        type: "text",
+                        value: title,
+                        onChange: function (e) { setTitle(e.target.value); },
+                        placeholder: "예) 즐거운 하루, 신나는 체육시간",
+                        className: "w-full px-5 py-4 text-2xl font-black rounded-2xl border-emerald-200 focus:border-emerald-400 outline-none placeholder:text-slate-300 bg-emerald-50/30",
+                        style: { borderWidth: '4px' }
+                    })
                 ),
-                // 오른쪽: 그림
-                h("div", { className: "bg-white p-4 rounded-[2rem] shadow-xl border-4 border-emerald-200 flex flex-col gap-2" },
-                    h("label", { className: "text-sm font-black text-slate-600" }, "🎨 그림 그리기 (선택)"),
-                    h(DrawBoard, { canvasRefOut: gotCanvas })
+
+                // 한 일 칸
+                h("div", { className: "shrink-0" },
+                    h("label", { className: "text-2xl font-black mb-2 flex items-center gap-2 text-amber-700" },
+                        h("span", { className: "text-3xl" }, "📌"),
+                        h("span", null, "오늘 무엇을 했어요?")
+                    ),
+                    // 도움 힌트
+                    h("div", { className: "flex flex-wrap gap-2 mb-2" },
+                        ['언제', '어디서', '누구와', '무엇을'].map(function(hint, i) {
+                            var colors = ['bg-amber-100 text-amber-700', 'bg-blue-100 text-blue-700', 'bg-emerald-100 text-emerald-700', 'bg-red-100 text-red-700'];
+                            return h("span", {
+                                key: i,
+                                className: "px-3 py-1.5 rounded-lg text-base font-black " + colors[i]
+                            }, hint);
+                        }),
+                        h("span", { className: "text-base font-bold text-slate-400 self-center" }, "← 떠올려봐요")
+                    ),
+                    h("textarea", {
+                        value: bodyAction,
+                        onChange: function (e) { setBodyAction(e.target.value); },
+                        placeholder: "예) 오늘 아침에 학교에서 친구랑 그네를 탔어요.",
+                        rows: 3,
+                        className: "w-full px-5 py-4 text-2xl font-bold rounded-2xl border-amber-200 focus:border-amber-400 outline-none resize-none leading-relaxed bg-amber-50/40 placeholder:text-amber-300",
+                        style: { borderWidth: '4px' }
+                    })
+                ),
+
+                // 마음 칸
+                h("div", { className: "shrink-0" },
+                    h("label", { className: "text-2xl font-black mb-2 flex items-center gap-2 text-purple-700" },
+                        h("span", { className: "text-3xl" }, "💜"),
+                        h("span", null, "어떤 마음이 들었어요?")
+                    ),
+                    // 마음 힌트
+                    h("div", { className: "flex flex-wrap gap-2 mb-2" },
+                        h("span", { className: "px-3 py-1.5 rounded-lg text-base font-black bg-red-100 text-red-700" }, "😢 속상해요"),
+                        h("span", { className: "px-3 py-1.5 rounded-lg text-base font-black bg-amber-100 text-amber-700" }, "🤔 궁금해요"),
+                        h("span", { className: "px-3 py-1.5 rounded-lg text-base font-black bg-emerald-100 text-emerald-700" }, "😊 기뻐요")
+                    ),
+                    h("textarea", {
+                        value: bodyFeeling,
+                        onChange: function (e) { setBodyFeeling(e.target.value); },
+                        placeholder: "예) 그네를 타니까 정말 신나고 즐거웠어요!",
+                        rows: 3,
+                        className: "w-full px-5 py-4 text-2xl font-bold rounded-2xl border-purple-200 focus:border-purple-400 outline-none resize-none leading-relaxed bg-purple-50/40 placeholder:text-purple-300",
+                        style: { borderWidth: '4px' }
+                    })
                 )
             ),
 
-            // 다음 버튼
-            h("div", { className: "flex justify-center shrink-0" },
+            // 다음 버튼 — 친근한 문구
+            h("div", { className: "flex flex-col items-center shrink-0 gap-1" },
                 h("button", {
                     onClick: goReview,
                     disabled: !title.trim() || !bodyAction.trim() || !bodyFeeling.trim(),
-                    className: "px-12 py-3 rounded-2xl text-2xl font-black shadow-md " +
+                    className: "px-14 py-4 rounded-2xl text-2xl font-black shadow-md " +
                         (title.trim() && bodyAction.trim() && bodyFeeling.trim()
                             ? "bg-emerald-500 text-white shadow-[0_6px_0_rgb(4,120,87)] active:translate-y-1 active:shadow-none"
                             : "bg-slate-200 text-slate-400 cursor-not-allowed")
-                }, "일기 미리보기 →")
+                }, "일기 다 썼어요! 👀"),
+                !title.trim() || !bodyAction.trim() || !bodyFeeling.trim()
+                    ? h("p", { className: "text-base font-bold text-slate-400" },
+                        !title.trim() ? "📝 제목을 써주세요" :
+                        !bodyAction.trim() ? "📌 오늘 한 일을 써주세요" :
+                        "💜 마음을 써주세요")
+                    : null
             )
         );
     }
@@ -4446,24 +4523,18 @@ function Stage3(props) {
                     ),
                     // 제목
                     h("h1", { className: "text-3xl font-black text-slate-800 text-center mb-4" }, title),
-                    // 본문 + 그림
-                    h("div", { className: "grid grid-cols-2 gap-5" },
-                        // 본문 — 한 일 + 마음 분리 표시
-                        h("div", { className: "flex flex-col gap-3" },
-                            // 한 일
-                            h("div", { className: "bg-amber-50/60 px-4 py-3 rounded-xl border-l-4 border-amber-300" },
-                                h("p", { className: "text-xs font-black text-amber-600 mb-1" }, "📌 오늘 한 일"),
-                                h("p", { className: "text-lg font-bold text-slate-700 leading-relaxed whitespace-pre-wrap" }, bodyAction)
-                            ),
-                            // 마음
-                            h("div", { className: "bg-purple-50/60 px-4 py-3 rounded-xl border-l-4 border-purple-300" },
-                                h("p", { className: "text-xs font-black text-purple-600 mb-1" }, "💜 내 마음"),
-                                h("p", { className: "text-lg font-bold text-slate-700 leading-relaxed whitespace-pre-wrap" }, bodyFeeling)
-                            )
+                    // 본문 — 한 일 + 마음 분리 표시
+                    h("div", { className: "flex flex-col gap-4 max-w-3xl mx-auto" },
+                        // 한 일
+                        h("div", { className: "bg-amber-50/60 px-6 py-5 rounded-xl border-l-4 border-amber-300" },
+                            h("p", { className: "text-lg font-black text-amber-600 mb-2" }, "📌 오늘 한 일"),
+                            h("p", { className: "text-2xl font-bold text-slate-700 leading-relaxed whitespace-pre-wrap", style: { wordBreak: 'keep-all' } }, bodyAction)
                         ),
-                        drawingImage
-                            ? h("img", { src: drawingImage, alt: "내 그림", className: "rounded-2xl border-4 border-amber-200 shadow-md w-full" })
-                            : h("div", { className: "rounded-2xl border-4 border-dashed border-amber-200 flex items-center justify-center text-amber-400 font-black min-h-[12rem]" }, "(그림 없음)")
+                        // 마음
+                        h("div", { className: "bg-purple-50/60 px-6 py-5 rounded-xl border-l-4 border-purple-300" },
+                            h("p", { className: "text-lg font-black text-purple-600 mb-2" }, "💜 내 마음"),
+                            h("p", { className: "text-2xl font-bold text-slate-700 leading-relaxed whitespace-pre-wrap", style: { wordBreak: 'keep-all' } }, bodyFeeling)
+                        )
                     )
                 )
             ),
@@ -4532,13 +4603,13 @@ function Stage3(props) {
 
     return h("div", { className: "w-full bg-[#F0F7FF] flex flex-col overflow-hidden min-h-0", style: { height: "100dvh" } },
         h(Tutorial, {
-            storageKey: 'tutorial_s3',
+            storageKey: 'tutorial_s3_v3',
             accentColor: 'emerald',
             steps: [
-                { emoji: '📝', title: '일기 제목을 써요!', desc: '오늘 하루를 잘 표현하는 제목을 지어봐요. 짧고 재미있게!' },
-                { emoji: '📄', title: '일기 본문이에요!', desc: '1단계와 2단계에서 만든 문장이 자동으로 들어가 있어요. 고쳐도 좋아요!' },
-                { emoji: '🎨', title: '그림도 그려요!', desc: '오늘 있었던 일을 그림으로 표현해봐요. 마음대로 그려도 돼요!' },
-                { emoji: '📮', title: '선생님께 제출해요!', desc: '다 썼으면 제출 버튼을 눌러봐요. 선생님이 볼 수 있어요!' }
+                { emoji: '📝', title: '제목 한 줄 쓰기', desc: '오늘 하루를 한 마디로! "즐거운 하루"처럼 짧게 적어봐요.' },
+                { emoji: '📌', title: '오늘 한 일 쓰기', desc: '언제·어디서·누구와·무엇을 했나요? 한두 줄이면 충분해요!' },
+                { emoji: '💜', title: '내 마음 쓰기', desc: '그때 기분이 어땠어요? 신났어요? 속상했어요? 솔직하게 적어봐요!' },
+                { emoji: '📮', title: '선생님께 보내기', desc: '다 썼으면 보내기 버튼을 눌러요. 선생님이 잘 봐 줄 거예요!' }
             ]
         }),
         h(StageHeader, {
@@ -5143,7 +5214,8 @@ function App() {
                 updateProgress({ did2_2: true, sentence2: result });
                 goMenu();
             },
-            cards2: progress.cards2
+            cards2: progress.cards2,
+            collectedCards: progress.cards2List || []
         });
 
     } else if (screen === 's3') {
