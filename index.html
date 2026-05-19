@@ -64,7 +64,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbyg0EXQCE01xp4wg_wr-lfRsH9qAg1gt8nslXGWRkTW7WT3GbUTNcuKrlp23cRCr7yLXw/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbzVWXfmj9pWc9ePTIVpcZrrteecnd7mVSQU6R-4O7TP9_tvCfUFjXCAeapZy6Ki1NnGkg/exec';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -816,10 +816,16 @@ function MainMenu(props) {
     var total2 = FEELINGS_POOL.length || 28;
 
     var progresses = [
-        { sub1Done: stage1Sub1Done, sub2Done: stage1Sub2Done, sub2Locked: stage1Sub2Locked, sub2LockReason: stage1Sub2LockReason, stageLocked: false, stageLockReason: '',
-          sub1Count: state.cards1, sub1Total: total1, sub2Count: state.did1_2 ? 1 : 0, sub2Total: 1 },
-        { sub1Done: stage2Sub1Done, sub2Done: stage2Sub2Done, sub2Locked: stage2Sub2Locked, sub2LockReason: stage2Sub2LockReason, stageLocked: stage2Locked, stageLockReason: "선생님이 아직 잠가 놨어요 🔒",
-          sub1Count: state.cards2, sub1Total: total2, sub2Count: state.did2_2 ? 1 : 0, sub2Total: 1 },
+        // 1단계: 낱말 카드 모으기
+        { sub1Done: stage1Sub1Done, sub2Done: false, sub2Locked: false, sub2LockReason: '', stageLocked: false, stageLockReason: '',
+          sub1Count: state.cards1, sub1Total: total1, sub2Count: 0, sub2Total: 1 },
+        // 2단계: 감정 카드 고르기
+        { sub1Done: false, sub2Done: false, sub2Locked: false, sub2LockReason: '', stageLocked: false, stageLockReason: '',
+          sub1Count: 0, sub1Total: 1, sub2Count: 0, sub2Total: 1 },
+        // 3단계: 문장 만들기
+        { sub1Done: stage1Sub2Done, sub2Done: false, sub2Locked: false, sub2LockReason: '', stageLocked: LOCK_SETTINGS.lock_stage1_2, stageLockReason: LOCK_SETTINGS.lock_stage1_2 ? '선생님이 아직 잠가 놨어요 🔒' : '',
+          sub1Count: state.did1_2 ? 1 : 0, sub1Total: 1, sub2Count: 0, sub2Total: 1 },
+        // 4단계: 일기쓰기
         { sub1Done: false, sub2Done: false, sub2Locked: false, sub2LockReason: '', stageLocked: stage3Locked, stageLockReason: stage3LockReason,
           sub1Count: 0, sub1Total: 1, sub2Count: 0, sub2Total: 1 }
     ];
