@@ -42,6 +42,7 @@
   /* ── 그림자 유틸 ── */
   .puffy-shadow-orange { box-shadow: 0 8px 0 -2px rgba(234,88,12,0.25), 0 6px 20px -2px rgba(234,88,12,0.3) }
   .puffy-shadow-purple { box-shadow: 0 8px 0 -2px rgba(126,34,206,0.25), 0 6px 20px -2px rgba(126,34,206,0.3) }
+  .puffy-shadow-blue   { box-shadow: 0 8px 0 -2px rgba(37,99,235,0.25),  0 6px 20px -2px rgba(37,99,235,0.3)  }
   .puffy-shadow-green  { box-shadow: 0 8px 0 -2px rgba(5,150,105,0.25),  0 6px 20px -2px rgba(5,150,105,0.3)  }
   .light-glow-red    { box-shadow: 0 0 20px rgba(239,68,68,0.6),  inset -4px -4px 12px rgba(0,0,0,0.2), inset 4px 4px 12px rgba(255,255,255,0.4) }
   .light-glow-yellow { box-shadow: 0 0 20px rgba(245,158,11,0.6), inset -4px -4px 12px rgba(0,0,0,0.2), inset 4px 4px 12px rgba(255,255,255,0.4) }
@@ -63,7 +64,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbwfWO7HRP-C1aQTYurCsRd3KrkQy1wDYRbU06n9215A_TcAZAUcizwG-LNMSS-x_MqHkQ/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbyRKteYimRaYKtSQRSOJR8oZ9McBo3PkOzomIcXPLUHWwT5Iak_BLev4KnIsfY2Xt0Eew/exec';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -188,26 +189,28 @@ var DEMO_STATES = {
 
 var STAGE_DATA = [
     {
-        number: 1, title: '4요소 모으기', subtitle: '언제·어디·누구·무엇',
-        char: '🧩',
+        number: 1, title: '낱말 카드 모으기', subtitle: '언제·어디서·누구와·무엇을',
+        char: '🃏',
         bgGradFrom: '#FFE0B8', bgGradTo: '#FFCC85',
         innerBg: '#FFF1E2',
         accentBg: '#F97316', accentText: '#9A3412',
         sticker1: '🌅', sticker3: '🏫',
-        sub1: '카드로 배워요',
-        sub2: '카드로 문장 만들어요',
+        single: true,
+        sub1: '카드 모으러 가기',
+        sub2: '',
         shadowClass: 'puffy-shadow-orange'
     },
     {
-        number: 2, title: '마음 신호등', subtitle: '내 마음을 색깔로 표현',
-        char: '🚦',
-        bgGradFrom: '#E9D5FF', bgGradTo: '#D8B4FE',
-        innerBg: '#F5E8FF',
-        accentBg: '#A855F7', accentText: '#6B21A8',
-        sticker1: '😊', sticker3: '🥰',
-        sub1: '감정을 배워요',
-        sub2: '내 마음을 표현해요',
-        shadowClass: 'puffy-shadow-purple'
+        number: 2, title: '문장 만들기', subtitle: '카드로 나만의 문장을 써요',
+        char: '✏️',
+        bgGradFrom: '#DBEAFE', bgGradTo: '#BFDBFE',
+        innerBg: '#EFF6FF',
+        accentBg: '#3B82F6', accentText: '#1E40AF',
+        sticker1: '📖', sticker3: '🖊️',
+        single: true,
+        sub1: '문장 만들러 가기',
+        sub2: '',
+        shadowClass: 'puffy-shadow-blue'
     },
     {
         number: 3, title: '일기쓰기', subtitle: '오늘 일기를 완성해요',
@@ -660,14 +663,14 @@ function Tutorial(props) {
             animate: { opacity: 1, scale: 1 },
             transition: { type: 'spring', stiffness: 300, damping: 24 },
             style: {
-                position: 'absolute',
+                position: 'fixed',
                 top: '50%',
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
                 width: '92%',
                 maxWidth: '820px',
                 pointerEvents: 'auto',
-                zIndex: 51
+                zIndex: 52
             }
         },
             h("div", {
@@ -1028,8 +1031,9 @@ function MainMenu(props) {
                 STAGE_DATA.map(function (stage, i) {
                     // 각 단계의 sub1/sub2 이동 키 매핑
                     var subMap = [
-                        { sub1: 's1_1', sub2: 's1_2' },
-                        { sub1: 's2_1', sub2: 's2_2' },
+                        { sub1: 's1_1', sub2: 's1_2' },   // 1단계: 카드 모으기
+                        { sub1: 's1_2', sub2: 's1_2' },   // 2단계: 문장 만들기
+                        { sub1: 's3',   sub2: 's3'   },   // 3단계: 일기쓰기
                         { sub1: 's3',   sub2: 's3'   }
                     ][i];
                     return h(StageCard, {
@@ -5734,172 +5738,207 @@ function MicPermissionScreen(props) {
 function LoginScreen(props) {
     var onLogin = props.onLogin;
 
+    var sPage = useState(0);  var page = sPage[0], setPage = sPage[1];
+    // page 0: 앱 소개  1: 음성녹음 안내  2: 학생 선택
+
     var s1 = useState([]);          var students = s1[0], setStudents = s1[1];
     var s2 = useState('loading');   var status = s2[0], setStatus = s2[1];
     var s3 = useState('');          var selectedId = s3[0], setSelectedId = s3[1];
     var s4 = useState('');          var errorMsg = s4[0], setErrorMsg = s4[1];
-    // status: 'loading' | 'ok' | 'error' | 'nogas'
+    var sMicOk = useState(null);    var micOk = sMicOk[0], setMicOk = sMicOk[1];
 
     useEffect(function() {
         var isGasConfigured = GAS_URL.indexOf('여기에') === -1 &&
                               GAS_URL.indexOf('script.google.com') !== -1;
         if (!isGasConfigured) {
             setStudents([
-                { id: 1, name: '김민서' },
-                { id: 2, name: '이준혁' },
-                { id: 3, name: '박소연' },
-                { id: 4, name: '최지우' },
-                { id: 5, name: '정하은' },
-                { id: 6, name: '윤서준' },
+                { id: 1, name: '김민서' }, { id: 2, name: '이준혁' },
+                { id: 3, name: '박소연' }, { id: 4, name: '최지우' },
+                { id: 5, name: '정하은' }, { id: 6, name: '윤서준' },
             ]);
             setStatus('nogas');
-            setErrorMsg('config.js 파일의 GAS_URL을 설정해주세요');
             return;
         }
         gasGet('getStudents')
             .then(function(d) {
-                if (d && d.students && d.students.length > 0) {
-                    setStudents(d.students);
-                    setStatus('ok');
-                } else if (d && d.error) {
-                    setStatus('error');
-                    setErrorMsg('GAS 오류: ' + d.error);
-                } else {
-                    setStatus('error');
-                    setErrorMsg('명단이 비어있거나 응답 형식이 잘못됨: ' + JSON.stringify(d).substring(0, 100));
-                }
+                if (d && d.students && d.students.length > 0) { setStudents(d.students); setStatus('ok'); }
+                else { setStatus('error'); setErrorMsg('명단을 불러오지 못했어요: ' + JSON.stringify(d).substring(0, 80)); }
             })
-            .catch(function(err) {
-                setStatus('error');
-                setErrorMsg('GAS 통신 실패: ' + (err.message || err));
-            });
+            .catch(function(err) { setStatus('error'); setErrorMsg('연결 실패: ' + (err.message || err)); });
     }, []);
 
-    // 선택된 학생 객체
     var selectedStudent = null;
     for (var i = 0; i < students.length; i++) {
-        if (String(students[i].id) === String(selectedId)) {
-            selectedStudent = students[i];
-            break;
-        }
+        if (String(students[i].id) === String(selectedId)) { selectedStudent = students[i]; break; }
     }
 
-    function handleConfirm() {
-        if (selectedStudent) onLogin(selectedStudent);
+    function requestMic() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { setMicOk(false); return; }
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(function(stream) {
+                stream.getTracks().forEach(function(t){ t.stop(); });
+                setMicOk(true);
+                setTimeout(function(){ setPage(2); }, 800);
+            })
+            .catch(function(){ setMicOk(false); });
     }
 
-    return h("div", {
-        className: "w-full flex flex-col items-center justify-center gap-4 p-4 md:p-6 overflow-hidden min-h-0",
-        style: {
-            height: '100dvh',
-            background: 'linear-gradient(160deg, #FFF8E7 0%, #F0F4FF 40%, #FFF0F5 100%)'
-        }
-    },
-        // 연필요정 + 제목
-        h("div", { className: "flex flex-col items-center gap-2 shrink-0" },
+    var bg = 'linear-gradient(160deg, #FFF8E7 0%, #F0F4FF 40%, #FFF0F5 100%)';
+    var wrapStyle = {
+        height: '100dvh',
+        background: bg
+    };
+
+    // ──────────────────────────────────────────
+    // 페이지 0: 앱 소개
+    // ──────────────────────────────────────────
+    if (page === 0) {
+        return h("div", { className: "w-full flex flex-col items-center justify-center p-6 gap-6 overflow-hidden", style: wrapStyle },
+            // 연필요정
             h(motion.div, {
-                animate: { y: [0, -8, 0], rotate: [-2, 2, -2] },
-                transition: { repeat: Infinity, duration: 3, ease: "easeInOut" }
-            },
-                h("svg", { width: "90", height: "110", viewBox: "0 0 120 150", fill: "none" },
-                    h("path", { d: "M45 55C25 45 15 75 30 85C15 95 20 115 40 105", stroke: "#A0AEC0", strokeWidth: "4", strokeLinecap: "round" }),
-                    h("path", { d: "M75 55C95 45 105 75 90 85C105 95 100 115 80 105", stroke: "#A0AEC0", strokeWidth: "4", strokeLinecap: "round" }),
-                    h("path", { d: "M45 30L75 30V110L60 135L45 110V30Z", fill: "#F6AD55", stroke: "#4A5568", strokeWidth: "2" }),
-                    h("path", { d: "M45 110L60 135L75 110H45Z", fill: "#FBD38D", stroke: "#4A5568", strokeWidth: "2" }),
-                    h("path", { d: "M54 125L60 135L66 125H54Z", fill: "#2D3748" }),
-                    h("path", { d: "M45 15C45 10 75 10 75 15V30H45V15Z", fill: "#FBB6CE", stroke: "#4A5568", strokeWidth: "2" }),
-                    h("circle", { cx: "53", cy: "65", r: "2.5", fill: "#2D3748" }),
-                    h("circle", { cx: "67", cy: "65", r: "2.5", fill: "#2D3748" }),
-                    h("path", { d: "M56 78C56 78 60 82 64 78", stroke: "#2D3748", strokeWidth: "2", strokeLinecap: "round" })
+                animate: { y: [0, -10, 0] },
+                transition: { repeat: Infinity, duration: 2.5, ease: "easeInOut" }
+            }, h(PencilFairy, null)),
+
+            // 제목
+            h("div", { className: "text-center" },
+                h("h1", { className: "text-5xl font-black text-slate-800" }, "✏️ 한 문장 일기장"),
+                h("p", { className: "text-2xl font-bold text-slate-500 mt-2" }, "오늘 하루를 한 문장으로 표현해봐요!")
+            ),
+
+            // 3단계 소개 카드
+            h("div", { className: "flex gap-5 flex-wrap justify-center" },
+                [
+                    { num: '1단계', icon: '🃏', title: '낱말 카드 모으기', desc: '언제·어디서·누구와·무엇을\n카드를 모아봐요!', color: 'from-amber-100 to-orange-100', border: 'border-orange-300', text: 'text-orange-700' },
+                    { num: '2단계', icon: '✏️', title: '문장 만들기',       desc: '모은 카드로\n나만의 문장을 써봐요!',   color: 'from-blue-100 to-indigo-100',  border: 'border-blue-300',   text: 'text-blue-700'   },
+                    { num: '3단계', icon: '📔', title: '일기 쓰기',         desc: '문장을 모아\n일기를 완성해봐요!',     color: 'from-green-100 to-emerald-100',border: 'border-green-300',  text: 'text-emerald-700'}
+                ].map(function(item) {
+                    return h(motion.div, {
+                        key: item.num,
+                        whileHover: { y: -6, scale: 1.03 },
+                        className: "bg-gradient-to-b " + item.color + " rounded-[2rem] border-4 " + item.border + " p-6 flex flex-col items-center gap-3 w-56 shadow-lg"
+                    },
+                        h("span", { className: "text-5xl" }, item.icon),
+                        h("div", { className: "text-center" },
+                            h("p", { className: "text-sm font-black " + item.text + " mb-1" }, item.num),
+                            h("p", { className: "text-xl font-black text-slate-800" }, item.title),
+                            h("p", { className: "text-base font-bold text-slate-500 mt-1 whitespace-pre-line" }, item.desc)
+                        )
+                    );
+                })
+            ),
+
+            // 시작 버튼
+            h(motion.button, {
+                whileHover: { scale: 1.05 },
+                whileTap: { scale: 0.97 },
+                onClick: function(){ setPage(1); },
+                className: "px-16 py-5 bg-orange-500 text-white text-3xl font-black rounded-3xl shadow-[0_8px_0_rgb(154,52,18)]"
+            }, "시작하기! 🎉")
+        );
+    }
+
+    // ──────────────────────────────────────────
+    // 페이지 1: 음성 녹음 안내
+    // ──────────────────────────────────────────
+    if (page === 1) {
+        return h("div", { className: "w-full flex flex-col items-center justify-center p-6 gap-6 overflow-hidden", style: wrapStyle },
+            h("div", { className: "text-center" },
+                h("div", { className: "text-8xl mb-4" }, micOk === true ? "✅" : micOk === false ? "❌" : "🎤"),
+                h("h2", { className: "text-4xl font-black text-slate-800" }, "마이크를 사용할게요!"),
+                h("p", { className: "text-2xl font-bold text-slate-500 mt-3 whitespace-pre-line" },
+                    "낱말 카드를 배울 때\n마이크로 따라 말하면 돼요!\n\n아래 버튼을 눌러 허용해줘요 🙏"
                 )
             ),
-            h("h1", { className: "text-5xl font-black text-slate-800" }, "한 문장 일기장 ✏️"),
-            h("p", { className: "text-xl font-bold text-slate-500" }, "내 이름을 골라봐요!")
+
+            micOk === false && h("div", { className: "bg-red-50 border-2 border-red-200 rounded-2xl px-6 py-4 text-center" },
+                h("p", { className: "text-xl font-black text-red-700" }, "마이크 허용이 안 됐어요"),
+                h("p", { className: "text-base font-bold text-red-500 mt-1" }, "브라우저 설정에서 마이크를 허용하거나\n건너뛰고 다음으로 가도 괜찮아요!")
+            ),
+
+            h("div", { className: "flex flex-col items-center gap-3" },
+                micOk === true
+                    ? h("div", { className: "px-8 py-4 bg-emerald-500 text-white text-2xl font-black rounded-3xl" }, "🎤 마이크 허용됐어요!")
+                    : h(motion.button, {
+                        whileHover: { scale: 1.05 },
+                        whileTap: { scale: 0.97 },
+                        onClick: requestMic,
+                        className: "px-12 py-5 bg-red-500 text-white text-3xl font-black rounded-3xl shadow-[0_8px_0_rgb(153,27,27)]"
+                    }, "🎤 마이크 허용하기"),
+                h("button", {
+                    onClick: function(){ setPage(2); },
+                    className: "text-xl font-bold text-slate-400 hover:text-slate-600 underline"
+                }, "건너뛰고 다음으로 →")
+            ),
+
+            // 이전
+            h("button", {
+                onClick: function(){ setPage(0); },
+                className: "text-base font-bold text-slate-400 hover:text-slate-600"
+            }, "← 처음으로")
+        );
+    }
+
+    // ──────────────────────────────────────────
+    // 페이지 2: 학생 이름 선택
+    // ──────────────────────────────────────────
+    return h("div", { className: "w-full flex flex-col items-center justify-center p-6 gap-6 overflow-hidden", style: wrapStyle },
+        h("div", { className: "text-center shrink-0" },
+            h("div", { className: "text-6xl mb-2" }, "👋"),
+            h("h2", { className: "text-4xl font-black text-slate-800" }, "내 이름을 찾아봐요!"),
+            h("p", { className: "text-2xl font-bold text-slate-500 mt-1" }, "이름을 눌러서 선택해요")
         ),
 
-        // 드롭다운 카드
-        h("div", { className: "bg-white rounded-[2rem] shadow-2xl border-4 border-amber-200 p-5 w-full max-w-xl flex flex-col gap-4" },
-
-            // 로딩
-            status === 'loading' && h("div", { className: "flex flex-col items-center gap-3 py-6" },
+        // 학생 목록
+        h("div", { className: "flex-1 overflow-y-auto w-full max-w-2xl min-h-0" },
+            status === 'loading' && h("div", { className: "flex flex-col items-center justify-center h-32 gap-3" },
                 h(motion.div, {
                     animate: { rotate: 360 },
-                    transition: { repeat: Infinity, duration: 1, ease: "linear" },
-                    className: "text-5xl"
-                }, "⏳"),
-                h("p", { className: "text-xl font-black text-slate-500" }, "명단을 불러오는 중...")
+                    transition: { repeat: Infinity, duration: 1, ease: 'linear' },
+                    className: "w-12 h-12 border-4 border-orange-300 border-t-orange-600 rounded-full"
+                }),
+                h("p", { className: "text-xl font-black text-slate-500" }, "명단 불러오는 중...")
             ),
-
-            // 드롭다운
-            (status === 'ok' || status === 'nogas') && h("div", { className: "flex flex-col gap-4" },
-                status === 'nogas' && h("p", {
-                    className: "text-xs font-bold text-amber-600 text-center bg-amber-50 py-2 rounded-xl"
-                }, "⚠️ GAS 미연결 — 데모 명단입니다"),
-
-                h("label", { className: "text-lg font-black text-slate-700" }, "🎒 내 이름"),
-                h("select", {
-                    value: selectedId,
-                    onChange: function(e) { setSelectedId(e.target.value); },
-                    className: "w-full text-xl font-black text-slate-800 px-4 py-3 rounded-2xl border-4 " +
-                        (selectedId ? "border-amber-400 bg-amber-50" : "border-slate-300 bg-slate-50") +
-                        " focus:outline-none focus:border-amber-500 cursor-pointer",
-                    style: { appearance: 'auto' }
-                },
-                    h("option", { value: "" }, "▼ 이름을 골라주세요"),
-                    students.map(function(st) {
-                        return h("option", { key: st.id, value: String(st.id) },
-                            st.id + "번 " + st.name
-                        );
-                    })
-                ),
-
-                // 선택된 학생 프리뷰
-                selectedStudent
-                    ? h(motion.div, {
-                        initial: { scale: 0.9, opacity: 0 },
-                        animate: { scale: 1, opacity: 1 },
-                        className: "flex items-center gap-4 px-6 py-4 bg-amber-50 border-4 border-amber-300 rounded-2xl"
-                    },
-                        h("div", { className: "w-16 h-16 bg-gradient-to-br from-amber-200 to-orange-300 rounded-full flex items-center justify-center text-3xl border-4 border-white shadow-md" }, "🎒"),
-                        h("div", null,
-                            h("p", { className: "text-sm font-black text-amber-600" }, "안녕, 친구!"),
-                            h("p", { className: "text-3xl font-black text-slate-800" }, selectedStudent.name)
-                        )
-                    )
-                    : h("div", { className: "flex items-center justify-center gap-2 px-6 py-4 bg-slate-50 border-4 border-dashed border-slate-200 rounded-2xl" },
-                        h("span", { className: "text-3xl" }, "👆"),
-                        h("p", { className: "text-lg font-bold text-slate-400" }, "위에서 이름을 골라봐요!")
-                    ),
-
-                // 확인 버튼
-                h("button", {
-                    onClick: handleConfirm,
-                    disabled: !selectedStudent,
-                    className: "w-full py-4 rounded-2xl text-2xl font-black transition " +
-                        (selectedStudent
-                            ? "bg-amber-500 text-white shadow-[0_8px_0_rgb(154,52,18)] active:translate-y-1 active:shadow-none cursor-pointer"
-                            : "bg-slate-200 text-slate-400 cursor-not-allowed")
-                }, selectedStudent ? ("시작하기! 🎉") : "이름을 먼저 골라주세요")
+            (status === 'ok' || status === 'nogas') && h("div", { className: "grid grid-cols-3 gap-3 p-2" },
+                students.map(function(st) {
+                    var isSelected = String(st.id) === String(selectedId);
+                    return h(motion.button, {
+                        key: st.id,
+                        whileHover: { scale: 1.04, y: -3 },
+                        whileTap: { scale: 0.97 },
+                        onClick: function(){ setSelectedId(String(st.id)); },
+                        className: "py-5 px-4 rounded-3xl text-2xl font-black border-4 shadow-md transition-all " +
+                            (isSelected
+                                ? "bg-orange-500 text-white border-orange-600 shadow-[0_6px_0_rgb(154,52,18)]"
+                                : "bg-white text-slate-700 border-slate-200 hover:border-orange-300")
+                    }, st.name);
+                })
             ),
-
-            // 에러
-            status === 'error' && h("div", { className: "flex flex-col items-center gap-4 py-6" },
-                h("div", { className: "text-5xl" }, "😢"),
-                h("p", { className: "text-xl font-black text-slate-600 text-center" },
-                    "명단을 불러오지 못했어요.", h("br", null), "선생님께 말씀해주세요!"
-                ),
-                errorMsg && h("div", { className: "w-full px-4 py-3 bg-red-50 border-2 border-red-200 rounded-xl" },
-                    h("p", { className: "text-xs font-bold text-red-700 break-all" }, errorMsg)
-                ),
-                h("p", { className: "text-xs text-slate-400 font-bold" }, "현재 GAS_URL: " + GAS_URL.substring(0, 60) + "...")
+            status === 'error' && h("div", { className: "bg-red-50 border-2 border-red-200 rounded-2xl p-4 text-center" },
+                h("p", { className: "text-xl font-black text-red-700" }, "⚠️ 명단을 불러오지 못했어요"),
+                h("p", { className: "text-base font-bold text-red-500 mt-2 break-all" }, errorMsg)
             )
-        )
-    );
-}
+        ),
 
-// ═══════════════════════════════════════════════
-// 최상위 App (라우터)
-// ═══════════════════════════════════════════════
+        // 확인 버튼
+        h(motion.button, {
+            whileHover: selectedStudent ? { scale: 1.04 } : {},
+            whileTap: selectedStudent ? { scale: 0.97 } : {},
+            onClick: function(){ if (selectedStudent) onLogin(selectedStudent); },
+            disabled: !selectedStudent,
+            className: "w-full max-w-sm py-5 rounded-3xl text-3xl font-black shadow-lg shrink-0 " +
+                (selectedStudent
+                    ? "bg-orange-500 text-white shadow-[0_8px_0_rgb(154,52,18)]"
+                    : "bg-slate-200 text-slate-400 cursor-not-allowed")
+        }, selectedStudent ? selectedStudent.name + " 시작! 🎉" : "이름을 골라주세요"),
+
+        // 이전
+        h("button", {
+            onClick: function(){ setPage(1); },
+            className: "text-base font-bold text-slate-400 hover:text-slate-600 shrink-0"
+        }, "← 이전")
+        );
+}
 function App() {
     // screen: 'login' | 'menu' | 's1_1' | 's1_2' | 's2_1' | 's2_2' | 's3'
     var s1 = useState('login');
@@ -6051,19 +6090,16 @@ function App() {
             lockVer: lockVer,
             onNavigate: function(stageNum, sub) {
                 // 잠금 체크
-                if (stageNum === '1' && sub === '2' && LOCK_SETTINGS.lock_stage1_2) return;
-                if (stageNum === '2' && sub === '1' && LOCK_SETTINGS.lock_stage2_1) return;
-                if (stageNum === '2' && sub === '2' && LOCK_SETTINGS.lock_stage2_2) return;
+                if (stageNum === '1' && LOCK_SETTINGS.lock_stage1_2) return;
+                if (stageNum === '2' && LOCK_SETTINGS.lock_stage1_2) return;
                 if (stageNum === '3' && LOCK_SETTINGS.lock_stage3) return;
 
                 // 화면 키 결정
-                var screen;
-                if      (stageNum === '1' && sub === '1') screen = 's1_1';
-                else if (stageNum === '1' && sub === '2') screen = 's1_2';
-                else if (stageNum === '2' && sub === '1') screen = 's2_1';
-                else if (stageNum === '2' && sub === '2') screen = 's2_2';
-                else if (stageNum === '3')                screen = 's3';
-                if (screen) goTo(screen);
+                var sc;
+                if      (stageNum === '1') sc = 's1_1';   // 1단계: 카드 모으기
+                else if (stageNum === '2') sc = 's1_2';   // 2단계: 문장 만들기
+                else if (stageNum === '3') sc = 's3';     // 3단계: 일기쓰기
+                if (sc) goTo(sc);
             },
             onChangeStudent: goLogin
         });
@@ -6132,72 +6168,6 @@ function App() {
             cards1: progress.cards1,
             collectedCards: progress.cards1List || [],
             previousSentence: progress.sentence1
-        });
-
-    } else if (screen === 's2_1') {
-        content = h(Stage2_1, {
-            onBack: goMenu,
-            onChangeStage: function(key) { goTo(key); },
-            collectedCards: progress.cards2List || [],
-            onComplete: function(newCards) {
-                // 감정 카드 누적 병합 (value 같으면 중복)
-                var existing = progress.cards2List || [];
-                var incoming = Array.isArray(newCards) ? newCards : [];
-
-                // 새로 추가된 카드만 추출 (시트에는 새 카드만 누가)
-                var addedCards = [];
-                incoming.forEach(function(nc) {
-                    var dup = false;
-                    for (var i = 0; i < existing.length; i++) {
-                        if (existing[i].value === nc.value) { dup = true; break; }
-                    }
-                    if (!dup) addedCards.push(nc);
-                });
-
-                // GAS에 새 카드만 전송
-                if (addedCards.length > 0) {
-                    try {
-                        gasPost({
-                            type: 'saveCard',
-                            studentId: student ? student.id : '',
-                            studentName: student ? student.name : '',
-                            stage: '2단계❶',
-                            cards: addedCards
-                        }).catch(function(){});
-                    } catch(e) {}
-                }
-
-                // 병합된 전체 목록 저장
-                var merged = existing.concat(addedCards);
-                updateProgress({
-                    cards2: merged.length,
-                    cards2List: merged
-                });
-                goMenu();
-            }
-        });
-
-    } else if (screen === 's2_2') {
-        content = h(Stage2_2, {
-            onBack: goMenu,
-            onChangeStage: function(key) { goTo(key); },
-            onComplete: function(result) {
-                // 감정 문장 완성 기록 → 학습문장 시트
-                try {
-                    gasPost({
-                        type: 'saveSentence',
-                        studentId: student ? student.id : '',
-                        studentName: student ? student.name : '',
-                        stage: '2단계❷',
-                        sentence2: result
-                    }).catch(function(){});
-                } catch(e) {}
-                updateProgress({ did2_2: true, sentence2: result });
-                goMenu();
-            },
-            cards2: progress.cards2,
-            collectedCards: progress.cards2List || [],
-            previousSentence: progress.sentence2
         });
 
     } else if (screen === 's3') {
