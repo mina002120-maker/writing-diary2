@@ -64,7 +64,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbzVWXfmj9pWc9ePTIVpcZrrteecnd7mVSQU6R-4O7TP9_tvCfUFjXCAeapZy6Ki1NnGkg/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbx03ayYlGVOCjlAVEvLE2RsjpTPpITIEBB90uFOfEgJOG2LyHJxuxLEZj6vaNEs-50Xgg/exec';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -878,21 +878,22 @@ function MainMenu(props) {
             // 단계 소개 배너
             h("div", { className: "flex gap-2 shrink-0" },
                 [
-                    { num: '1단계', icon: '🃏', title: '낱말 카드 모으기', desc: '언제·어디서·누구와·무엇을 카드로 배워요', bg: 'bg-orange-50', border: 'border-orange-300', text: 'text-orange-700', badge: 'bg-orange-500' },
-                    { num: '2단계', icon: '✏️', title: '문장 만들기',       desc: '모은 카드로 나만의 문장을 써봐요',        bg: 'bg-blue-50',   border: 'border-blue-300',   text: 'text-blue-700',   badge: 'bg-blue-500'   },
-                    { num: '3단계', icon: '📔', title: '일기 쓰기',         desc: '오늘 있었던 일을 일기로 완성해요',       bg: 'bg-emerald-50',border: 'border-emerald-300',text: 'text-emerald-700',badge: 'bg-emerald-500'}
+                    { num: '1단계', icon: '🃏', title: '낱말 카드', desc: '언제·어디서·누구와·무엇을 카드로 배워요', bg: 'bg-orange-50', border: 'border-orange-300', text: 'text-orange-700', badge: 'bg-orange-500' },
+                    { num: '2단계', icon: '🚦', title: '감정 고르기', desc: '신호등으로 내 마음을 표현해봐요',        bg: 'bg-purple-50', border: 'border-purple-300', text: 'text-purple-700', badge: 'bg-purple-500' },
+                    { num: '3단계', icon: '✏️', title: '문장 만들기', desc: '모은 카드로 나만의 문장을 써봐요',        bg: 'bg-blue-50',   border: 'border-blue-300',   text: 'text-blue-700',   badge: 'bg-blue-500'   },
+                    { num: '4단계', icon: '📔', title: '일기 쓰기',  desc: '오늘 있었던 일을 일기로 완성해요',      bg: 'bg-emerald-50',border: 'border-emerald-300',text: 'text-emerald-700',badge: 'bg-emerald-500'}
                 ].map(function(item) {
                     return h("div", {
                         key: item.num,
-                        className: "flex-1 " + item.bg + " border-2 " + item.border + " rounded-2xl px-4 py-2.5 flex items-center gap-3"
+                        className: "flex-1 " + item.bg + " border-2 " + item.border + " rounded-2xl px-3 py-2 flex items-center gap-2"
                     },
-                        h("span", { className: "text-2xl shrink-0" }, item.icon),
+                        h("span", { className: "text-xl shrink-0" }, item.icon),
                         h("div", { className: "min-w-0" },
                             h("div", { className: "flex items-center gap-1.5 mb-0.5" },
                                 h("span", { className: "text-xs font-black text-white px-2 py-0.5 rounded-full " + item.badge }, item.num),
-                                h("span", { className: "text-base font-black " + item.text }, item.title)
+                                h("span", { className: "text-sm font-black " + item.text }, item.title)
                             ),
-                            h("p", { className: "text-sm font-bold text-slate-500 truncate" }, item.desc)
+                            h("p", { className: "text-xs font-bold text-slate-500 truncate" }, item.desc)
                         )
                     );
                 })
@@ -900,25 +901,15 @@ function MainMenu(props) {
 
             h("div", { className: "flex-1 grid grid-cols-4 gap-2 md:gap-4 min-h-0 overflow-hidden" },
                 STAGE_DATA.map(function (stage, i) {
-                    // 각 단계의 sub1/sub2 이동 키 매핑
-                    var subMap = [
-                        { sub1: 's1_1', sub2: 's1_1' },   // 1단계: 카드 모으기
-                        { sub1: 's2_feeling', sub2: 's2_feeling' }, // 2단계: 감정 고르기
-                        { sub1: 's1_2', sub2: 's1_2' },   // 3단계: 문장 만들기
-                        { sub1: 's3',   sub2: 's3'   },   // 4단계: 일기쓰기
-                        { sub1: 's3',   sub2: 's3'   }
-                    ][i];
+                    var screenKeys = ['s1_1', 's2_feeling', 's1_2', 's3'];
+                    var screenKey = screenKeys[i] || 's1_1';
                     return h(StageCard, {
                         key: stage.number,
                         stage: stage,
-                        progress: progresses[i],
-                        onClick: function () { navigateToStage(stage.number); },
-                        onClickSub1: (function(sn) { return function() {
-                            onNavigate(String(sn), sn === 3 ? null : '1');
-                        }; })(stage.number),
-                        onClickSub2: (function(sn) { return function() {
-                            onNavigate(String(sn), sn === 3 ? null : '2');
-                        }; })(stage.number)
+                        progress: progresses[i] || { stageLocked: false, stageLockReason: '', sub1Done: false, sub2Done: false, sub2Locked: false, sub2LockReason: '', sub1Count: 0, sub1Total: 1, sub2Count: 0, sub2Total: 1 },
+                        onClick: (function(idx) { return function() { onNavigate(String(idx + 1)); }; })(i),
+                        onClickSub1: (function(idx) { return function() { onNavigate(String(idx + 1)); }; })(i),
+                        onClickSub2: (function(idx) { return function() { onNavigate(String(idx + 1)); }; })(i)
                     });
                 })
             )    // grid 닫기
