@@ -64,7 +64,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbwiHRTaBDEO0Jr9Mhj9FtoAIbCCqJ1R-IlvlyaWHEIqTgVumcyScylcGAafPpBnaGxpyQ/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbyg0EXQCE01xp4wg_wr-lfRsH9qAg1gt8nslXGWRkTW7WT3GbUTNcuKrlp23cRCr7yLXw/exec';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -6168,7 +6168,12 @@ function App() {
 
     function doLogin(st) {
         setStudent(st);
-        var saved = lsGet('diary_progress_' + st.id, null);
+        var saved = null;
+        try {
+            saved = lsGet('diary_progress_' + st.id, null);
+            // 저장된 데이터가 INIT_PROGRESS 구조와 맞는지 검증
+            if (saved && typeof saved !== 'object') saved = null;
+        } catch(e) { saved = null; }
         var prog = saved
             ? Object.assign({}, INIT_PROGRESS, saved)
             : Object.assign({}, INIT_PROGRESS, { studentId: st.id, studentName: st.name });
@@ -6390,7 +6395,36 @@ function App() {
     return h('div', { className: 'w-full overflow-hidden bg-[#F0F7FF]', style: { height: '100dvh' } }, content);
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+// 에러 경계 — 앱 크래시 시 안내 화면 표시
+class ErrorBoundary extends React.Component {
+    constructor(props) { super(props); this.state = { hasError: false, error: null }; }
+    static getDerivedStateFromError(error) { return { hasError: true, error: error }; }
+    render() {
+        if (this.state.hasError) {
+            return React.createElement('div', {
+                style: { height:'100dvh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'1rem', padding:'2rem', background:'#fff7ed' }
+            },
+                React.createElement('div', { style: { fontSize:'4rem' } }, '⚠️'),
+                React.createElement('h2', { style: { fontSize:'1.5rem', fontWeight:900, color:'#c2410c' } }, '앱을 불러오는 중 오류가 발생했어요'),
+                React.createElement('p', { style: { fontSize:'1rem', color:'#64748b', maxWidth:'400px', textAlign:'center' } },
+                    String(this.state.error)
+                ),
+                React.createElement('button', {
+                    onClick: function() {
+                        try { localStorage.clear(); } catch(e) {}
+                        location.reload();
+                    },
+                    style: { padding:'0.75rem 2rem', background:'#f97316', color:'white', borderRadius:'1rem', fontWeight:900, fontSize:'1.1rem', border:'none', cursor:'pointer' }
+                }, '🔄 새로고침')
+            );
+        }
+        return this.props.children;
+    }
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+    React.createElement(ErrorBoundary, null, React.createElement(App))
+);
 </script>
 </body>
 </html>
