@@ -64,7 +64,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbx7BKZMju_dxnGTzONb0b0fiA1Ds6BZUc3EyzKOXZs9sac0x2OMPt0QwyVBITZ6LemlqA/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbwiHRTaBDEO0Jr9Mhj9FtoAIbCCqJ1R-IlvlyaWHEIqTgVumcyScylcGAafPpBnaGxpyQ/exec';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -1532,7 +1532,18 @@ function Stage1_1(props) {
     var st9  = useState(false);      var showConfetti = st9[0], setShowConfetti = st9[1];
     var st10 = useState(false);      var mustRetry = st10[0], setMustRetry = st10[1];
     var st11 = useState([]);         var finalCards = st11[0], setFinalCards = st11[1]; // 완료 시 전달할 카드 목록
+    // 감정 더하기 state (훅 규칙: 함수 최상단에 선언)
+    var stFG = useState('red');      var feelGroup = stFG[0], setFeelGroup = stFG[1];
+    var stFP = useState([]);         var feelPicked = stFP[0], setFeelPicked = stFP[1];
     var recRef = useRef(null);
+
+    // 감정 더하기 토글
+    function toggleFeel(f) {
+        var w = f.value || '';
+        var idx = feelPicked.indexOf(w);
+        if (idx >= 0) { var n = feelPicked.slice(); n.splice(idx, 1); setFeelPicked(n); }
+        else setFeelPicked(feelPicked.concat([w]));
+    }
 
     // examples: drawn 단어에 맞는 예시문장 배열
     var examples = (function() {
@@ -2179,24 +2190,12 @@ function Stage1_1(props) {
 
     // ───── subStep: feeling (감정 더하기) ─────
     else if (subStep === 'feeling') {
-        var sGroup2 = useState('red');
-        var feelGroup = sGroup2[0], setFeelGroup = sGroup2[1];
-        var sPicked2 = useState([]);
-        var feelPicked = sPicked2[0], setFeelPicked = sPicked2[1];
-
         var FEEL_GROUPS = [
             { g:'red',    label:'속상하거나\n화나는 마음', color:'#EF4444', glow:'rgba(239,68,68,0.6)'   },
             { g:'yellow', label:'평범하거나\n궁금한 마음', color:'#F59E0B', glow:'rgba(245,158,11,0.6)'  },
             { g:'green',  label:'기쁘고\n즐거운 마음',    color:'#10B981', glow:'rgba(16,185,129,0.6)'  }
         ];
         var groupCards2 = FEELINGS_POOL.filter(function(f){ return f.group === feelGroup; });
-
-        function toggleFeel(f) {
-            var w = f.value || '';
-            var idx = feelPicked.indexOf(w);
-            if (idx >= 0) { var n = feelPicked.slice(); n.splice(idx,1); setFeelPicked(n); }
-            else setFeelPicked(feelPicked.concat([w]));
-        }
 
         content = h("div", { className: "flex-1 flex flex-col p-4 gap-3 min-h-0 overflow-hidden" },
             // 안내 말풍선
