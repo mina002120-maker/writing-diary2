@@ -64,7 +64,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbx03ayYlGVOCjlAVEvLE2RsjpTPpITIEBB90uFOfEgJOG2LyHJxuxLEZj6vaNEs-50Xgg/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbxvS7XGM6haAC4Bt-UfPnpN3k2_5EUqpQX2V6PKypugjthHIPQacywovv5qlJEId1l_6A/exec';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -240,10 +240,10 @@ var STAGE_DATA = [
 
 function StageCard(props) {
     var stage = props.stage;
-    var progress = props.progress;
+    var progress = props.progress || {};
     var onClick = props.onClick;
     var onClickSub1 = props.onClickSub1 || onClick;
-    var stageLocked = progress.stageLocked;
+    var stageLocked = !!progress.stageLocked;
 
     return h(motion.div, {
         whileHover: stageLocked ? {} : { scale: 1.04, y: -6 },
