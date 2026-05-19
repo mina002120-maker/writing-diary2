@@ -64,7 +64,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbyRKteYimRaYKtSQRSOJR8oZ9McBo3PkOzomIcXPLUHWwT5Iak_BLev4KnIsfY2Xt0Eew/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbx9jIwUCVLJgcBd4FpaJYYzXO2GHByaJVVGZkAEoJV-SHd0b-5zZDU2n9MnobI5tfR6wQ/exec';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -441,236 +441,124 @@ function Tutorial(props) {
 
     // ── 인터랙션 영역 렌더링 ──
     function renderInteraction() {
+        // action이 none이어도 preview가 있으면 표시
+        if (action === 'none') {
+            if (cur.preview) return typeof cur.preview === 'function' ? cur.preview() : cur.preview;
+            return null;
+        }
+
         if (action === 'tap' || action === 'select') {
             var options = cur.options || [];
             return h("div", { style: { display:'flex', gap:'0.85rem', justifyContent:'center', flexWrap:'wrap' } },
                 options.map(function(opt, i) {
                     var isSel = selected === (opt.value || opt.label);
+                    var bgRaw = opt.bg || 'white';
+                    var isSty = bgRaw.indexOf('gradient') !== -1;
                     return h("button", {
                         key: i,
                         onClick: (function(val) { return function() {
                             setSelected(val);
-                            if (action === 'tap') {
-                                setTimeout(function() { next(); }, 400);
-                            }
+                            if (action === 'tap') setTimeout(function() { next(); }, 400);
                         }; })(opt.value || opt.label),
                         style: {
-                            background: isSel ? col.btn : (opt.bg || 'white'),
+                            background: isSel ? col.btn : bgRaw,
                             color: isSel ? 'white' : (opt.color || '#374151'),
-                            padding: '1rem 1.6rem',
-                            borderRadius: '1.1rem',
+                            padding: '1rem 1.8rem',
+                            borderRadius: '1.25rem',
                             fontWeight: 900,
                             fontSize: '1.5rem',
-                            border: isSel ? ('3px solid ' + col.btn) : '3px solid #e2e8f0',
+                            border: isSel ? ('4px solid '+col.btn) : '3px solid rgba(0,0,0,0.08)',
                             cursor: 'pointer',
-                            transform: isSel ? 'scale(1.05)' : 'scale(1)',
+                            transform: isSel ? 'scale(1.07) translateY(-4px)' : 'scale(1)',
                             transition: 'all 0.2s',
-                            boxShadow: isSel ? '0 4px 12px ' + col.btn + '44' : 'none',
+                            boxShadow: isSel ? ('0 8px 20px '+col.btn+'55') : '0 3px 8px rgba(0,0,0,0.12)',
                             display: 'flex', alignItems: 'center', gap: '0.55rem'
                         }
                     },
-                        opt.emoji && h("span", { style: { fontSize: '1.7rem' } }, opt.emoji),
+                        opt.emoji && h("span", { style: { fontSize: '1.8rem' } }, opt.emoji),
                         h("span", null, opt.label)
                     );
                 })
             );
         }
 
-        if (action === 'type') {
-            return h("div", { style: { display:'flex', flexDirection:'column', gap:'0.85rem', width: '100%' } },
-                h("input", {
-                    type: "text",
-                    value: userInput,
-                    onChange: function(e) { setUserInput(e.target.value); },
-                    onKeyDown: function(e) { if (e.key === 'Enter' && userInput.trim()) next(); },
-                    placeholder: cur.placeholder || '여기에 써보세요',
-                    autoFocus: true,
-                    style: {
-                        width: '100%', padding: '1.1rem 1.3rem',
-                        fontSize: '1.6rem', fontWeight: 900,
-                        borderRadius: '1rem',
-                        border: '3px solid ' + col.ring,
-                        outline: 'none',
-                        background: 'white'
-                    }
-                }),
-                cur.examples && h("div", { style: { display:'flex', gap:'0.6rem', flexWrap:'wrap', justifyContent:'center' } },
-                    cur.examples.map(function(ex, i) {
-                        return h("button", {
-                            key: i,
-                            onClick: (function(t) { return function() { setUserInput(t); }; })(ex),
-                            style: {
-                                background: col.bg, color: col.text,
-                                padding: '0.55rem 1.1rem', borderRadius: '0.8rem',
-                                fontWeight: 700, fontSize: '1.2rem',
-                                border: 'none', cursor: 'pointer'
-                            }
-                        }, '💡 ' + ex);
-                    })
-                )
-            );
-        }
-
-        // 📓 공책 10칸 — 학생이 직접 공책에 쓰고 확인 버튼 누르기
-        if (action === 'notebook') {
-            var chars = (cur.chars || '오늘 아침에').split('');
-            // 색깔: 단어별로 구분
-            var wordColors = [col.btn, '#3b82f6', '#10b981', '#ef4444', '#a855f7'];
-            var wordIdx = 0;
-            var colored = [];
-            var currentColor = wordColors[0];
-            chars.forEach(function(ch) {
-                if (ch === ' ') { wordIdx++; currentColor = wordColors[Math.min(wordIdx, wordColors.length - 1)]; colored.push({ ch: ' ', color: currentColor }); }
-                else { colored.push({ ch: ch, color: currentColor }); }
-            });
-            // 10칸 고정 (나머지는 빈 칸)
-            var cells = [];
-            for (var i = 0; i < 10; i++) {
-                cells.push(colored[i] || { ch: '', color: '#e2e8f0' });
-            }
-
-            return h("div", { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', width: '100%' } },
-                // 안내
-                h("p", { style: { fontSize: '1.3rem', fontWeight: 700, color: '#64748b' } },
-                    "✏️ 아래 칸을 보면서 공책에 한 글자씩 써봐요!"
-                ),
-                // 공책 10칸
-                h("div", { style: { display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' } },
-                    cells.map(function(cell, i) {
-                        if (cell.ch === ' ') {
-                            return h("div", { key: i, style: { width: '16px' } });
-                        }
-                        return h("div", { key: i, style: {
-                            width: '64px', height: '72px',
-                            border: '3px solid ' + (cell.ch ? cell.color : '#d1d5db'),
-                            borderRadius: '10px',
-                            background: cell.ch ? cell.color + '18' : '#f8fafc',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '2rem', fontWeight: 900,
-                            color: cell.ch ? cell.color : '#d1d5db',
-                            boxShadow: cell.ch ? ('0 2px 8px ' + cell.color + '33') : 'none',
-                            position: 'relative'
-                        } },
-                            h("span", null, cell.ch || ''),
-                            // 칸 번호 (작게)
-                            h("span", { style: { position: 'absolute', bottom: '3px', right: '5px', fontSize: '0.65rem', color: cell.ch ? cell.color : '#d1d5db', fontWeight: 700, opacity: 0.7 } }, i + 1)
-                        );
-                    })
-                ),
-                // 확인 버튼
-                h("button", {
-                    onClick: function() { setUserInput('done'); next(); },
-                    style: {
-                        background: col.btn,
-                        color: 'white',
-                        padding: '0.85rem 2.5rem',
-                        borderRadius: '1rem',
-                        fontWeight: 900,
-                        fontSize: '1.4rem',
-                        border: 'none',
-                        cursor: 'pointer',
-                        boxShadow: '0 5px 0 ' + col.shadow
-                    }
-                }, "✅ 공책에 다 썼어요!")
-            );
-        }
-
-        // 🚦 실제 신호등 화면과 동일한 렌더링
         if (action === 'trafficlight') {
             var lights = [
-                { g: 'red',    label: '속상하거나\n화나는 마음', color: '#EF4444', glow: 'rgba(239,68,68,0.7)'   },
-                { g: 'yellow', label: '평범하거나\n궁금한 마음', color: '#F59E0B', glow: 'rgba(245,158,11,0.7)'  },
-                { g: 'green',  label: '기쁘고\n즐거운 마음',    color: '#10B981', glow: 'rgba(16,185,129,0.7)'  }
+                { g: 'red',    label: '속상하거나\n화나는 마음', color: '#EF4444', glow: 'rgba(239,68,68,0.7)'  },
+                { g: 'yellow', label: '평범하거나\n궁금한 마음', color: '#F59E0B', glow: 'rgba(245,158,11,0.7)' },
+                { g: 'green',  label: '기쁘고\n즐거운 마음',    color: '#10B981', glow: 'rgba(16,185,129,0.7)' }
             ];
-            return h("div", {
-                style: {
-                    background: '#1e293b',
-                    borderRadius: '2.5rem',
-                    padding: '1.2rem 2rem',
-                    display: 'flex',
-                    gap: '2rem',
-                    justifyContent: 'center',
-                    alignItems: 'flex-end'
-                }
-            },
+            return h("div", { style: { background:'#1e293b', borderRadius:'2.5rem', padding:'1.2rem 2rem', display:'flex', gap:'2rem', justifyContent:'center', alignItems:'flex-end' } },
                 lights.map(function(item) {
                     var isActive = selected === item.g;
-                    return h("button", {
-                        key: item.g,
-                        onClick: (function(g) { return function() {
-                            setSelected(g);
-                            setTimeout(function() { next(); }, 500);
-                        }; })(item.g),
-                        style: {
-                            display: 'flex', flexDirection: 'column',
-                            alignItems: 'center', gap: '0.6rem',
-                            background: 'none', border: 'none', cursor: 'pointer'
-                        }
-                    },
-                        h("div", {
-                            style: {
-                                width: '90px', height: '90px',
-                                borderRadius: '50%',
-                                background: 'radial-gradient(circle at 35% 35%, ' + item.color + 'ff, ' + item.color + '88)',
-                                boxShadow: isActive
-                                    ? '0 0 35px ' + item.glow + ', inset -8px -8px 20px rgba(0,0,0,0.3), inset 8px 8px 20px rgba(255,255,255,0.2)'
-                                    : 'inset -8px -8px 20px rgba(0,0,0,0.4), inset 8px 8px 20px rgba(255,255,255,0.15)',
-                                border: isActive ? '3px solid rgba(255,255,255,0.8)' : '2px solid rgba(255,255,255,0.1)',
-                                transform: isActive ? 'scale(1.1)' : 'scale(1)',
-                                transition: 'all 0.2s',
-                                opacity: isActive ? 1 : 0.75
-                            }
-                        }),
-                        h("p", {
-                            style: {
-                                color: item.color,
-                                fontWeight: 900,
-                                fontSize: '1.1rem',
-                                textAlign: 'center',
-                                whiteSpace: 'pre-line',
-                                lineHeight: 1.4
-                            }
-                        }, item.label)
+                    return h("button", { key: item.g, onClick: (function(g){ return function(){ setSelected(g); setTimeout(function(){ next(); }, 500); }; })(item.g), style: { display:'flex', flexDirection:'column', alignItems:'center', gap:'0.6rem', background:'none', border:'none', cursor:'pointer' } },
+                        h("div", { style: { width:'90px', height:'90px', borderRadius:'50%', background:'radial-gradient(circle at 35% 35%, '+item.color+'ff, '+item.color+'88)', boxShadow: isActive ? '0 0 35px '+item.glow+', inset -8px -8px 20px rgba(0,0,0,0.3)' : 'inset -8px -8px 20px rgba(0,0,0,0.4)', border: isActive ? '3px solid white' : '2px solid rgba(255,255,255,0.1)', transform: isActive ? 'scale(1.12)' : 'scale(1)', transition:'all 0.2s' } }),
+                        h("p", { style: { color:item.color, fontWeight:900, fontSize:'1.1rem', textAlign:'center', whiteSpace:'pre-line', lineHeight:1.4 } }, item.label)
                     );
                 })
             );
         }
 
-        if (cur.preview) {
-            return typeof cur.preview === 'function' ? cur.preview() : cur.preview;
+        if (action === 'notebook') {
+            var chars = (cur.chars || '오늘 아침에').split('');
+            var wordColors = [col.btn, '#3b82f6', '#10b981', '#ef4444', '#a855f7'];
+            var wordIdx = 0;
+            var colored = [];
+            var currentColor = wordColors[0];
+            chars.forEach(function(ch) {
+                if (ch === ' ') { wordIdx++; currentColor = wordColors[Math.min(wordIdx, wordColors.length-1)]; colored.push({ ch:' ', color:currentColor }); }
+                else { colored.push({ ch:ch, color:currentColor }); }
+            });
+            var cells = [];
+            for (var i = 0; i < 10; i++) cells.push(colored[i] || { ch:'', color:'#e2e8f0' });
+            return h("div", { style: { display:'flex', flexDirection:'column', alignItems:'center', gap:'1.2rem', width:'100%' } },
+                h("p", { style: { fontSize:'1.3rem', fontWeight:700, color:'#64748b' } }, "✏️ 아래 칸을 보면서 공책에 써봐요!"),
+                h("div", { style: { display:'flex', gap:'6px', justifyContent:'center', flexWrap:'wrap' } },
+                    cells.map(function(cell, i) {
+                        if (cell.ch === ' ') return h("div", { key:i, style:{ width:'14px' } });
+                        return h("div", { key:i, style:{ width:'62px', height:'70px', border:'3px solid '+(cell.ch?cell.color:'#d1d5db'), borderRadius:'10px', background:cell.ch?cell.color+'18':'#f8fafc', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'2rem', fontWeight:900, color:cell.ch?cell.color:'#d1d5db', position:'relative' } },
+                            h("span", null, cell.ch || ''),
+                            h("span", { style:{ position:'absolute', bottom:'3px', right:'5px', fontSize:'0.65rem', color:cell.ch?cell.color:'#d1d5db', fontWeight:700, opacity:0.7 } }, i+1)
+                        );
+                    })
+                ),
+                h("button", { onClick:function(){ setUserInput('done'); next(); }, style:{ background:col.btn, color:'white', padding:'0.85rem 2.5rem', borderRadius:'1rem', fontWeight:900, fontSize:'1.4rem', border:'none', cursor:'pointer', boxShadow:'0 5px 0 '+col.shadow } }, "✅ 공책에 다 썼어요!")
+            );
         }
+
+        if (action === 'type') {
+            return h("div", { style:{ display:'flex', flexDirection:'column', gap:'0.85rem', width:'100%' } },
+                h("input", { type:"text", value:userInput, onChange:function(e){ setUserInput(e.target.value); }, onKeyDown:function(e){ if(e.key==='Enter'&&userInput.trim()) next(); }, placeholder:cur.placeholder||'여기에 써보세요', autoFocus:true, style:{ width:'100%', padding:'1.1rem 1.3rem', fontSize:'1.6rem', fontWeight:900, borderRadius:'1rem', border:'3px solid '+col.ring, outline:'none', background:'white' } }),
+                cur.examples && h("div", { style:{ display:'flex', gap:'0.6rem', flexWrap:'wrap', justifyContent:'center' } },
+                    cur.examples.map(function(ex, i){ return h("button", { key:i, onClick:(function(t){ return function(){ setUserInput(t); }; })(ex), style:{ background:col.bg, color:col.text, padding:'0.55rem 1.1rem', borderRadius:'0.8rem', fontWeight:700, fontSize:'1.2rem', border:'none', cursor:'pointer' } }, '💡 '+ex); })
+                )
+            );
+        }
+
+        if (cur.preview) return typeof cur.preview === 'function' ? cur.preview() : cur.preview;
         return null;
     }
 
     var pos = cur.pos || 'center';
 
     return h("div", {
-        className: "fixed inset-0 z-50",
-        style: { pointerEvents: 'none' }
+        style: {
+            position: 'fixed', inset: 0, zIndex: 9999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(0,0,0,0.55)',
+            pointerEvents: 'auto'
+        },
+        onClick: function(e) { if (e.target === e.currentTarget) { /* 오버레이 클릭 무시 */ } }
     },
-        h("div", {
-            style: {
-                position: 'absolute', inset: 0,
-                background: 'rgba(0,0,0,0.5)',
-                pointerEvents: 'auto'
-            },
-            onClick: function(e) { e.stopPropagation(); }
-        }),
-
         h(motion.div, {
             key: step,
-            initial: { opacity: 0, scale: 0.95 },
-            animate: { opacity: 1, scale: 1 },
-            transition: { type: 'spring', stiffness: 300, damping: 24 },
+            initial: { opacity: 0, scale: 0.92, y: 20 },
+            animate: { opacity: 1, scale: 1, y: 0 },
+            transition: { type: 'spring', stiffness: 320, damping: 26 },
             style: {
-                position: 'fixed',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
                 width: '92%',
                 maxWidth: '820px',
-                pointerEvents: 'auto',
-                zIndex: 52
+                pointerEvents: 'auto'
             }
         },
             h("div", {
@@ -1026,8 +914,32 @@ function MainMenu(props) {
         ),
 
 
-        h("main", { className: "flex-1 px-3 md:px-6 pb-2 overflow-hidden min-h-0" },
-            h("div", { className: "grid grid-cols-3 gap-2 md:gap-4 h-full min-h-0 overflow-hidden" },
+        h("main", { className: "flex-1 px-3 md:px-6 pb-2 flex flex-col gap-2 overflow-hidden min-h-0" },
+
+            // 단계 소개 배너
+            h("div", { className: "flex gap-2 shrink-0" },
+                [
+                    { num: '1단계', icon: '🃏', title: '낱말 카드 모으기', desc: '언제·어디서·누구와·무엇을 카드로 배워요', bg: 'bg-orange-50', border: 'border-orange-300', text: 'text-orange-700', badge: 'bg-orange-500' },
+                    { num: '2단계', icon: '✏️', title: '문장 만들기',       desc: '모은 카드로 나만의 문장을 써봐요',        bg: 'bg-blue-50',   border: 'border-blue-300',   text: 'text-blue-700',   badge: 'bg-blue-500'   },
+                    { num: '3단계', icon: '📔', title: '일기 쓰기',         desc: '오늘 있었던 일을 일기로 완성해요',       bg: 'bg-emerald-50',border: 'border-emerald-300',text: 'text-emerald-700',badge: 'bg-emerald-500'}
+                ].map(function(item) {
+                    return h("div", {
+                        key: item.num,
+                        className: "flex-1 " + item.bg + " border-2 " + item.border + " rounded-2xl px-4 py-2.5 flex items-center gap-3"
+                    },
+                        h("span", { className: "text-2xl shrink-0" }, item.icon),
+                        h("div", { className: "min-w-0" },
+                            h("div", { className: "flex items-center gap-1.5 mb-0.5" },
+                                h("span", { className: "text-xs font-black text-white px-2 py-0.5 rounded-full " + item.badge }, item.num),
+                                h("span", { className: "text-base font-black " + item.text }, item.title)
+                            ),
+                            h("p", { className: "text-sm font-bold text-slate-500 truncate" }, item.desc)
+                        )
+                    );
+                })
+            ),
+
+            h("div", { className: "flex-1 grid grid-cols-3 gap-2 md:gap-4 min-h-0 overflow-hidden" },
                 STAGE_DATA.map(function (stage, i) {
                     // 각 단계의 sub1/sub2 이동 키 매핑
                     var subMap = [
@@ -1049,8 +961,8 @@ function MainMenu(props) {
                         }; })(stage.number)
                     });
                 })
-            )
-        ),
+            )    // grid 닫기
+        ),       // main 닫기
 
         // 이동 안내 (팝업 대신 하단 토스트)
         navTarget && h(motion.div, {
@@ -1439,9 +1351,11 @@ function buildCellGrid(parts) {
 function NotebookGrid(props) {
     var cells = props.cells;
     var perRow = 10;
+    // 첫 줄 들여쓰기: 첫 칸 빈 칸 추가
+    var paddedCells = [{ ch: '', color: null, isEmpty: true }].concat(cells);
     var rows = [];
-    for (var i = 0; i < cells.length; i += perRow) {
-        rows.push(cells.slice(i, i + perRow));
+    for (var i = 0; i < paddedCells.length; i += perRow) {
+        rows.push(paddedCells.slice(i, i + perRow));
     }
     // 마지막 줄이 10칸 미만이면 빈 칸으로 채워서 시각적 정렬
     while (rows[rows.length - 1].length < perRow) {
@@ -2303,52 +2217,68 @@ function Stage1_1(props) {
 
     return h("div", { className: "w-full bg-[#F0F7FF] flex flex-col overflow-hidden min-h-0", style: { height: "100dvh" } },
         h(Tutorial, {
-            storageKey: 'tutorial_s1_1_v2',
+            storageKey: 'tutorial_s1_1_v3',
             accentColor: 'orange',
             steps: [
                 {
-                    emoji: '👋', title: '안녕! 카드를 배워볼까요?', pos: 'center',
-                    desc: '1단계는 카드를 모으면서 문장을 만드는 법을 배워요. 함께 시작해봐요!',
-                    action: 'none'
+                    emoji: '👋', title: '안녕! 카드를 배워볼까요?',
+                    desc: '낱말 카드를 모으면서 문장 만드는 법을 배워요!\n아래 4가지 카드 종류가 있어요.',
+                    action: 'none',
+                    preview: function() {
+                        return h('div', { style: { display:'flex', gap:'0.75rem', justifyContent:'center', flexWrap:'wrap' } },
+                            [
+                                { label:'언제',   emoji:'🗓️', bg:'#fef3c7', border:'#f59e0b', text:'#92400e' },
+                                { label:'어디서', emoji:'📍', bg:'#dbeafe', border:'#3b82f6', text:'#1e3a8a' },
+                                { label:'누구와', emoji:'👥', bg:'#d1fae5', border:'#10b981', text:'#065f46' },
+                                { label:'무엇을', emoji:'🎯', bg:'#fee2e2', border:'#ef4444', text:'#991b1b' }
+                            ].map(function(c) {
+                                return h('div', { key: c.label, style: { background: c.bg, border: '3px solid '+c.border, borderRadius:'1.5rem', padding:'1rem 1.5rem', display:'flex', flexDirection:'column', alignItems:'center', gap:'0.5rem', minWidth:'100px' } },
+                                    h('span', { style: { fontSize:'2.5rem' } }, c.emoji),
+                                    h('span', { style: { fontWeight:900, fontSize:'1.3rem', color: c.text } }, c.label)
+                                );
+                            })
+                        );
+                    }
                 },
                 {
-                    emoji: '🃏', title: '카테고리를 골라요!', pos: 'center',
-                    desc: '4가지 카드 종류가 있어요. 마음에 드는 걸 하나 눌러봐요!',
+                    emoji: '🃏', title: '카테고리를 골라요!',
+                    desc: '배우고 싶은 카드 종류를 눌러봐요!',
                     action: 'tap',
                     options: [
-                        { label: '언제',   emoji: '⏰', bg: '#fef3c7', color: '#92400e' },
+                        { label: '언제',   emoji: '🗓️', bg: '#fef3c7', color: '#92400e' },
                         { label: '어디서', emoji: '📍', bg: '#dbeafe', color: '#1e3a8a' },
                         { label: '누구와', emoji: '👥', bg: '#d1fae5', color: '#065f46' },
                         { label: '무엇을', emoji: '🎯', bg: '#fee2e2', color: '#991b1b' }
                     ]
                 },
                 {
-                    emoji: '✨', title: '카드를 뽑아요!', pos: 'center',
-                    desc: '카드를 꾹 누르면 뒤집혀요! 카드 하나를 눌러봐요.',
+                    emoji: '✨', title: '카드를 뽑아요!',
+                    desc: '어두운 카드를 꾹 누르면 뒤집혀요!\n뒷면엔 단어가 나와요. 눌러봐요!',
                     action: 'tap',
                     options: [
-                        { label: '💫 카드 1', bg: '#475569', color: 'white' },
-                        { label: '💫 카드 2', bg: '#475569', color: 'white' },
-                        { label: '💫 카드 3', bg: '#475569', color: 'white' }
+                        { label: '💫', bg: 'linear-gradient(180deg,#475569,#1e293b)', color: 'white', value: 'card1' },
+                        { label: '💫', bg: 'linear-gradient(180deg,#475569,#1e293b)', color: 'white', value: 'card2' },
+                        { label: '💫', bg: 'linear-gradient(180deg,#475569,#1e293b)', color: 'white', value: 'card3' }
                     ]
                 },
                 {
-                    emoji: '🎤', title: '따라 말해봐요!', pos: 'center',
-                    desc: '"오늘 아침에 학교에서 친구랑 밥을 먹었다"\n같은 문장을 마이크로 따라 말해요.\n어떤 버튼을 먼저 눌러요?',
+                    emoji: '🎤', title: '따라 말해봐요!',
+                    desc: '예시 문장을 보고 녹음 버튼을 눌러 따라 말해요!\n어떤 버튼을 먼저 누를까요?',
                     action: 'tap',
                     options: [
-                        { label: '🎤 녹음 시작', bg: '#ef4444', color: 'white' },
-                        { label: '⏭️ 건너뛰기',  bg: '#f1f5f9', color: '#64748b' }
+                        { label: '🔊 듣기',    bg: '#3b82f6', color: 'white', value: 'listen' },
+                        { label: '🎤 녹음 시작', bg: '#ef4444', color: 'white', value: 'rec' },
+                        { label: '⏭️ 건너뛰기', bg: '#f1f5f9', color: '#64748b', value: 'skip' }
                     ]
                 },
                 {
-                    emoji: '📓', title: '공책에 한 글자씩 써봐요!', pos: 'center',
+                    emoji: '📓', title: '공책에 한 글자씩 써봐요!',
                     desc: '색깔 칸을 보면서 공책에 한 글자씩 써봐요!',
                     action: 'notebook',
                     chars: '오늘 아침에'
                 },
                 {
-                    emoji: '🎉', title: '준비 끝! 시작해봐요!', pos: 'center',
+                    emoji: '🎉', title: '준비 끝! 시작해봐요!',
                     desc: '이제 직접 카드를 모아서 문장을 만들 수 있어요.\n화이팅!',
                     action: 'none'
                 }
@@ -2449,9 +2379,11 @@ function buildCellGrid(parts) {
 function NotebookGrid(props) {
     var cells = props.cells;
     var perRow = 10;
+    // 첫 줄 들여쓰기: 첫 칸 빈 칸 추가
+    var paddedCells = [{ ch: '', color: null, isEmpty: true }].concat(cells);
     var rows = [];
-    for (var i = 0; i < cells.length; i += perRow) {
-        rows.push(cells.slice(i, i + perRow));
+    for (var i = 0; i < paddedCells.length; i += perRow) {
+        rows.push(paddedCells.slice(i, i + perRow));
     }
     while (rows[rows.length - 1].length < perRow) {
         rows[rows.length - 1].push({ ch: '', color: null, isEmpty: true });
@@ -3367,9 +3299,16 @@ function PencilFairy(props) {
 function NotebookGrid(props) {
     var cells = props.cells;
     var perRow = 10;
+
+    // ── 첫 줄 앞에 빈 칸 하나 삽입 ──
+    // 첫 줄만 앞에 { ch:'', color:null, isEmpty:true } 한 칸 추가
+    var paddedCells = [{ ch:'', color:null, isEmpty:true }].concat(cells);
+
     var rows = [];
-    for (var i = 0; i < cells.length; i += perRow) rows.push(cells.slice(i, i + perRow));
+    for (var i = 0; i < paddedCells.length; i += perRow) rows.push(paddedCells.slice(i, i + perRow));
+    // 마지막 줄 빈 칸 채우기
     while (rows[rows.length - 1].length < perRow) rows[rows.length - 1].push({ ch:'', color:null, isEmpty:true });
+
     var lineCount = rows.length;
     var cellSize, textSize, gap;
     if (lineCount <= 2) { cellSize = 'w-20 h-20'; textSize = 'text-4xl'; gap = 'gap-3'; }
@@ -5806,27 +5745,6 @@ function LoginScreen(props) {
                 h("p", { className: "text-2xl font-bold text-slate-500 mt-2" }, "오늘 하루를 한 문장으로 표현해봐요!")
             ),
 
-            // 3단계 소개 카드
-            h("div", { className: "flex gap-5 flex-wrap justify-center" },
-                [
-                    { num: '1단계', icon: '🃏', title: '낱말 카드 모으기', desc: '언제·어디서·누구와·무엇을\n카드를 모아봐요!', color: 'from-amber-100 to-orange-100', border: 'border-orange-300', text: 'text-orange-700' },
-                    { num: '2단계', icon: '✏️', title: '문장 만들기',       desc: '모은 카드로\n나만의 문장을 써봐요!',   color: 'from-blue-100 to-indigo-100',  border: 'border-blue-300',   text: 'text-blue-700'   },
-                    { num: '3단계', icon: '📔', title: '일기 쓰기',         desc: '문장을 모아\n일기를 완성해봐요!',     color: 'from-green-100 to-emerald-100',border: 'border-green-300',  text: 'text-emerald-700'}
-                ].map(function(item) {
-                    return h(motion.div, {
-                        key: item.num,
-                        whileHover: { y: -6, scale: 1.03 },
-                        className: "bg-gradient-to-b " + item.color + " rounded-[2rem] border-4 " + item.border + " p-6 flex flex-col items-center gap-3 w-56 shadow-lg"
-                    },
-                        h("span", { className: "text-5xl" }, item.icon),
-                        h("div", { className: "text-center" },
-                            h("p", { className: "text-sm font-black " + item.text + " mb-1" }, item.num),
-                            h("p", { className: "text-xl font-black text-slate-800" }, item.title),
-                            h("p", { className: "text-base font-bold text-slate-500 mt-1 whitespace-pre-line" }, item.desc)
-                        )
-                    );
-                })
-            ),
 
             // 시작 버튼
             h(motion.button, {
@@ -5880,64 +5798,91 @@ function LoginScreen(props) {
     }
 
     // ──────────────────────────────────────────
-    // 페이지 2: 학생 이름 선택
+    // 페이지 2: 학생 이름 선택 (드롭다운)
     // ──────────────────────────────────────────
-    return h("div", { className: "w-full flex flex-col items-center justify-center p-6 gap-6 overflow-hidden", style: wrapStyle },
-        h("div", { className: "text-center shrink-0" },
-            h("div", { className: "text-6xl mb-2" }, "👋"),
-            h("h2", { className: "text-4xl font-black text-slate-800" }, "내 이름을 찾아봐요!"),
-            h("p", { className: "text-2xl font-bold text-slate-500 mt-1" }, "이름을 눌러서 선택해요")
-        ),
-
-        // 학생 목록
-        h("div", { className: "flex-1 overflow-y-auto w-full max-w-2xl min-h-0" },
-            status === 'loading' && h("div", { className: "flex flex-col items-center justify-center h-32 gap-3" },
-                h(motion.div, {
-                    animate: { rotate: 360 },
-                    transition: { repeat: Infinity, duration: 1, ease: 'linear' },
-                    className: "w-12 h-12 border-4 border-orange-300 border-t-orange-600 rounded-full"
-                }),
-                h("p", { className: "text-xl font-black text-slate-500" }, "명단 불러오는 중...")
-            ),
-            (status === 'ok' || status === 'nogas') && h("div", { className: "grid grid-cols-3 gap-3 p-2" },
-                students.map(function(st) {
-                    var isSelected = String(st.id) === String(selectedId);
-                    return h(motion.button, {
-                        key: st.id,
-                        whileHover: { scale: 1.04, y: -3 },
-                        whileTap: { scale: 0.97 },
-                        onClick: function(){ setSelectedId(String(st.id)); },
-                        className: "py-5 px-4 rounded-3xl text-2xl font-black border-4 shadow-md transition-all " +
-                            (isSelected
-                                ? "bg-orange-500 text-white border-orange-600 shadow-[0_6px_0_rgb(154,52,18)]"
-                                : "bg-white text-slate-700 border-slate-200 hover:border-orange-300")
-                    }, st.name);
-                })
-            ),
-            status === 'error' && h("div", { className: "bg-red-50 border-2 border-red-200 rounded-2xl p-4 text-center" },
-                h("p", { className: "text-xl font-black text-red-700" }, "⚠️ 명단을 불러오지 못했어요"),
-                h("p", { className: "text-base font-bold text-red-500 mt-2 break-all" }, errorMsg)
+    return h("div", { className: "w-full flex flex-col items-center justify-center p-6 gap-8 overflow-hidden", style: wrapStyle },
+        // 연필요정 + 안내
+        h("div", { className: "flex flex-col items-center gap-3" },
+            h(motion.div, {
+                animate: { y: [0, -8, 0] },
+                transition: { repeat: Infinity, duration: 2.5, ease: "easeInOut" }
+            }, h(PencilFairy, null)),
+            h("div", { className: "text-center" },
+                h("h2", { className: "text-4xl font-black text-slate-800" }, "👋 내 이름을 골라봐요!"),
+                h("p", { className: "text-xl font-bold text-slate-500 mt-2" }, "번호와 이름을 확인하고 선택해요")
             )
         ),
 
-        // 확인 버튼
-        h(motion.button, {
-            whileHover: selectedStudent ? { scale: 1.04 } : {},
-            whileTap: selectedStudent ? { scale: 0.97 } : {},
-            onClick: function(){ if (selectedStudent) onLogin(selectedStudent); },
-            disabled: !selectedStudent,
-            className: "w-full max-w-sm py-5 rounded-3xl text-3xl font-black shadow-lg shrink-0 " +
-                (selectedStudent
-                    ? "bg-orange-500 text-white shadow-[0_8px_0_rgb(154,52,18)]"
-                    : "bg-slate-200 text-slate-400 cursor-not-allowed")
-        }, selectedStudent ? selectedStudent.name + " 시작! 🎉" : "이름을 골라주세요"),
+        // 드롭다운
+        h("div", { className: "w-full max-w-lg flex flex-col items-center gap-4" },
+            // select 박스
+            h("div", { className: "relative w-full" },
+                h("select", {
+                    value: selectedId,
+                    onChange: function(e){ setSelectedId(e.target.value); },
+                    className: "w-full appearance-none px-6 py-5 text-2xl font-black text-slate-800 bg-white border-4 border-orange-300 rounded-3xl shadow-md focus:outline-none focus:border-orange-500 cursor-pointer",
+                    style: { backgroundImage: 'none' }
+                },
+                    h("option", { value: '' }, "── 이름을 선택해주세요 ──"),
+                    status === 'loading' && h("option", { disabled: true }, "명단 불러오는 중..."),
+                    (status === 'ok' || status === 'nogas') && students.map(function(st) {
+                        return h("option", { key: st.id, value: String(st.id) },
+                            st.id + "번  " + st.name
+                        );
+                    })
+                ),
+                // 드롭다운 화살표
+                h("div", {
+                    className: "absolute right-5 top-1/2 pointer-events-none",
+                    style: { transform: 'translateY(-50%)' }
+                },
+                    h("svg", { width: "28", height: "28", viewBox: "0 0 24 24", fill: "none" },
+                        h("path", { d: "M6 9l6 6 6-6", stroke: "#f97316", strokeWidth: "3", strokeLinecap: "round", strokeLinejoin: "round" })
+                    )
+                )
+            ),
+
+            // 선택된 학생 확인 카드
+            selectedStudent && h(motion.div, {
+                initial: { opacity: 0, y: 10 },
+                animate: { opacity: 1, y: 0 },
+                className: "w-full bg-orange-50 border-4 border-orange-300 rounded-3xl px-8 py-5 flex items-center gap-5"
+            },
+                h("div", { className: "w-14 h-14 bg-orange-500 text-white rounded-2xl flex items-center justify-center text-2xl font-black shrink-0" },
+                    selectedStudent.id + "번"
+                ),
+                h("div", null,
+                    h("p", { className: "text-sm font-black text-orange-600" }, "선택한 학생"),
+                    h("p", { className: "text-3xl font-black text-slate-800" }, selectedStudent.name)
+                ),
+                h("span", { className: "ml-auto text-4xl" }, "✅")
+            ),
+
+            // 오류 메시지
+            status === 'error' && h("div", { className: "w-full bg-red-50 border-2 border-red-200 rounded-2xl p-4 text-center" },
+                h("p", { className: "text-xl font-black text-red-700" }, "⚠️ 명단을 불러오지 못했어요"),
+                h("p", { className: "text-base font-bold text-red-500 mt-2 break-all" }, errorMsg)
+            ),
+
+            // 시작 버튼
+            h(motion.button, {
+                whileHover: selectedStudent ? { scale: 1.04 } : {},
+                whileTap: selectedStudent ? { scale: 0.97 } : {},
+                onClick: function(){ if (selectedStudent) onLogin(selectedStudent); },
+                disabled: !selectedStudent,
+                className: "w-full py-5 rounded-3xl text-3xl font-black shadow-lg " +
+                    (selectedStudent
+                        ? "bg-orange-500 text-white shadow-[0_8px_0_rgb(154,52,18)]"
+                        : "bg-slate-200 text-slate-400 cursor-not-allowed")
+            }, selectedStudent ? selectedStudent.id + "번 " + selectedStudent.name + " 시작! 🎉" : "이름을 골라주세요")
+        ),
 
         // 이전
         h("button", {
             onClick: function(){ setPage(1); },
-            className: "text-base font-bold text-slate-400 hover:text-slate-600 shrink-0"
+            className: "text-base font-bold text-slate-400 hover:text-slate-600"
         }, "← 이전")
-        );
+    );
 }
 function App() {
     // screen: 'login' | 'menu' | 's1_1' | 's1_2' | 's2_1' | 's2_2' | 's3'
@@ -5971,7 +5916,7 @@ function App() {
         prog.studentName = st.name;
         prog.studentId = st.id;
         setProgress(prog);
-        setScreen('mic_permission');  // 마이크 허용 화면 먼저
+        setScreen('menu');  // 바로 메뉴로
 
         var isGasOk = GAS_URL.indexOf('여기에') === -1 &&
                       GAS_URL.indexOf('script.google.com') !== -1;
