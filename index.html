@@ -64,7 +64,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbz3OA32VYGtZet0d83DJydsCcIXjBjKG-9T44NMJc9046YqybcFonQBFvYTgfuIx0ooZA/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbzKCoSkh1mne-r1QSa9wUDtYZZoxCW2XWPRqN-TaG7Qy-xgmAi7b7NMmAWJlG3RdHV2dg/exec';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -1670,14 +1670,23 @@ function Stage1_1(props) {
 
     // ───── subStep: category ─────
     if (subStep === 'category') {
-        // 카테고리별 수집 카드 수 계산
+        // 카테고리별 수집 카드 수 계산 — props.collectedCards를 직접 참조해야 최신값 반영
+        var allCollected = (props.collectedCards || []).concat(collected);
+        // 중복 제거 (key+value 기준)
+        var seen = {};
+        var deduped = [];
+        allCollected.forEach(function(card) {
+            var uniq = (card.key || '') + '::' + (card.value || '');
+            if (!seen[uniq]) { seen[uniq] = true; deduped.push(card); }
+        });
+
         var catCounts = { when: 0, where: 0, who: 0, what: 0 };
         var catTotals = { when: 0, where: 0, who: 0, what: 0 };
         DEMO_POOL.when  && (catTotals.when  = DEMO_POOL.when.length);
         DEMO_POOL.where && (catTotals.where = DEMO_POOL.where.length);
         DEMO_POOL.who   && (catTotals.who   = DEMO_POOL.who.length);
         DEMO_POOL.what  && (catTotals.what  = DEMO_POOL.what.length);
-        collected.forEach(function(card) {
+        deduped.forEach(function(card) {
             if (catCounts[card.key] !== undefined) catCounts[card.key]++;
         });
 
@@ -1702,20 +1711,23 @@ function Stage1_1(props) {
                         onClick: (function(k){ return function(){ selectCategory(k); }; })(cat),
                         className: "p-6 rounded-[2rem] shadow-xl border-4 flex flex-col items-center gap-3 bg-white " + c.border + " " + c.text
                     },
-                        h("span", { className: "text-4xl md:text-5xl" }, CAT_EMOJI[cat]),
+                        h("span", { className: "text-5xl" }, CAT_EMOJI[cat]),
                         h("span", { className: "text-3xl font-black" }, c.name),
                         // 진행바
-                        h("div", { className: "w-full flex flex-col gap-1" },
+                        h("div", { className: "w-full flex flex-col gap-1.5" },
                             h("div", { className: "flex justify-between items-center" },
-                                h("span", { className: "text-xs font-black opacity-70" }, cnt + "장 모음"),
-                                h("span", { className: "text-xs font-black opacity-70" }, cnt + "/" + tot)
+                                h("span", { className: "text-sm font-black opacity-80" },
+                                    cnt > 0 ? "✅ " + cnt + "장 모음!" : "0장 모음"
+                                ),
+                                h("span", { className: "text-sm font-black opacity-70" }, cnt + "/" + tot)
                             ),
-                            h("div", { className: "w-full h-2.5 rounded-full bg-slate-100 overflow-hidden border border-slate-200" },
+                            h("div", { className: "w-full h-4 rounded-full bg-slate-100 overflow-hidden border border-slate-200" },
                                 h(motion.div, {
                                     initial: { width: 0 },
                                     animate: { width: pct + "%" },
-                                    transition: { duration: 0.6, ease: "easeOut" },
-                                    className: "h-full rounded-full " + c.stripe
+                                    transition: { duration: 0.7, ease: "easeOut" },
+                                    className: "h-full rounded-full " + c.stripe,
+                                    style: pct > 0 ? { boxShadow: '0 2px 8px rgba(0,0,0,0.2)' } : {}
                                 })
                             )
                         )
@@ -2125,9 +2137,14 @@ function Stage1_1(props) {
         // 선택한 문장
         var chosenSentenceFP = examples[chosenForWriting];
         var sentenceTextFP = chosenSentenceFP ? chosenSentenceFP.filter(Boolean).join(' ') : '';
-        // "무엇을" 텍스트로 추천 감정 찾기
+        // "무엇을" 텍스트로 추천 감정 찾기 (문장 전체도 폴백으로 검색)
         var whatTextFP = chosenSentenceFP ? (chosenSentenceFP[3] || '') : '';
-        var recommendedFP = findRecommendedFeelings(whatTextFP);
+        var recommendedFP = findRecommendedFeelings(whatTextFP, sentenceTextFP);
+
+        // 추천감정 없으면 현재 신호등 그룹 감정 중 앞 3개를 기본 추천으로 표시
+        var displayRecommendedFP = recommendedFP.length > 0
+            ? recommendedFP
+            : FEELINGS_POOL.filter(function(f){ return f.group === feelGroup; }).slice(0, 3).map(function(f){ return f.value; });
 
         // 팝업에 표시할 예시문장
         var popupExamples = [];
@@ -2163,11 +2180,13 @@ function Stage1_1(props) {
                 h("span", { className: "text-2xl font-black text-slate-800 truncate", style: { wordBreak: 'keep-all' } }, sentenceTextFP)
             ),
 
-            // ⭐ 추천 감정 배너
-            recommendedFP.length > 0 && h("div", { className: "bg-pink-50 border-2 border-pink-300 rounded-2xl px-5 py-3 flex items-center gap-3 shrink-0 flex-wrap" },
-                h("span", { className: "text-base font-black text-pink-700 shrink-0" }, "⭐ 추천 감정"),
+            // ⭐ 추천 감정 배너 (항상 표시)
+            h("div", { className: "bg-pink-50 border-2 border-pink-300 rounded-2xl px-5 py-3 flex items-center gap-3 shrink-0 flex-wrap" },
+                h("span", { className: "text-base font-black text-pink-700 shrink-0" },
+                    recommendedFP.length > 0 ? "⭐ 추천 감정" : "💜 이런 감정은 어때요?"
+                ),
                 h("div", { className: "flex flex-wrap gap-2 items-center" },
-                    recommendedFP.map(function(word, ri) {
+                    displayRecommendedFP.map(function(word, ri) {
                         var fc = null;
                         for (var pi = 0; pi < FEELINGS_POOL.length; pi++) {
                             if (FEELINGS_POOL[pi].value === word) { fc = FEELINGS_POOL[pi]; break; }
@@ -3214,8 +3233,13 @@ function Stage1_2(props) {
 
         // 학생이 만든 문장
         var sentenceTextS12_pick = FIELD_KEYS.map(function(k){ return myParts[k]; }).filter(Boolean).join(' ');
-        // "무엇을" 텍스트로 추천 감정 찾기
-        var recommendedS12 = findRecommendedFeelings(myParts.what || '');
+        // "무엇을" 텍스트로 추천 감정 찾기 (문장 전체도 폴백으로 검색)
+        var recommendedS12 = findRecommendedFeelings(myParts.what || '', sentenceTextS12_pick);
+
+        // 추천감정 없으면 현재 신호등 그룹 감정 중 앞 3개를 기본 추천으로 표시
+        var displayRecommendedS12 = recommendedS12.length > 0
+            ? recommendedS12
+            : FEELINGS_POOL.filter(function(f){ return f.group === feelGroup2; }).slice(0, 3).map(function(f){ return f.value; });
 
         // 팝업에 표시할 예시문장
         var popupExamples2 = [];
@@ -3250,11 +3274,13 @@ function Stage1_2(props) {
                 h("span", { className: "text-2xl font-black text-slate-800 truncate", style: { wordBreak: 'keep-all' } }, sentenceTextS12_pick)
             ),
 
-            // ⭐ 추천 감정 배너
-            recommendedS12.length > 0 && h("div", { className: "bg-pink-50 border-2 border-pink-300 rounded-2xl px-5 py-3 flex items-center gap-3 shrink-0 flex-wrap" },
-                h("span", { className: "text-base font-black text-pink-700 shrink-0" }, "⭐ 추천 감정"),
+            // ⭐ 추천 감정 배너 (항상 표시)
+            h("div", { className: "bg-pink-50 border-2 border-pink-300 rounded-2xl px-5 py-3 flex items-center gap-3 shrink-0 flex-wrap" },
+                h("span", { className: "text-base font-black text-pink-700 shrink-0" },
+                    recommendedS12.length > 0 ? "⭐ 추천 감정" : "💜 이런 감정은 어때요?"
+                ),
                 h("div", { className: "flex flex-wrap gap-2 items-center" },
-                    recommendedS12.map(function(word, ri) {
+                    displayRecommendedS12.map(function(word, ri) {
                         var fc = null;
                         for (var pi = 0; pi < FEELINGS_POOL.length; pi++) {
                             if (FEELINGS_POOL[pi].value === word) { fc = FEELINGS_POOL[pi]; break; }
@@ -3852,30 +3878,155 @@ var FEELINGS_EXAMPLES = {
 // 추천 감정 매핑 (행동 키워드 → 감정 단어 목록)
 // GAS에서 로드됨 (시트: '추천감정')
 var RECOMMENDED_FEELINGS = {
-    '놀리다':     ['속상하다', '화나다',   '슬프다'],
-    '칭찬받다':   ['뿌듯하다', '기쁘다',   '즐겁다',   '신나다'],
-    '혼나다':     ['속상하다', '부끄럽다', '서운하다'],
-    '친구와놀다': ['즐겁다',   '신나다',   '기쁘다',   '재미있다', '행복하다'],
-    '책읽다':     ['뿌듯하다', '궁금하다', '편안하다'],
-    '그네타다':   ['신나다',   '즐겁다',   '기쁘다'],
-    '달리다':     ['신나다',   '힘들다',   '뿌듯하다'],
-    '혼자있다':   ['외롭다',   '편안하다', '심심하다'],
-    '싸우다':     ['속상하다', '화나다',   '슬프다',   '서운하다']
+
+    // ══ 신나게 놀았다 / 놀다 / 놀았다 ══
+    '신나게 놀았다': ['신나다', '즐겁다', '기쁘다', '재미있다', '행복하다'],
+    '신나게':        ['신나다', '즐겁다', '재미있다'],
+    '놀았다':        ['즐겁다', '신나다', '기쁘다', '재미있다'],
+    '놀다':          ['즐겁다', '신나다', '기쁘다', '재미있다'],
+    '뛰어 놀았다':   ['신나다', '즐겁다', '재미있다'],
+    '뛰어놀았다':    ['신나다', '즐겁다', '재미있다'],
+
+    // ══ 맛있게 먹었다 / 밥 / 먹다 ══
+    '맛있게 먹었다': ['행복하다', '즐겁다', '기쁘다'],
+    '맛있게':        ['행복하다', '즐겁다', '기쁘다'],
+    '먹었다':        ['행복하다', '편안하다', '즐겁다'],
+    '밥을 먹었다':   ['행복하다', '편안하다'],
+    '간식을 먹었다': ['행복하다', '기쁘다', '즐겁다'],
+    '외식을 했다':   ['행복하다', '즐겁다', '기쁘다'],
+    '요리를 했다':   ['뿌듯하다', '즐겁다', '재미있다'],
+    '장을 봤다':     ['즐겁다', '행복하다'],
+
+    // ══ 책을 읽었다 / 책 관련 ══
+    '책을 읽었다':   ['뿌듯하다', '궁금하다', '편안하다'],
+    '동화책을 읽었다':['편안하다', '행복하다', '즐겁다'],
+    '그림책을 읽었다':['편안하다', '행복하다', '즐겁다'],
+    '만화책을 읽었다':['즐겁다', '재미있다', '편안하다'],
+    '동시집을 읽었다':['즐겁다', '편안하다'],
+    '위인전을 읽었다':['뿌듯하다', '궁금하다'],
+    '책을 빌렸다':   ['뿌듯하다', '기쁘다', '궁금하다'],
+
+    // ══ 그림을 그렸다 / 미술 관련 ══
+    '그림을 그렸다': ['즐겁다', '뿌듯하다', '재미있다'],
+    '꽃을 그렸다':   ['즐겁다', '뿌듯하다'],
+    '강아지를 그렸다':['즐겁다', '뿌듯하다'],
+    '가족을 그렸다': ['행복하다', '뿌듯하다'],
+    '무지개를 그렸다':['즐겁다', '뿌듯하다'],
+
+    // ══ 깔깔 웃었다 / 웃다 ══
+    '깔깔 웃었다':   ['즐겁다', '신나다', '재미있다', '행복하다'],
+    '웃었다':        ['즐겁다', '기쁘다', '행복하다'],
+
+    // ══ 게임 / 보드게임 / 놀이 ══
+    '보드게임을 했다':['즐겁다', '신나다', '재미있다', '기쁘다'],
+    '블록놀이를 했다':['즐겁다', '재미있다', '신나다'],
+    '공놀이를 했다': ['신나다', '즐겁다', '재미있다'],
+    '술래잡기를 했다':['신나다', '즐겁다', '재미있다'],
+
+    // ══ 운동 / 신체 활동 ══
+    '줄넘기를 했다': ['신나다', '뿌듯하다', '힘들다'],
+    '달리기를 했다': ['신나다', '뿌듯하다', '힘들다'],
+    '축구를 했다':   ['신나다', '즐겁다', '뿌듯하다', '힘들다'],
+    '수영을 했다':   ['신나다', '즐겁다', '뿌듯하다'],
+    '등산을 했다':   ['뿌듯하다', '힘들다', '즐겁다'],
+    '산책을 했다':   ['편안하다', '즐겁다', '행복하다'],
+    '자전거를 탔다': ['신나다', '즐겁다', '뿌듯하다'],
+    '그네를 탔다':   ['신나다', '즐겁다', '기쁘다'],
+    '미끄럼틀을 탔다':['신나다', '즐겁다', '기쁘다'],
+    '뛰었다':        ['신나다', '즐겁다', '힘들다'],
+
+    // ══ 학습 / 수업 ══
+    '새 글자를 배웠다':['뿌듯하다', '궁금하다', '즐겁다'],
+    '수학을 배웠다': ['뿌듯하다', '힘들다', '지루하다'],
+    '일기를 썼다':   ['뿌듯하다', '편안하다'],
+    '숙제를 했다':   ['뿌듯하다', '힘들다'],
+    '공부를 했다':   ['뿌듯하다', '힘들다'],
+
+    // ══ 청소 / 정리 ══
+    '청소를 했다':   ['뿌듯하다', '힘들다'],
+    '책상을 닦았다': ['뿌듯하다'],
+
+    // ══ 영상 / TV ══
+    '텔레비전을 봤다':['편안하다', '즐겁다', '행복하다'],
+    '영화를 봤다':   ['즐겁다', '편안하다', '행복하다', '신나다'],
+    '그림책을 봤다': ['편안하다', '즐겁다'],
+    '만화를 봤다':   ['즐겁다', '재미있다'],
+
+    // ══ 음악 / 노래 ══
+    '노래를 불렀다': ['즐겁다', '신나다', '행복하다'],
+
+    // ══ 이야기 / 대화 ══
+    '이야기를 했다': ['즐겁다', '편안하다', '기쁘다'],
+    '인사를 했다':   ['기쁘다', '편안하다'],
+    '인사를 드렸다': ['뿌듯하다', '편안하다'],
+
+    // ══ 일상 / 기타 ══
+    '이를 닦았다':   ['뿌듯하다', '편안하다'],
+    '손을 씻었다':   ['편안하다', '뿌듯하다'],
+    '약을 받았다':   ['속상하다', '아프다', '걱정된다'],
+
+    // ══ 부정적 상황 ══
+    '혼났다':        ['속상하다', '부끄럽다', '서운하다'],
+    '놀렸다':        ['속상하다', '화나다', '슬프다', '서운하다'],
+    '놀림받았다':    ['속상하다', '화나다', '슬프다'],
+    '빼고 놀았다':   ['서운하다', '속상하다', '슬프다'],
+    '싸웠다':        ['속상하다', '화나다', '슬프다', '서운하다'],
+    '넘어졌다':      ['아프다', '속상하다', '부끄럽다'],
+    '망쳤다':        ['속상하다', '아쉽다', '부끄럽다'],
+    '실수를 했다':   ['부끄럽다', '속상하다', '아쉽다'],
+    '졌다':          ['속상하다', '아쉽다', '슬프다'],
+    '잃어버렸다':    ['속상하다', '슬프다', '걱정된다'],
+
+    // ══ 부분 매칭 키워드 (짧은 것 → 위에서 못 잡을 때 폴백) ══
+    '놀았':  ['즐겁다', '신나다', '기쁘다'],
+    '먹었':  ['행복하다', '편안하다', '즐겁다'],
+    '읽었':  ['뿌듯하다', '궁금하다', '편안하다'],
+    '그렸':  ['즐겁다', '뿌듯하다', '재미있다'],
+    '탔다':  ['신나다', '즐겁다', '뿌듯하다'],
+    '했다':  ['뿌듯하다', '즐겁다'],
+    '봤다':  ['편안하다', '즐겁다', '행복하다'],
+    '불렀':  ['즐겁다', '신나다', '행복하다'],
+    '웃었':  ['즐겁다', '기쁘다', '행복하다'],
+    '배웠':  ['뿌듯하다', '궁금하다', '즐겁다'],
+    '썼다':  ['뿌듯하다', '편안하다'],
+    '달렸':  ['신나다', '힘들다', '뿌듯하다'],
+    '뛰었':  ['신나다', '즐겁다', '힘들다'],
+    '걸었':  ['편안하다', '즐겁다'],
+    '만들었':['즐겁다', '뿌듯하다', '재미있다'],
+    '도왔':  ['뿌듯하다', '기쁘다', '행복하다'],
+    '받았':  ['기쁘다', '행복하다', '뿌듯하다'],
+    '이겼':  ['뿌듯하다', '기쁘다', '신나다'],
+    '혼났':  ['속상하다', '부끄럽다', '서운하다'],
+    '싸웠':  ['속상하다', '화나다', '서운하다'],
+    '울었':  ['슬프다', '속상하다', '서운하다'],
+    '넘어':  ['아프다', '속상하다'],
+    '아팠':  ['아프다', '속상하다'],
+    '떨렸':  ['떨리다', '긴장된다'],
+    '무서':  ['무섭다', '걱정된다'],
+    '걱정':  ['걱정된다', '무섭다', '떨리다'],
+    '창피':  ['부끄럽다', '속상하다']
 };
 
-// "무엇을" 문구에서 추천 감정 찾기 (부분 일치)
-function findRecommendedFeelings(whatText) {
-    if (!whatText) return [];
-    var clean = String(whatText).replace(/\s+/g, '');
-    var found = [];
+// "무엇을" 문구(+선택적으로 문장 전체)에서 추천 감정 찾기
+function findRecommendedFeelings(whatText, fullSentence) {
+    var results = [];
+    // whatText가 없으면 빈 배열
+    if (!whatText && !fullSentence) return results;
+
+    // 검색 대상: 무엇을 필드 + (없으면) 문장 전체
+    var targets = [];
+    if (whatText) targets.push(String(whatText).replace(/\s+/g, ''));
+    if (fullSentence) targets.push(String(fullSentence).replace(/\s+/g, ''));
+
     Object.keys(RECOMMENDED_FEELINGS).forEach(function(key) {
-        if (clean.indexOf(key) !== -1) {
+        var matched = targets.some(function(t) { return t.indexOf(key) !== -1; });
+        if (matched) {
             RECOMMENDED_FEELINGS[key].forEach(function(f) {
-                if (found.indexOf(f) === -1) found.push(f);
+                if (results.indexOf(f) === -1) results.push(f);
             });
         }
     });
-    return found;
+    return results;
 }
 
 
@@ -5890,12 +6041,93 @@ function Stage3(props) {
 
     // ───── compose: 순차 채우기 (1단계❷ 방식) ─────
     else if (subStep === 'compose') {
+        // 기본 제공 카드 풀 (필드별로 풍부하게)
+        var DEFAULT_CARDS = {
+            when: [
+                { value:'오늘 아침에', emoji:'🌅' }, { value:'점심 시간에', emoji:'🌞' },
+                { value:'쉬는 시간에', emoji:'⏰' }, { value:'학교 끝나고', emoji:'🎒' },
+                { value:'잠들기 전에', emoji:'🌙' }, { value:'저녁 시간에', emoji:'🍽️' },
+                { value:'주말 아침에', emoji:'🌤️' }, { value:'주말 오후에', emoji:'🌈' },
+                { value:'어제', emoji:'📅' }, { value:'오늘', emoji:'📌' },
+                { value:'수업 시간에', emoji:'📚' }, { value:'체육 시간에', emoji:'🏃' },
+                { value:'미술 시간에', emoji:'🎨' }, { value:'청소 시간에', emoji:'🧹' },
+                { value:'방학 때', emoji:'☀️' }, { value:'토요일에', emoji:'🗓️' },
+                { value:'일요일에', emoji:'🗓️' }, { value:'아침 시간에', emoji:'🌄' }
+            ],
+            where: [
+                { value:'교실에서', emoji:'🏫' }, { value:'운동장에서', emoji:'⚽' },
+                { value:'도서관에서', emoji:'📚' }, { value:'집에서', emoji:'🏠' },
+                { value:'놀이터에서', emoji:'🛝' }, { value:'급식실에서', emoji:'🍱' },
+                { value:'공원에서', emoji:'🌳' }, { value:'학교 복도에서', emoji:'🚶' },
+                { value:'미술실에서', emoji:'🎨' }, { value:'학교 가는 길에', emoji:'🚶' },
+                { value:'보건실에서', emoji:'🏥' }, { value:'마트에서', emoji:'🛒' },
+                { value:'식당에서', emoji:'🍽️' }, { value:'부엌에서', emoji:'🍳' },
+                { value:'거실에서', emoji:'🛋️' }, { value:'내 방에서', emoji:'🛏️' },
+                { value:'산에서', emoji:'⛰️' }, { value:'바다에서', emoji:'🌊' },
+                { value:'수영장에서', emoji:'🏊' }, { value:'마당에서', emoji:'🌿' }
+            ],
+            who: [
+                { value:'친구랑', emoji:'👫' }, { value:'친구들과', emoji:'👥' },
+                { value:'엄마랑', emoji:'👩' }, { value:'아빠랑', emoji:'👨' },
+                { value:'동생이랑', emoji:'👶' }, { value:'선생님이랑', emoji:'👩‍🏫' },
+                { value:'짝꿍이랑', emoji:'🤝' }, { value:'가족이랑', emoji:'👨‍👩‍👧' },
+                { value:'혼자서', emoji:'🙋' }, { value:'형이랑', emoji:'👦' },
+                { value:'누나랑', emoji:'👧' }, { value:'언니랑', emoji:'👧' },
+                { value:'오빠랑', emoji:'👦' }, { value:'할머니랑', emoji:'👵' },
+                { value:'할아버지랑', emoji:'👴' }, { value:'강아지랑', emoji:'🐶' },
+                { value:'고양이랑', emoji:'🐱' }, { value:'인형이랑', emoji:'🧸' }
+            ],
+            what: [
+                { value:'신나게 놀았다', emoji:'🎉' }, { value:'맛있게 먹었다', emoji:'🍜' },
+                { value:'책을 읽었다', emoji:'📖' }, { value:'그림을 그렸다', emoji:'🎨' },
+                { value:'깔깔 웃었다', emoji:'😄' }, { value:'줄넘기를 했다', emoji:'🪢' },
+                { value:'달리기를 했다', emoji:'🏃' }, { value:'이야기를 했다', emoji:'💬' },
+                { value:'보드게임을 했다', emoji:'🎲' }, { value:'블록놀이를 했다', emoji:'🧱' },
+                { value:'공놀이를 했다', emoji:'⚽' }, { value:'술래잡기를 했다', emoji:'🏃' },
+                { value:'자전거를 탔다', emoji:'🚲' }, { value:'그네를 탔다', emoji:'🛝' },
+                { value:'미끄럼틀을 탔다', emoji:'🛝' }, { value:'산책을 했다', emoji:'🚶' },
+                { value:'노래를 불렀다', emoji:'🎵' }, { value:'영화를 봤다', emoji:'🎬' },
+                { value:'텔레비전을 봤다', emoji:'📺' }, { value:'요리를 했다', emoji:'🍳' },
+                { value:'청소를 했다', emoji:'🧹' }, { value:'수영을 했다', emoji:'🏊' },
+                { value:'축구를 했다', emoji:'⚽' }, { value:'간식을 먹었다', emoji:'🍰' },
+                { value:'밥을 먹었다', emoji:'🍚' }, { value:'동화책을 읽었다', emoji:'📚' },
+                { value:'새 글자를 배웠다', emoji:'✏️' }, { value:'일기를 썼다', emoji:'📓' },
+                { value:'숙제를 했다', emoji:'📝' }, { value:'등산을 했다', emoji:'⛰️' }
+            ],
+            feeling: [
+                { value:'즐거웠다', emoji:'😊' }, { value:'신났다', emoji:'🎉' },
+                { value:'행복했다', emoji:'😄' }, { value:'뿌듯했다', emoji:'😌' },
+                { value:'기뻤다', emoji:'😃' }, { value:'재미있었다', emoji:'😆' },
+                { value:'편안했다', emoji:'😌' }, { value:'속상했다', emoji:'😢' },
+                { value:'화났다', emoji:'😠' }, { value:'서운했다', emoji:'😔' },
+                { value:'무서웠다', emoji:'😨' }, { value:'슬펐다', emoji:'😭' },
+                { value:'힘들었다', emoji:'😓' }, { value:'궁금했다', emoji:'🤔' },
+                { value:'부끄러웠다', emoji:'😊' }, { value:'걱정됐다', emoji:'😟' },
+                { value:'떨렸다', emoji:'😬' }, { value:'외로웠다', emoji:'😔' }
+            ]
+        };
+
+        // 1단계 모은 카드 + 기본 카드 합산 (중복 value 제거)
+        function mergeCards(collected, defaults) {
+            var seen = {};
+            var merged = [];
+            collected.forEach(function(c) {
+                var v = c.value || c.word || '';
+                if (v && !seen[v]) { seen[v] = true; merged.push(c); }
+            });
+            defaults.forEach(function(c) {
+                var v = c.value || c.word || '';
+                if (v && !seen[v]) { seen[v] = true; merged.push(c); }
+            });
+            return merged;
+        }
+
         var cardPool = {
-            when:    cards1.filter(function(c){ return c.key === 'when'; }),
-            where:   cards1.filter(function(c){ return c.key === 'where'; }),
-            who:     cards1.filter(function(c){ return c.key === 'who'; }),
-            what:    cards1.filter(function(c){ return c.key === 'what'; }),
-            feeling: cards2
+            when:    mergeCards(cards1.filter(function(c){ return c.key === 'when'; }),    DEFAULT_CARDS.when),
+            where:   mergeCards(cards1.filter(function(c){ return c.key === 'where'; }),   DEFAULT_CARDS.where),
+            who:     mergeCards(cards1.filter(function(c){ return c.key === 'who'; }),     DEFAULT_CARDS.who),
+            what:    mergeCards(cards1.filter(function(c){ return c.key === 'what'; }),    DEFAULT_CARDS.what),
+            feeling: mergeCards(cards2,                                                     DEFAULT_CARDS.feeling)
         };
 
         content = h("div", { className: "flex-1 flex flex-col p-3 gap-2 min-h-0 overflow-hidden" },
@@ -6023,25 +6255,56 @@ function Stage3(props) {
 
                     // cards
                     inputMode === 'cards' && h("div", { className: "flex-1 overflow-y-auto w-full min-h-0" },
-                        cardPool[activeField] && cardPool[activeField].length > 0
-                            ? h("div", { className: "flex flex-wrap gap-3 justify-center p-2" },
-                                cardPool[activeField].map(function(card, i) {
-                                    var v = card.value || card.word || '';
-                                    var e = card.emoji || '';
-                                    var c = S3_COLORS[activeField];
-                                    return h(motion.button, {
-                                        key: i,
-                                        whileHover: { scale: 1.05, y: -4 },
-                                        whileTap: { scale: 0.95 },
-                                        onClick: (function(val){ return function(){ fillActive(val); }; })(v),
-                                        className: "px-5 py-3 rounded-2xl border-4 shadow-md font-black text-xl flex items-center gap-2 bg-white " + c.border + " " + c.text
-                                    }, e && h("span", null, e), h("span", null, v));
-                                })
+                        h("div", { className: "flex flex-col gap-3 p-2" },
+                            // 내가 모은 카드 (있을 때만)
+                            (function() {
+                                var myCards = activeField === 'feeling'
+                                    ? cards2
+                                    : cards1.filter(function(c){ return c.key === activeField; });
+                                if (myCards.length === 0) return null;
+                                var c = S3_COLORS[activeField];
+                                return h("div", null,
+                                    h("p", { className: "text-sm font-black text-slate-500 mb-2 px-1" }, "⭐ 내가 모은 카드"),
+                                    h("div", { className: "flex flex-wrap gap-2" },
+                                        myCards.map(function(card, i) {
+                                            var v = card.value || card.word || '';
+                                            var e = card.emoji || '';
+                                            return h(motion.button, {
+                                                key: 'my' + i,
+                                                whileHover: { scale: 1.05, y: -3 },
+                                                whileTap: { scale: 0.95 },
+                                                onClick: (function(val){ return function(){ fillActive(val); }; })(v),
+                                                className: "px-4 py-2.5 rounded-2xl border-4 shadow-md font-black text-lg flex items-center gap-2 " + c.bg + " " + c.border + " " + c.text
+                                            }, e && h("span", null, e), h("span", null, v));
+                                        })
+                                    )
+                                );
+                            })(),
+                            // 기본 카드
+                            h("div", null,
+                                h("p", { className: "text-sm font-black text-slate-400 mb-2 px-1" }, "📋 고를 수 있는 카드"),
+                                h("div", { className: "flex flex-wrap gap-2" },
+                                    (function() {
+                                        var c = S3_COLORS[activeField];
+                                        var myVals = (activeField === 'feeling' ? cards2 : cards1.filter(function(cc){ return cc.key === activeField; }))
+                                            .map(function(cc){ return cc.value || cc.word || ''; });
+                                        return DEFAULT_CARDS[activeField].filter(function(card) {
+                                            return myVals.indexOf(card.value) === -1;
+                                        }).map(function(card, i) {
+                                            var v = card.value || '';
+                                            var e = card.emoji || '';
+                                            return h(motion.button, {
+                                                key: 'def' + i,
+                                                whileHover: { scale: 1.05, y: -3 },
+                                                whileTap: { scale: 0.95 },
+                                                onClick: (function(val){ return function(){ fillActive(val); }; })(v),
+                                                className: "px-4 py-2.5 rounded-2xl border-3 border-2 shadow-sm font-bold text-lg flex items-center gap-2 bg-white " + c.border + " " + c.text
+                                            }, e && h("span", null, e), h("span", null, v));
+                                        });
+                                    })()
+                                )
                             )
-                            : h("div", { className: "text-center text-slate-400 p-8" },
-                                h("p", { className: "text-xl font-black" }, "📦 모은 카드가 없어요"),
-                                h("p", { className: "text-base" }, "녹음하거나 직접 써봐요!")
-                            )
+                        )
                     )
                 )
             ),
@@ -6906,14 +7169,28 @@ function App() {
             gasGet('getRecommendedFeelings')
                 .then(function(d) {
                     if (d && d.recommendedFeelings && Object.keys(d.recommendedFeelings).length > 0) {
-                        // 시트 데이터로 교체
-                        Object.keys(RECOMMENDED_FEELINGS).forEach(function(k) { delete RECOMMENDED_FEELINGS[k]; });
-                        Object.keys(d.recommendedFeelings).forEach(function(k) {
-                            RECOMMENDED_FEELINGS[k] = d.recommendedFeelings[k];
+                        // 시트 데이터로 완전 교체 (카테고리 컬럼 등 불필요한 값 정리)
+                        var sheetData = d.recommendedFeelings;
+                        var cleaned = {};
+                        Object.keys(sheetData).forEach(function(k) {
+                            var key = String(k).trim();
+                            // 빈 키, 헤더, 카테고리 이모지 행 스킵
+                            if (!key || key.length === 0) return;
+                            if (key.indexOf('카테고리') !== -1 || key.indexOf('서술어') !== -1) return;
+                            var vals = sheetData[k];
+                            if (Array.isArray(vals) && vals.length > 0) cleaned[key] = vals;
                         });
+                        if (Object.keys(cleaned).length > 0) {
+                            // 기존 하드코딩 완전 교체
+                            Object.keys(RECOMMENDED_FEELINGS).forEach(function(k) { delete RECOMMENDED_FEELINGS[k]; });
+                            Object.keys(cleaned).forEach(function(k) { RECOMMENDED_FEELINGS[k] = cleaned[k]; });
+                            console.log('[추천감정] 시트에서 ' + Object.keys(cleaned).length + '개 로드 완료');
+                        }
                     }
                 })
-                .catch(function() {});
+                .catch(function(e) {
+                    console.log('[추천감정] 로드 실패, 기본값 사용:', e);
+                });
         }
     }
 
