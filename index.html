@@ -64,7 +64,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbwDF_cLoatC2Ee-_Mnbj9zdEcFjBChjWHOwivCjcbnagcPPQNX6_6RLPrxHD1anFFqYeg/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbw86gqJdu4vu95EYP7tICEW7AFFUKdjIMmDmHNdKlHOJoOh6m-oO1lzRuhqhtLuJ9luMQ/exec';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -234,54 +234,54 @@ function StageCard(props) {
     var stageLocked = !!progress.stageLocked;
 
     return h(motion.div, {
-        whileHover: stageLocked ? {} : { scale: 1.04, y: -6 },
-        whileTap: stageLocked ? {} : { scale: 0.97 },
+        whileHover: stageLocked ? {} : { scale: 1.03, y: -6 },
+        whileTap: stageLocked ? {} : { scale: 0.98 },
         transition: { type: "spring", stiffness: 300, damping: 22 },
         onClick: function() { if (!stageLocked) onClickSub1(); },
         style: { background: 'linear-gradient(160deg, ' + stage.bgGradFrom + ' 0%, ' + stage.bgGradTo + ' 100%)' },
-        className: "relative rounded-[2.5rem] overflow-hidden flex flex-col items-center justify-center h-full cursor-pointer select-none " + stage.shadowClass +
+        className: "relative rounded-[2rem] overflow-hidden flex flex-col items-center justify-center cursor-pointer select-none h-full " + stage.shadowClass +
             (stageLocked ? " grayscale opacity-60" : "")
     },
-        // 테두리 링
-        h("div", { className: "absolute inset-2 rounded-[2rem] border-4 border-white/40 pointer-events-none" }),
+        // 안쪽 테두리 링
+        h("div", { className: "absolute inset-2 rounded-[1.75rem] border-4 border-white/40 pointer-events-none" }),
 
-        // 단계 번호 배지 (상단 중앙)
+        // 단계 번호 배지
         h("div", {
-            className: "absolute top-5 left-1/2 px-4 py-1 rounded-full text-sm font-black text-white shadow-md",
+            className: "absolute top-4 left-1/2 px-4 py-1 rounded-full text-sm font-black text-white shadow-md",
             style: { background: stage.accentBg, transform: 'translateX(-50%)' }
         }, stage.number + "단계"),
 
         // 이모지 캐릭터
         h(motion.div, {
-            animate: stageLocked ? {} : { y: [0, -8, 0] },
+            animate: stageLocked ? {} : { y: [0, -6, 0] },
             transition: { repeat: Infinity, duration: 2.5, ease: "easeInOut" },
-            className: "mt-10 mb-3"
+            className: "mt-8 mb-3"
         },
             h("div", {
-                className: "w-24 h-24 rounded-full flex items-center justify-center text-6xl border-[5px] border-white shadow-xl",
+                className: "w-20 h-20 rounded-full flex items-center justify-center text-5xl border-4 border-white shadow-lg",
                 style: { background: stage.innerBg }
             }, stage.char)
         ),
 
         // 제목
         h("h3", {
-            className: "text-2xl md:text-3xl font-black text-center px-4",
+            className: "text-2xl font-black text-center px-4 leading-tight",
             style: { color: stage.accentText }
         }, stage.title),
 
         // 부제목
         h("p", {
-            className: "text-base md:text-lg font-bold text-center px-6 mt-1 mb-6",
+            className: "text-sm font-bold text-center px-5 mt-1 mb-5 leading-snug",
             style: { color: stage.accentText, opacity: 0.75 }
         }, stage.subtitle),
 
-        // 진행 표시 (카드 모은 경우)
+        // 진행 표시
         progress.sub1Count > 0 && h("div", {
-            className: "absolute bottom-5 left-5 right-5 flex flex-col gap-1"
+            className: "absolute bottom-4 left-4 right-4"
         },
-            h("div", { className: "flex justify-between items-center" },
-                h("span", { className: "text-sm font-black", style: { color: stage.accentText } },
-                    progress.sub1Done ? "✅ 완료!" : progress.sub1Count + "/" + progress.sub1Total + " 장"
+            h("div", { className: "flex justify-between items-center mb-1" },
+                h("span", { className: "text-xs font-black", style: { color: stage.accentText } },
+                    progress.sub1Done ? "✅ 완료!" : progress.sub1Count + "/" + progress.sub1Total + "장"
                 )
             ),
             h("div", { className: "w-full h-2 rounded-full bg-white/50 overflow-hidden" },
@@ -296,9 +296,9 @@ function StageCard(props) {
         ),
 
         // 잠금 오버레이
-        stageLocked && h("div", { className: "absolute inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-5 z-20" },
+        stageLocked && h("div", { className: "absolute inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-20" },
             h("div", { className: "bg-white px-5 py-4 rounded-3xl shadow-2xl border-4 border-slate-300 text-center" },
-                h("div", { className: "text-5xl mb-2" }, "🔒"),
+                h("div", { className: "text-4xl mb-1" }, "🔒"),
                 h("p", { className: "text-base font-black text-slate-700" }, progress.stageLockReason)
             )
         )
@@ -810,85 +810,73 @@ function MainMenu(props) {
         }, 600);
     }
 
-    return h("div", { className: "w-full flex flex-col relative overflow-hidden", style: { height: "100dvh" } },
-        h("div", { className: "px-4 md:px-8 pt-2 pb-1 flex items-center justify-between shrink-0" },
-            h("div", { className: "flex items-center gap-4" },
+    return h("div", { className: "w-full flex flex-col relative overflow-hidden", style: { height: "100dvh", background: 'linear-gradient(160deg, #FFF8E7 0%, #F0F4FF 40%, #FFF0F5 100%)' } },
+
+        // ── 헤더 (한 줄에 모두) ──
+        h("div", { className: "px-5 py-3 flex items-center justify-between shrink-0" },
+            // 왼쪽: 연필요정 + 제목
+            h("div", { className: "flex items-center gap-3" },
                 h(PencilFairy, null),
                 h("div", null,
-                    h("h1", { className: "text-xl md:text-2xl font-black text-slate-800" }, "한 문장 일기장 ✏️"),
-                    h("p", { className: "text-sm font-bold text-slate-500 mt-0.5" }, "오늘은 어디서부터 시작해볼까?")
+                    h("h1", { className: "text-xl font-black text-slate-800" }, "한 문장 일기장 ✏️"),
+                    h("p", { className: "text-sm font-bold text-slate-400" }, "오늘은 어디서부터 시작해볼까?")
                 )
             ),
-            h("div", { className: "bg-white px-3 py-2 rounded-2xl shadow-md border-2 border-amber-300 flex items-center gap-2" },
-                h("div", { className: "w-9 h-9 bg-gradient-to-br from-amber-200 to-orange-300 rounded-full flex items-center justify-center text-xl border-2 border-white" }, "🎒"),
-                h("div", null,
-                    h("p", { className: "hidden md:block text-xs text-amber-700 font-bold" }, "안녕, 친구!"),
-                    h("p", { className: "text-sm font-black text-slate-800" }, state.studentName || "학생")
-                ),
+            // 오른쪽: 보관함 + 학생명
+            h("div", { className: "flex items-center gap-3" },
+                // 카드 보관함 버튼 (작게)
                 h("button", {
-                    onClick: onChangeStudent,
-                    className: "text-xs font-black text-amber-600 hover:text-amber-800 px-2 py-1 bg-amber-50 rounded-xl hover:bg-amber-100 border border-amber-200"
-                }, "다른 학생")
+                    onClick: function(){ setShowBox(true); },
+                    className: "flex items-center gap-1.5 px-4 py-2 bg-indigo-500 text-white rounded-2xl font-black text-base shadow-md hover:bg-indigo-600 active:scale-95 transition"
+                },
+                    h("span", null, "📦"),
+                    h("span", null, "보관함"),
+                    h("span", { className: "bg-white text-indigo-600 px-2 py-0.5 rounded-lg text-sm font-black" },
+                        (progress.cards1 || 0) + "장"
+                    )
+                ),
+                // 학생 정보
+                h("div", { className: "flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-md border-2 border-amber-200" },
+                    h("div", { className: "w-8 h-8 bg-gradient-to-br from-amber-200 to-orange-300 rounded-full flex items-center justify-center text-lg border-2 border-white" }, "🎒"),
+                    h("span", { className: "text-base font-black text-slate-800" }, state.studentName || "학생"),
+                    h("button", {
+                        onClick: onChangeStudent,
+                        className: "text-xs font-black text-amber-600 hover:text-amber-800 px-2 py-1 bg-amber-50 rounded-xl hover:bg-amber-100 border border-amber-200 ml-1"
+                    }, "다른 학생")
+                )
             )
         ),
-        // 📦 카드 보관함 버튼
-        h("button", {
-            onClick: function(){ setShowBox(true); },
-            className: "flex items-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-2xl font-black text-lg shadow-md hover:bg-indigo-600 active:scale-95 transition ml-3"
-        },
-            h("span", null, "📦"),
-            h("span", null, "내 카드 보관함"),
-            h("span", { className: "bg-white text-indigo-600 px-2 py-0.5 rounded-lg text-base font-black" },
-                (progress.cards1 || 0) + (progress.cards2 || 0) + "장"
-            )
-        ),
 
+        // ── 메인 콘텐츠 ──
+        h("main", { className: "flex-1 px-5 pb-4 flex flex-col gap-4 overflow-hidden min-h-0" },
 
-        h("main", { className: "flex-1 px-3 md:px-6 pb-2 flex flex-col gap-2 overflow-hidden min-h-0" },
-
-            // 단계 소개 배너
-            h("div", { className: "flex gap-2 shrink-0" },
-                [
-                    { num: '1단계', icon: '🃏', title: '낱말 카드', desc: '언제·어디서·누구와·무엇을 카드로 배워요', bg: 'bg-orange-50', border: 'border-orange-300', text: 'text-orange-700', badge: 'bg-orange-500' },
-                    { num: '2단계', icon: '✏️', title: '문장 만들기', desc: '모은 카드로 나만의 문장을 써봐요',        bg: 'bg-blue-50',   border: 'border-blue-300',   text: 'text-blue-700',   badge: 'bg-blue-500'   },
-                    { num: '3단계', icon: '📔', title: '일기 쓰기',  desc: '오늘 있었던 일을 일기로 완성해요',      bg: 'bg-emerald-50',border: 'border-emerald-300',text: 'text-emerald-700',badge: 'bg-emerald-500'}
-                ].map(function(item) {
-                    return h("div", {
-                        key: item.num,
-                        className: "flex-1 " + item.bg + " border-2 " + item.border + " rounded-2xl px-3 py-2 flex items-center gap-2"
-                    },
-                        h("span", { className: "text-xl shrink-0" }, item.icon),
-                        h("div", { className: "min-w-0" },
-                            h("div", { className: "flex items-center gap-1.5 mb-0.5" },
-                                h("span", { className: "text-xs font-black text-white px-2 py-0.5 rounded-full " + item.badge }, item.num),
-                                h("span", { className: "text-sm font-black " + item.text }, item.title)
-                            ),
-                            h("p", { className: "text-xs font-bold text-slate-500 truncate" }, item.desc)
-                        )
-                    );
-                })
+            // 안내 텍스트
+            h("div", { className: "text-center shrink-0" },
+                h("p", { className: "text-2xl font-bold text-slate-600" }, "원하는 단계를 눌러서 시작해봐요! 👇")
             ),
 
-            h("div", { className: "flex-1 grid grid-cols-3 gap-2 md:gap-4 min-h-0 overflow-hidden" },
-                STAGE_DATA.map(function (stage, i) {
+            // 단계 카드 그리드 (3칸)
+            h("div", { className: "flex-1 grid grid-cols-3 gap-5 min-h-0 overflow-hidden" },
+                STAGE_DATA.map(function(stage, i) {
+                    var prog = progresses[i] || { stageLocked: false, stageLockReason: '', sub1Done: false, sub2Done: false, sub2Locked: false, sub2LockReason: '', sub1Count: 0, sub1Total: 1, sub2Count: 0, sub2Total: 1 };
                     return h(StageCard, {
                         key: stage.number,
                         stage: stage,
-                        progress: progresses[i] || { stageLocked: false, stageLockReason: '', sub1Done: false, sub2Done: false, sub2Locked: false, sub2LockReason: '', sub1Count: 0, sub1Total: 1, sub2Count: 0, sub2Total: 1 },
+                        progress: prog,
                         onClick: (function(idx) { return function() { onNavigate(String(idx + 1)); }; })(i),
                         onClickSub1: (function(idx) { return function() { onNavigate(String(idx + 1)); }; })(i),
                         onClickSub2: (function(idx) { return function() { onNavigate(String(idx + 1)); }; })(i)
                     });
                 })
-            )    // grid 닫기
-        ),       // main 닫기
+            )
+        ),
 
-        // 이동 안내 (팝업 대신 하단 토스트)
+        // 이동 안내 토스트
         navTarget && h(motion.div, {
             key: navTarget.time,
             initial: { y: 100, opacity: 0 },
             animate: { y: 0, opacity: 1 },
-            className: "absolute bottom-20 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-2xl text-base font-black z-50"
+            className: "absolute bottom-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-2xl text-lg font-black z-50 whitespace-nowrap"
         }, "→ " + navTarget.stage + "단계로 이동합니다"),
 
         // ── 카드 보관함 패널 ──
@@ -1272,9 +1260,20 @@ function NotebookGrid(props) {
     var perRow = 10;
     // 첫 줄 들여쓰기: 첫 칸 빈 칸 추가
     var paddedCells = [{ ch: '', color: null, isEmpty: true }].concat(cells);
+    // 줄바꿈 자리에 공백 칸(isSpace)이 오면 제거 → 다음 줄 첫 칸부터 시작
+    var packed = [];
+    var col = 0;
+    for (var pi = 0; pi < paddedCells.length; pi++) {
+        var cellP = paddedCells[pi];
+        // 줄 시작(col===0)이고 공백 칸이면 건너뛰기
+        if (col === 0 && cellP.isSpace) continue;
+        packed.push(cellP);
+        col++;
+        if (col >= perRow) col = 0;
+    }
     var rows = [];
-    for (var i = 0; i < paddedCells.length; i += perRow) {
-        rows.push(paddedCells.slice(i, i + perRow));
+    for (var i = 0; i < packed.length; i += perRow) {
+        rows.push(packed.slice(i, i + perRow));
     }
     // 마지막 줄이 10칸 미만이면 빈 칸으로 채워서 시각적 정렬
     while (rows[rows.length - 1].length < perRow) {
@@ -2119,8 +2118,29 @@ function Stage1_1(props) {
         ];
         var groupCardsFP = FEELINGS_POOL.filter(function(f){ return f.group === feelGroup; });
 
+        // 선택한 문장
+        var chosenSentenceFP = examples[chosenForWriting];
+        var sentenceTextFP = chosenSentenceFP ? chosenSentenceFP.filter(Boolean).join(' ') : '';
+        // "무엇을" 텍스트로 추천 감정 찾기
+        var whatTextFP = chosenSentenceFP ? (chosenSentenceFP[3] || '') : '';
+        var recommendedFP = findRecommendedFeelings(whatTextFP);
+
+        // 팝업에 표시할 예시문장
+        var popupExamples = [];
+        if (pendingFeel) {
+            var pExs = FEELINGS_EXAMPLES[pendingFeel.value] || [];
+            popupExamples = pExs.filter(function(ex){ return ex && ex.length >= 4 && ex[0]; }).slice(0, 3);
+        }
+        var POPUP_FLC = [
+            { bg:'bg-amber-100', text:'text-amber-700', border:'border-amber-300' },
+            { bg:'bg-blue-100',  text:'text-blue-700',  border:'border-blue-300' },
+            { bg:'bg-emerald-100', text:'text-emerald-700', border:'border-emerald-300' },
+            { bg:'bg-red-100', text:'text-red-700', border:'border-red-300' },
+            { bg:'bg-purple-100', text:'text-purple-700', border:'border-purple-300' }
+        ];
+
         content = h("div", { className: "flex-1 flex flex-col p-4 gap-3 min-h-0 overflow-hidden" },
-            // 말풍선
+            // 말풍선 + 뒤로
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
                 h("div", { className: "bg-white px-5 py-3 rounded-2xl shadow-md border-2 border-purple-200 mt-2 whitespace-nowrap" },
@@ -2131,6 +2151,12 @@ function Stage1_1(props) {
                     onClick: function(){ setSubStep('askFeeling'); },
                     className: "ml-auto self-center px-4 py-2 bg-slate-100 text-slate-500 rounded-2xl font-black text-base hover:bg-slate-200 shrink-0"
                 }, "← 뒤로")
+            ),
+
+            // 📝 학생이 선택한 문장 미리보기
+            h("div", { className: "bg-orange-50 border-3 border-orange-300 rounded-2xl px-5 py-3 flex items-center gap-3 shrink-0 border-2" },
+                h("span", { className: "text-sm font-black text-orange-700 shrink-0" }, "📝 내가 고른 문장"),
+                h("span", { className: "text-2xl font-black text-slate-800 truncate", style: { wordBreak: 'keep-all' } }, sentenceTextFP)
             ),
 
             // 좌(신호등) + 우(감정카드)
@@ -2163,25 +2189,35 @@ function Stage1_1(props) {
                     })
                 ),
 
-                // 감정 카드
+                // 감정 카드 (추천 감정 강조)
                 h("div", { className: "bg-white rounded-[2rem] border-4 border-purple-100 p-4 flex flex-col gap-3 overflow-hidden min-h-0" },
-                    h("h3", { className: "text-lg font-black text-purple-700 shrink-0" },
-                        (FEEL_GROUPS_LOCAL.filter(function(g){ return g.g === feelGroup; })[0] || {}).label
-                            ? (FEEL_GROUPS_LOCAL.filter(function(g){ return g.g === feelGroup; })[0]).label.replace('\n', ' ')
-                            : ''
+                    h("div", { className: "flex items-center justify-between shrink-0" },
+                        h("h3", { className: "text-lg font-black text-purple-700" },
+                            (FEEL_GROUPS_LOCAL.filter(function(g){ return g.g === feelGroup; })[0] || {}).label
+                                ? (FEEL_GROUPS_LOCAL.filter(function(g){ return g.g === feelGroup; })[0]).label.replace('\n', ' ')
+                                : ''
+                        ),
+                        recommendedFP.length > 0 && h("p", { className: "text-sm font-bold text-pink-600" },
+                            "✨ 추천 감정에는 별표가 있어요!"
+                        )
                     ),
                     h("div", { className: "flex-1 overflow-y-auto min-h-0" },
                         h("div", { className: "grid gap-3", style: { gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))' } },
                             groupCardsFP.map(function(f, i) {
                                 var word = f.value || '';
+                                var isRec = recommendedFP.indexOf(word) !== -1;
                                 return h(motion.button, {
                                     key: i,
                                     whileHover:{ scale:1.05, y:-3 }, whileTap:{ scale:0.95 },
                                     onClick: (function(fc){ return function(){
                                         setPendingFeel(fc);
                                     }; })(f),
-                                    className: "flex flex-col items-center gap-2 p-4 rounded-2xl border-4 shadow-md transition bg-white border-slate-200 hover:border-purple-300 hover:bg-purple-50"
+                                    className: "relative flex flex-col items-center gap-2 p-4 rounded-2xl border-4 shadow-md transition " +
+                                        (isRec
+                                            ? "bg-pink-50 border-pink-400 hover:border-pink-500"
+                                            : "bg-white border-slate-200 hover:border-purple-300 hover:bg-purple-50")
                                 },
+                                    isRec && h("span", { className: "absolute -top-2 -right-2 text-2xl" }, "⭐"),
                                     h("span", { className: "text-4xl" }, f.emoji || '💜'),
                                     h("span", { className: "text-lg font-black text-slate-800 text-center leading-tight" }, word)
                                 );
@@ -2191,37 +2227,64 @@ function Stage1_1(props) {
                 )
             ),
 
-            // 선택 확인 팝업
+            // 선택 확인 팝업 (옆에 예시 문장)
             pendingFeel && h("div", {
-                style: { position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999 }
+                style: { position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999, padding:'1rem' }
             },
                 h(motion.div, {
-                    initial: { scale: 0.8, opacity: 0 },
+                    initial: { scale: 0.9, opacity: 0 },
                     animate: { scale: 1, opacity: 1 },
                     transition: { type: 'spring', stiffness: 300, damping: 24 },
-                    className: "bg-white rounded-[2.5rem] shadow-2xl border-4 border-purple-300 p-8 flex flex-col items-center gap-5 max-w-md mx-4"
+                    className: "flex gap-4 max-w-5xl w-full items-stretch"
                 },
-                    h("p", { className: "text-xl font-black text-purple-600" }, "이 감정을 골랐어요!"),
-                    h("div", { className: "w-32 h-32 rounded-full bg-purple-100 border-4 border-purple-300 flex items-center justify-center" },
-                        h("span", { style: { fontSize: '5.5rem', lineHeight: 1 } }, pendingFeel.emoji || '💜')
+                    // 왼쪽: 감정 카드
+                    h("div", { className: "bg-white rounded-[2.5rem] shadow-2xl border-4 border-purple-300 p-8 flex flex-col items-center gap-4", style: { minWidth: '340px', maxWidth: '380px' } },
+                        h("p", { className: "text-lg font-black text-purple-600" }, "이 감정을 골랐어요!"),
+                        h("div", { className: "w-32 h-32 rounded-full bg-purple-100 border-4 border-purple-300 flex items-center justify-center" },
+                            h("span", { style: { fontSize: '5.5rem', lineHeight: 1 } }, pendingFeel.emoji || '💜')
+                        ),
+                        h("h3", { className: "text-4xl font-black text-purple-800" }, pendingFeel.value),
+                        pendingFeel.desc && h("p", { className: "text-base font-bold text-slate-600 text-center leading-relaxed", style: { wordBreak: 'keep-all' } },
+                            "💡 ", pendingFeel.desc
+                        ),
+                        h("div", { className: "flex gap-3 mt-2 w-full" },
+                            h("button", {
+                                onClick: function(){ setPendingFeel(null); },
+                                className: "flex-1 px-4 py-3 bg-slate-200 text-slate-700 rounded-2xl text-base font-black hover:bg-slate-300"
+                            }, "← 다시"),
+                            h("button", {
+                                onClick: function(){
+                                    setFeelPicked([pendingFeel.value || '']);
+                                    setPendingFeel(null);
+                                    setSubStep('feelingDetail');
+                                },
+                                className: "flex-1 px-4 py-3 bg-purple-500 text-white rounded-2xl text-base font-black shadow-[0_5px_0_rgb(107,33,168)]"
+                            }, "✓ 이 감정으로!")
+                        )
                     ),
-                    h("h3", { className: "text-4xl font-black text-purple-800" }, pendingFeel.value),
-                    pendingFeel.desc && h("p", { className: "text-lg font-bold text-slate-600 text-center leading-relaxed", style: { wordBreak: 'keep-all' } },
-                        "💡 ", pendingFeel.desc
-                    ),
-                    h("div", { className: "flex gap-3 mt-2" },
-                        h("button", {
-                            onClick: function(){ setPendingFeel(null); },
-                            className: "px-6 py-3 bg-slate-200 text-slate-700 rounded-2xl text-lg font-black hover:bg-slate-300"
-                        }, "← 다시 고를래요"),
-                        h("button", {
-                            onClick: function(){
-                                setFeelPicked([pendingFeel.value || '']);
-                                setPendingFeel(null);
-                                setSubStep('feelingDetail');
-                            },
-                            className: "px-8 py-3 bg-purple-500 text-white rounded-2xl text-lg font-black shadow-[0_5px_0_rgb(107,33,168)]"
-                        }, "✓ 이 감정으로!")
+                    // 오른쪽: 예시 문장 3개
+                    h("div", { className: "flex-1 bg-purple-50 rounded-[2.5rem] shadow-2xl border-4 border-purple-300 p-6 flex flex-col gap-3 overflow-hidden", style: { minWidth: '380px' } },
+                        h("p", { className: "text-xl font-black text-purple-700 shrink-0" }, "📝 이런 문장으로 써볼 수 있어요"),
+                        h("div", { className: "flex-1 overflow-y-auto flex flex-col gap-2 min-h-0" },
+                            popupExamples.length > 0
+                                ? popupExamples.map(function(ex, ei) {
+                                    return h("div", { key: ei, className: "bg-white rounded-2xl border-2 border-purple-100 p-3" },
+                                        h("div", { className: "flex flex-wrap gap-1.5 mb-2" },
+                                            ex.map(function(val, idx) {
+                                                if (!val) return null;
+                                                var fc = POPUP_FLC[idx] || POPUP_FLC[0];
+                                                return h("span", { key: idx, className: "px-2.5 py-1.5 rounded-lg text-sm font-black border-2 " + fc.bg + " " + fc.text + " " + fc.border }, val);
+                                            })
+                                        ),
+                                        h("p", { className: "text-base font-bold text-slate-700", style: { wordBreak: 'keep-all' } },
+                                            ex.filter(Boolean).join(' ') + '.'
+                                        )
+                                    );
+                                })
+                                : h("div", { className: "flex-1 flex items-center justify-center" },
+                                    h("p", { className: "text-base font-bold text-slate-400" }, "예시 문장이 없어요")
+                                  )
+                        )
                     )
                 )
             )
@@ -2568,9 +2631,19 @@ function NotebookGrid(props) {
     var perRow = 10;
     // 첫 줄 들여쓰기: 첫 칸 빈 칸 추가
     var paddedCells = [{ ch: '', color: null, isEmpty: true }].concat(cells);
+    // 줄바꿈 자리에 공백 칸(isSpace)이 오면 제거 → 다음 줄 첫 칸부터 시작
+    var packed = [];
+    var col = 0;
+    for (var pi = 0; pi < paddedCells.length; pi++) {
+        var cellP = paddedCells[pi];
+        if (col === 0 && cellP.isSpace) continue;
+        packed.push(cellP);
+        col++;
+        if (col >= perRow) col = 0;
+    }
     var rows = [];
-    for (var i = 0; i < paddedCells.length; i += perRow) {
-        rows.push(paddedCells.slice(i, i + perRow));
+    for (var i = 0; i < packed.length; i += perRow) {
+        rows.push(packed.slice(i, i + perRow));
     }
     while (rows[rows.length - 1].length < perRow) {
         rows[rows.length - 1].push({ ch: '', color: null, isEmpty: true });
@@ -3104,6 +3177,25 @@ function Stage1_2(props) {
         ];
         var groupCardsS12 = FEELINGS_POOL.filter(function(f){ return f.group === feelGroup2; });
 
+        // 학생이 만든 문장
+        var sentenceTextS12_pick = FIELD_KEYS.map(function(k){ return myParts[k]; }).filter(Boolean).join(' ');
+        // "무엇을" 텍스트로 추천 감정 찾기
+        var recommendedS12 = findRecommendedFeelings(myParts.what || '');
+
+        // 팝업에 표시할 예시문장
+        var popupExamples2 = [];
+        if (pendingFeel2) {
+            var pExs2 = FEELINGS_EXAMPLES[pendingFeel2.value] || [];
+            popupExamples2 = pExs2.filter(function(ex){ return ex && ex.length >= 4 && ex[0]; }).slice(0, 3);
+        }
+        var POPUP_FLC2 = [
+            { bg:'bg-amber-100', text:'text-amber-700', border:'border-amber-300' },
+            { bg:'bg-blue-100',  text:'text-blue-700',  border:'border-blue-300' },
+            { bg:'bg-emerald-100', text:'text-emerald-700', border:'border-emerald-300' },
+            { bg:'bg-red-100', text:'text-red-700', border:'border-red-300' },
+            { bg:'bg-purple-100', text:'text-purple-700', border:'border-purple-300' }
+        ];
+
         content = h("div", { className: "flex-1 flex flex-col p-4 gap-3 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
@@ -3117,7 +3209,14 @@ function Stage1_2(props) {
                 }, "← 뒤로")
             ),
 
+            // 📝 학생이 만든 문장 미리보기
+            h("div", { className: "bg-orange-50 border-2 border-orange-300 rounded-2xl px-5 py-3 flex items-center gap-3 shrink-0" },
+                h("span", { className: "text-sm font-black text-orange-700 shrink-0" }, "📝 내가 만든 문장"),
+                h("span", { className: "text-2xl font-black text-slate-800 truncate", style: { wordBreak: 'keep-all' } }, sentenceTextS12_pick)
+            ),
+
             h("div", { className: "flex-1 grid gap-4 min-h-0 overflow-hidden", style: { gridTemplateColumns: '130px 1fr' } },
+                // 신호등
                 h("div", { className: "bg-slate-800 rounded-[2rem] flex flex-col items-center justify-center gap-5 py-6 px-3 shadow-2xl" },
                     FG2_LOCAL.map(function(item) {
                         var isActive = feelGroup2 === item.g;
@@ -3144,24 +3243,31 @@ function Stage1_2(props) {
                     })
                 ),
 
+                // 감정 카드
                 h("div", { className: "bg-white rounded-[2rem] border-4 border-purple-100 p-4 flex flex-col gap-3 overflow-hidden min-h-0" },
-                    h("h3", { className: "text-lg font-black text-purple-700 shrink-0" },
-                        (FG2_LOCAL.filter(function(g){ return g.g === feelGroup2; })[0] || {}).label
-                            ? (FG2_LOCAL.filter(function(g){ return g.g === feelGroup2; })[0]).label.replace('\n', ' ')
-                            : ''
+                    h("div", { className: "flex items-center justify-between shrink-0" },
+                        h("h3", { className: "text-lg font-black text-purple-700" },
+                            (FG2_LOCAL.filter(function(g){ return g.g === feelGroup2; })[0] || {}).label
+                                ? (FG2_LOCAL.filter(function(g){ return g.g === feelGroup2; })[0]).label.replace('\n', ' ')
+                                : ''
+                        ),
+                        recommendedS12.length > 0 && h("p", { className: "text-sm font-bold text-pink-600" }, "✨ 추천 감정에는 별표가 있어요!")
                     ),
                     h("div", { className: "flex-1 overflow-y-auto min-h-0" },
                         h("div", { className: "grid gap-3", style: { gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))' } },
                             groupCardsS12.map(function(f, i) {
                                 var word = f.value || '';
+                                var isRec = recommendedS12.indexOf(word) !== -1;
                                 return h(motion.button, {
                                     key: i,
                                     whileHover:{ scale:1.05, y:-3 }, whileTap:{ scale:0.95 },
-                                    onClick: (function(fc){ return function(){
-                                        setPendingFeel2(fc);
-                                    }; })(f),
-                                    className: "flex flex-col items-center gap-2 p-4 rounded-2xl border-4 shadow-md transition bg-white border-slate-200 hover:border-purple-300 hover:bg-purple-50"
+                                    onClick: (function(fc){ return function(){ setPendingFeel2(fc); }; })(f),
+                                    className: "relative flex flex-col items-center gap-2 p-4 rounded-2xl border-4 shadow-md transition " +
+                                        (isRec
+                                            ? "bg-pink-50 border-pink-400 hover:border-pink-500"
+                                            : "bg-white border-slate-200 hover:border-purple-300 hover:bg-purple-50")
                                 },
+                                    isRec && h("span", { className: "absolute -top-2 -right-2 text-2xl" }, "⭐"),
                                     h("span", { className: "text-4xl" }, f.emoji || '💜'),
                                     h("span", { className: "text-lg font-black text-slate-800 text-center leading-tight" }, word)
                                 );
@@ -3171,37 +3277,62 @@ function Stage1_2(props) {
                 )
             ),
 
-            // 선택 확인 팝업
+            // 선택 확인 팝업 (옆에 예시)
             pendingFeel2 && h("div", {
-                style: { position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999 }
+                style: { position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:9999, padding:'1rem' }
             },
                 h(motion.div, {
-                    initial: { scale: 0.8, opacity: 0 },
+                    initial: { scale: 0.9, opacity: 0 },
                     animate: { scale: 1, opacity: 1 },
                     transition: { type: 'spring', stiffness: 300, damping: 24 },
-                    className: "bg-white rounded-[2.5rem] shadow-2xl border-4 border-purple-300 p-8 flex flex-col items-center gap-5 max-w-md mx-4"
+                    className: "flex gap-4 max-w-5xl w-full items-stretch"
                 },
-                    h("p", { className: "text-xl font-black text-purple-600" }, "이 감정을 골랐어요!"),
-                    h("div", { className: "w-32 h-32 rounded-full bg-purple-100 border-4 border-purple-300 flex items-center justify-center" },
-                        h("span", { style: { fontSize: '5.5rem', lineHeight: 1 } }, pendingFeel2.emoji || '💜')
+                    h("div", { className: "bg-white rounded-[2.5rem] shadow-2xl border-4 border-purple-300 p-8 flex flex-col items-center gap-4", style: { minWidth: '340px', maxWidth: '380px' } },
+                        h("p", { className: "text-lg font-black text-purple-600" }, "이 감정을 골랐어요!"),
+                        h("div", { className: "w-32 h-32 rounded-full bg-purple-100 border-4 border-purple-300 flex items-center justify-center" },
+                            h("span", { style: { fontSize: '5.5rem', lineHeight: 1 } }, pendingFeel2.emoji || '💜')
+                        ),
+                        h("h3", { className: "text-4xl font-black text-purple-800" }, pendingFeel2.value),
+                        pendingFeel2.desc && h("p", { className: "text-base font-bold text-slate-600 text-center leading-relaxed", style: { wordBreak: 'keep-all' } },
+                            "💡 ", pendingFeel2.desc
+                        ),
+                        h("div", { className: "flex gap-3 mt-2 w-full" },
+                            h("button", {
+                                onClick: function(){ setPendingFeel2(null); },
+                                className: "flex-1 px-4 py-3 bg-slate-200 text-slate-700 rounded-2xl text-base font-black hover:bg-slate-300"
+                            }, "← 다시"),
+                            h("button", {
+                                onClick: function(){
+                                    setFeelPicked2([pendingFeel2.value || '']);
+                                    setPendingFeel2(null);
+                                    setSubStep('feelingDetail');
+                                },
+                                className: "flex-1 px-4 py-3 bg-purple-500 text-white rounded-2xl text-base font-black shadow-[0_5px_0_rgb(107,33,168)]"
+                            }, "✓ 이 감정으로!")
+                        )
                     ),
-                    h("h3", { className: "text-4xl font-black text-purple-800" }, pendingFeel2.value),
-                    pendingFeel2.desc && h("p", { className: "text-lg font-bold text-slate-600 text-center leading-relaxed", style: { wordBreak: 'keep-all' } },
-                        "💡 ", pendingFeel2.desc
-                    ),
-                    h("div", { className: "flex gap-3 mt-2" },
-                        h("button", {
-                            onClick: function(){ setPendingFeel2(null); },
-                            className: "px-6 py-3 bg-slate-200 text-slate-700 rounded-2xl text-lg font-black hover:bg-slate-300"
-                        }, "← 다시 고를래요"),
-                        h("button", {
-                            onClick: function(){
-                                setFeelPicked2([pendingFeel2.value || '']);
-                                setPendingFeel2(null);
-                                setSubStep('feelingDetail');
-                            },
-                            className: "px-8 py-3 bg-purple-500 text-white rounded-2xl text-lg font-black shadow-[0_5px_0_rgb(107,33,168)]"
-                        }, "✓ 이 감정으로!")
+                    h("div", { className: "flex-1 bg-purple-50 rounded-[2.5rem] shadow-2xl border-4 border-purple-300 p-6 flex flex-col gap-3 overflow-hidden", style: { minWidth: '380px' } },
+                        h("p", { className: "text-xl font-black text-purple-700 shrink-0" }, "📝 이런 문장으로 써볼 수 있어요"),
+                        h("div", { className: "flex-1 overflow-y-auto flex flex-col gap-2 min-h-0" },
+                            popupExamples2.length > 0
+                                ? popupExamples2.map(function(ex, ei) {
+                                    return h("div", { key: ei, className: "bg-white rounded-2xl border-2 border-purple-100 p-3" },
+                                        h("div", { className: "flex flex-wrap gap-1.5 mb-2" },
+                                            ex.map(function(val, idx) {
+                                                if (!val) return null;
+                                                var fc = POPUP_FLC2[idx] || POPUP_FLC2[0];
+                                                return h("span", { key: idx, className: "px-2.5 py-1.5 rounded-lg text-sm font-black border-2 " + fc.bg + " " + fc.text + " " + fc.border }, val);
+                                            })
+                                        ),
+                                        h("p", { className: "text-base font-bold text-slate-700", style: { wordBreak: 'keep-all' } },
+                                            ex.filter(Boolean).join(' ') + '.'
+                                        )
+                                    );
+                                })
+                                : h("div", { className: "flex-1 flex items-center justify-center" },
+                                    h("p", { className: "text-base font-bold text-slate-400" }, "예시 문장이 없어요")
+                                  )
+                        )
                     )
                 )
             )
@@ -3657,6 +3788,35 @@ var FEELINGS_EXAMPLES = {
     ]
 };
 
+// 추천 감정 매핑 (행동 키워드 → 감정 단어 목록)
+// GAS에서 로드됨 (시트: '추천감정')
+var RECOMMENDED_FEELINGS = {
+    '놀리다':     ['속상하다', '화나다',   '슬프다'],
+    '칭찬받다':   ['뿌듯하다', '기쁘다',   '즐겁다',   '신나다'],
+    '혼나다':     ['속상하다', '부끄럽다', '서운하다'],
+    '친구와놀다': ['즐겁다',   '신나다',   '기쁘다',   '재미있다', '행복하다'],
+    '책읽다':     ['뿌듯하다', '궁금하다', '편안하다'],
+    '그네타다':   ['신나다',   '즐겁다',   '기쁘다'],
+    '달리다':     ['신나다',   '힘들다',   '뿌듯하다'],
+    '혼자있다':   ['외롭다',   '편안하다', '심심하다'],
+    '싸우다':     ['속상하다', '화나다',   '슬프다',   '서운하다']
+};
+
+// "무엇을" 문구에서 추천 감정 찾기 (부분 일치)
+function findRecommendedFeelings(whatText) {
+    if (!whatText) return [];
+    var clean = String(whatText).replace(/\s+/g, '');
+    var found = [];
+    Object.keys(RECOMMENDED_FEELINGS).forEach(function(key) {
+        if (clean.indexOf(key) !== -1) {
+            RECOMMENDED_FEELINGS[key].forEach(function(f) {
+                if (found.indexOf(f) === -1) found.push(f);
+            });
+        }
+    });
+    return found;
+}
+
 
 
 // ────── 음성 비교 헬퍼 (1단계와 동일) ──────
@@ -3739,11 +3899,21 @@ function NotebookGrid(props) {
     var perRow = 10;
 
     // ── 첫 줄 앞에 빈 칸 하나 삽입 ──
-    // 첫 줄만 앞에 { ch:'', color:null, isEmpty:true } 한 칸 추가
     var paddedCells = [{ ch:'', color:null, isEmpty:true }].concat(cells);
 
+    // 줄바꿈 자리에 공백 칸(isSpace)이 오면 제거 → 다음 줄 첫 칸부터 시작
+    var packed = [];
+    var col = 0;
+    for (var pi = 0; pi < paddedCells.length; pi++) {
+        var cellP = paddedCells[pi];
+        if (col === 0 && cellP.isSpace) continue;
+        packed.push(cellP);
+        col++;
+        if (col >= perRow) col = 0;
+    }
+
     var rows = [];
-    for (var i = 0; i < paddedCells.length; i += perRow) rows.push(paddedCells.slice(i, i + perRow));
+    for (var i = 0; i < packed.length; i += perRow) rows.push(packed.slice(i, i + perRow));
     // 마지막 줄 빈 칸 채우기
     while (rows[rows.length - 1].length < perRow) rows[rows.length - 1].push({ ch:'', color:null, isEmpty:true });
 
@@ -6666,6 +6836,19 @@ function App() {
                                 return r && r.length >= 4 && r[0];
                             });
                             if (normalized.length > 0) FEELINGS_EXAMPLES[k] = normalized;
+                        });
+                    }
+                })
+                .catch(function() {});
+
+            // 추천 감정 매핑 로드
+            gasGet('getRecommendedFeelings')
+                .then(function(d) {
+                    if (d && d.recommendedFeelings && Object.keys(d.recommendedFeelings).length > 0) {
+                        // 시트 데이터로 교체
+                        Object.keys(RECOMMENDED_FEELINGS).forEach(function(k) { delete RECOMMENDED_FEELINGS[k]; });
+                        Object.keys(d.recommendedFeelings).forEach(function(k) {
+                            RECOMMENDED_FEELINGS[k] = d.recommendedFeelings[k];
                         });
                     }
                 })
