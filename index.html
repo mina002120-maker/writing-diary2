@@ -64,7 +64,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbxvS7XGM6haAC4Bt-UfPnpN3k2_5EUqpQX2V6PKypugjthHIPQacywovv5qlJEId1l_6A/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbzrK8rMNVcmUIoTuS9z8cLBiID-377QG4JnBvsolNeYeWRFhTKBUhFj5C6_lUfNGancTA/exec';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -201,19 +201,7 @@ var STAGE_DATA = [
         shadowClass: 'puffy-shadow-orange'
     },
     {
-        number: 2, title: '감정 카드 고르기', subtitle: '내 마음을 색깔로 표현해요',
-        char: '🚦',
-        bgGradFrom: '#E9D5FF', bgGradTo: '#D8B4FE',
-        innerBg: '#F5E8FF',
-        accentBg: '#A855F7', accentText: '#6B21A8',
-        sticker1: '😊', sticker3: '🥰',
-        single: true,
-        sub1: '감정 고르러 가기',
-        sub2: '',
-        shadowClass: 'puffy-shadow-purple'
-    },
-    {
-        number: 3, title: '문장 만들기', subtitle: '카드로 나만의 문장을 써요',
+        number: 2, title: '문장 만들기', subtitle: '카드로 나만의 문장을 써요',
         char: '✏️',
         bgGradFrom: '#DBEAFE', bgGradTo: '#BFDBFE',
         innerBg: '#EFF6FF',
@@ -225,7 +213,7 @@ var STAGE_DATA = [
         shadowClass: 'puffy-shadow-blue'
     },
     {
-        number: 4, title: '일기쓰기', subtitle: '오늘 일기를 완성해요',
+        number: 3, title: '일기쓰기', subtitle: '오늘 일기를 완성해요',
         char: '📝',
         bgGradFrom: '#A7F3D0', bgGradTo: '#6EE7B7',
         innerBg: '#E0FBF1',
@@ -819,13 +807,10 @@ function MainMenu(props) {
         // 1단계: 낱말 카드 모으기
         { sub1Done: stage1Sub1Done, sub2Done: false, sub2Locked: false, sub2LockReason: '', stageLocked: false, stageLockReason: '',
           sub1Count: state.cards1, sub1Total: total1, sub2Count: 0, sub2Total: 1 },
-        // 2단계: 감정 카드 고르기
-        { sub1Done: false, sub2Done: false, sub2Locked: false, sub2LockReason: '', stageLocked: false, stageLockReason: '',
-          sub1Count: 0, sub1Total: 1, sub2Count: 0, sub2Total: 1 },
-        // 3단계: 문장 만들기
+        // 2단계: 문장 만들기
         { sub1Done: stage1Sub2Done, sub2Done: false, sub2Locked: false, sub2LockReason: '', stageLocked: LOCK_SETTINGS.lock_stage1_2, stageLockReason: LOCK_SETTINGS.lock_stage1_2 ? '선생님이 아직 잠가 놨어요 🔒' : '',
           sub1Count: state.did1_2 ? 1 : 0, sub1Total: 1, sub2Count: 0, sub2Total: 1 },
-        // 4단계: 일기쓰기
+        // 3단계: 일기쓰기
         { sub1Done: false, sub2Done: false, sub2Locked: false, sub2LockReason: '', stageLocked: stage3Locked, stageLockReason: stage3LockReason,
           sub1Count: 0, sub1Total: 1, sub2Count: 0, sub2Total: 1 }
     ];
@@ -879,9 +864,8 @@ function MainMenu(props) {
             h("div", { className: "flex gap-2 shrink-0" },
                 [
                     { num: '1단계', icon: '🃏', title: '낱말 카드', desc: '언제·어디서·누구와·무엇을 카드로 배워요', bg: 'bg-orange-50', border: 'border-orange-300', text: 'text-orange-700', badge: 'bg-orange-500' },
-                    { num: '2단계', icon: '🚦', title: '감정 고르기', desc: '신호등으로 내 마음을 표현해봐요',        bg: 'bg-purple-50', border: 'border-purple-300', text: 'text-purple-700', badge: 'bg-purple-500' },
-                    { num: '3단계', icon: '✏️', title: '문장 만들기', desc: '모은 카드로 나만의 문장을 써봐요',        bg: 'bg-blue-50',   border: 'border-blue-300',   text: 'text-blue-700',   badge: 'bg-blue-500'   },
-                    { num: '4단계', icon: '📔', title: '일기 쓰기',  desc: '오늘 있었던 일을 일기로 완성해요',      bg: 'bg-emerald-50',border: 'border-emerald-300',text: 'text-emerald-700',badge: 'bg-emerald-500'}
+                    { num: '2단계', icon: '✏️', title: '문장 만들기', desc: '모은 카드로 나만의 문장을 써봐요',        bg: 'bg-blue-50',   border: 'border-blue-300',   text: 'text-blue-700',   badge: 'bg-blue-500'   },
+                    { num: '3단계', icon: '📔', title: '일기 쓰기',  desc: '오늘 있었던 일을 일기로 완성해요',      bg: 'bg-emerald-50',border: 'border-emerald-300',text: 'text-emerald-700',badge: 'bg-emerald-500'}
                 ].map(function(item) {
                     return h("div", {
                         key: item.num,
@@ -899,10 +883,8 @@ function MainMenu(props) {
                 })
             ),
 
-            h("div", { className: "flex-1 grid grid-cols-4 gap-2 md:gap-4 min-h-0 overflow-hidden" },
+            h("div", { className: "flex-1 grid grid-cols-3 gap-2 md:gap-4 min-h-0 overflow-hidden" },
                 STAGE_DATA.map(function (stage, i) {
-                    var screenKeys = ['s1_1', 's2_feeling', 's1_2', 's3'];
-                    var screenKey = screenKeys[i] || 's1_1';
                     return h(StageCard, {
                         key: stage.number,
                         stage: stage,
@@ -1664,7 +1646,7 @@ function Stage1_1(props) {
 
     function chooseSentence(idx) {
         setChosenForWriting(idx);
-        setSubStep('write');
+        setSubStep('askFeeling');
     }
 
     function finishWriting() {
@@ -2105,6 +2087,206 @@ function Stage1_1(props) {
             )
         );
     }
+
+    // ───── askFeeling: 감정 더하기 여부 묻기 ─────
+    else if (subStep === 'askFeeling') {
+        var chosenSentence = examples[chosenForWriting];
+        var sentenceText = chosenSentence ? chosenSentence.filter(Boolean).join(' ') : '';
+
+        content = h("div", { className: "flex-1 flex flex-col items-center justify-center p-6 gap-6 overflow-hidden" },
+            // 선택한 문장 미리보기
+            h("div", { className: "bg-white px-8 py-5 rounded-3xl shadow-xl border-4 border-orange-200 max-w-3xl text-center" },
+                h("p", { className: "text-base font-black text-orange-600 mb-2" }, "📝 내가 고른 문장"),
+                h("p", { className: "text-3xl font-black text-slate-800", style: { wordBreak: 'keep-all' } }, sentenceText)
+            ),
+
+            h("h2", { className: "text-4xl font-black text-purple-700 mt-4" }, "💜 감정을 더해볼까요?"),
+            h("p", { className: "text-xl font-bold text-slate-600 text-center", style: { wordBreak: 'keep-all' } },
+                "이 문장에 어울리는 마음을 골라서 더해볼 수 있어요!"
+            ),
+
+            // Yes / No 버튼
+            h("div", { className: "flex gap-5 mt-2" },
+                h(motion.button, {
+                    whileHover: { scale: 1.05, y: -3 },
+                    whileTap: { scale: 0.97 },
+                    onClick: function() { setSubStep('pickFeeling'); },
+                    className: "px-10 py-5 bg-purple-500 text-white rounded-3xl text-2xl font-black shadow-[0_8px_0_rgb(107,33,168)] active:translate-y-1 active:shadow-none"
+                }, "💜 감정 더하기!"),
+                h(motion.button, {
+                    whileHover: { scale: 1.05, y: -3 },
+                    whileTap: { scale: 0.97 },
+                    onClick: function() { setSubStep('write'); },
+                    className: "px-10 py-5 bg-slate-300 text-slate-700 rounded-3xl text-2xl font-black shadow-[0_8px_0_rgb(100,116,139)] active:translate-y-1 active:shadow-none"
+                }, "→ 그냥 쓸래요")
+            )
+        );
+    }
+
+    // ───── pickFeeling: 신호등 + 감정 카드 선택 ─────
+    else if (subStep === 'pickFeeling') {
+        var FEEL_GROUPS_LOCAL = [
+            { g:'red',    label:'속상하거나\n화나는 마음', color:'#EF4444', glow:'rgba(239,68,68,0.6)'   },
+            { g:'yellow', label:'평범하거나\n궁금한 마음', color:'#F59E0B', glow:'rgba(245,158,11,0.6)'  },
+            { g:'green',  label:'기쁘고\n즐거운 마음',    color:'#10B981', glow:'rgba(16,185,129,0.6)'  }
+        ];
+        var groupCardsFP = FEELINGS_POOL.filter(function(f){ return f.group === feelGroup; });
+
+        content = h("div", { className: "flex-1 flex flex-col p-4 gap-3 min-h-0 overflow-hidden" },
+            // 말풍선
+            h("div", { className: "flex items-start gap-3 shrink-0" },
+                h(PencilFairy, { mini: true }),
+                h("div", { className: "bg-white px-5 py-3 rounded-2xl shadow-md border-2 border-purple-200 mt-2 whitespace-nowrap" },
+                    h("h2", { className: "text-2xl font-black text-slate-800" }, "💜 어울리는 감정을 골라봐요!"),
+                    h("p", { className: "text-xl text-slate-500 font-bold" }, "신호등 색깔을 누르고 감정을 하나 선택해요")
+                ),
+                h("button", {
+                    onClick: function(){ setSubStep('askFeeling'); },
+                    className: "ml-auto self-center px-4 py-2 bg-slate-100 text-slate-500 rounded-2xl font-black text-base hover:bg-slate-200 shrink-0"
+                }, "← 뒤로")
+            ),
+
+            // 좌(신호등) + 우(감정카드)
+            h("div", { className: "flex-1 grid gap-4 min-h-0 overflow-hidden", style: { gridTemplateColumns: '130px 1fr' } },
+
+                // 신호등
+                h("div", { className: "bg-slate-800 rounded-[2rem] flex flex-col items-center justify-center gap-5 py-6 px-3 shadow-2xl" },
+                    FEEL_GROUPS_LOCAL.map(function(item) {
+                        var isActive = feelGroup === item.g;
+                        return h(motion.button, {
+                            key: item.g,
+                            whileHover:{ scale:1.06 }, whileTap:{ scale:0.95 },
+                            onClick: (function(g){ return function(){ setFeelGroup(g); }; })(item.g),
+                            className: "flex flex-col items-center gap-1.5"
+                        },
+                            h(motion.div, {
+                                animate: isActive ? { boxShadow: ['0 0 20px '+item.glow,'0 0 45px '+item.glow,'0 0 20px '+item.glow] } : {},
+                                transition: { repeat: Infinity, duration: 1.5 },
+                                style: {
+                                    width:'75px', height:'75px', borderRadius:'50%',
+                                    background: 'radial-gradient(circle at 35% 35%, '+item.color+'ff, '+item.color+'88)',
+                                    boxShadow: isActive ? '0 0 25px '+item.glow+', inset -6px -6px 15px rgba(0,0,0,0.3)' : 'inset -6px -6px 15px rgba(0,0,0,0.4)',
+                                    border: isActive ? '3px solid white' : '2px solid rgba(255,255,255,0.15)',
+                                    opacity: isActive ? 1 : 0.65,
+                                    transition: 'all 0.2s'
+                                }
+                            }),
+                            h("p", { style: { color:item.color, fontWeight:900, fontSize:'0.75rem', textAlign:'center', whiteSpace:'pre-line', lineHeight:1.4 } }, item.label)
+                        );
+                    })
+                ),
+
+                // 감정 카드
+                h("div", { className: "bg-white rounded-[2rem] border-4 border-purple-100 p-4 flex flex-col gap-3 overflow-hidden min-h-0" },
+                    h("h3", { className: "text-lg font-black text-purple-700 shrink-0" },
+                        (FEEL_GROUPS_LOCAL.filter(function(g){ return g.g === feelGroup; })[0] || {}).label
+                            ? (FEEL_GROUPS_LOCAL.filter(function(g){ return g.g === feelGroup; })[0]).label.replace('\n', ' ')
+                            : ''
+                    ),
+                    h("div", { className: "flex-1 overflow-y-auto min-h-0" },
+                        h("div", { className: "grid gap-3", style: { gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))' } },
+                            groupCardsFP.map(function(f, i) {
+                                var word = f.value || '';
+                                return h(motion.button, {
+                                    key: i,
+                                    whileHover:{ scale:1.05, y:-3 }, whileTap:{ scale:0.95 },
+                                    onClick: (function(fc){ return function(){
+                                        setFeelPicked([fc.value || '']);
+                                        setSubStep('feelingDetail');
+                                    }; })(f),
+                                    className: "flex flex-col items-center gap-2 p-4 rounded-2xl border-4 shadow-md transition bg-white border-slate-200 hover:border-purple-300 hover:bg-purple-50"
+                                },
+                                    h("span", { className: "text-4xl" }, f.emoji || '💜'),
+                                    h("span", { className: "text-lg font-black text-slate-800 text-center leading-tight" }, word)
+                                );
+                            })
+                        )
+                    )
+                )
+            )
+        );
+    }
+
+    // ───── feelingDetail: 선택한 감정의 뜻 + 예시 ─────
+    else if (subStep === 'feelingDetail') {
+        var chosenFeelWord = feelPicked[0] || '';
+        var chosenFeelCard = null;
+        for (var fi = 0; fi < FEELINGS_POOL.length; fi++) {
+            if (FEELINGS_POOL[fi].value === chosenFeelWord) { chosenFeelCard = FEELINGS_POOL[fi]; break; }
+        }
+        if (!chosenFeelCard) chosenFeelCard = { value:'', emoji:'💜', desc:'' };
+
+        // FEELINGS_EXAMPLES에서 예시 가져오기
+        var feelExamples = FEELINGS_EXAMPLES[chosenFeelWord] || [];
+        var validExamples = feelExamples.filter(function(ex){ return ex && ex.length >= 4 && ex[0]; }).slice(0, 3);
+
+        var FLC = [
+            { label:'언제',  bg:'bg-amber-100',   text:'text-amber-700',   border:'border-amber-300'   },
+            { label:'어디서',bg:'bg-blue-100',    text:'text-blue-700',    border:'border-blue-300'    },
+            { label:'누구와',bg:'bg-emerald-100', text:'text-emerald-700', border:'border-emerald-300' },
+            { label:'무엇을',bg:'bg-red-100',     text:'text-red-700',     border:'border-red-300'     },
+            { label:'감정',  bg:'bg-purple-100',  text:'text-purple-700',  border:'border-purple-300'  }
+        ];
+
+        content = h("div", { className: "flex-1 flex flex-col p-4 gap-3 min-h-0 overflow-hidden" },
+            // 헤더
+            h("div", { className: "flex items-start gap-3 shrink-0" },
+                h(PencilFairy, { mini: true }),
+                h("div", { className: "bg-white px-5 py-3 rounded-2xl shadow-md border-2 border-purple-200 mt-2 whitespace-nowrap" },
+                    h("h2", { className: "text-2xl font-black text-slate-800" }, "💜 감정 뜻을 알아봐요!"),
+                    h("p", { className: "text-xl text-slate-500 font-bold" }, "감정의 의미와 예시를 보고 공책에 써봐요")
+                ),
+                h("button", {
+                    onClick: function(){ setSubStep('pickFeeling'); },
+                    className: "ml-auto self-center px-4 py-2 bg-slate-100 text-slate-500 rounded-2xl font-black text-base hover:bg-slate-200 shrink-0"
+                }, "← 다시 고르기")
+            ),
+
+            // 감정 카드 (큰 형태)
+            h("div", { className: "bg-white rounded-[2rem] shadow-xl border-4 border-purple-300 p-6 flex items-center gap-6 shrink-0" },
+                h("div", { className: "w-28 h-28 rounded-full bg-purple-100 border-4 border-purple-300 flex items-center justify-center text-7xl shrink-0" }, chosenFeelCard.emoji),
+                h("div", { className: "flex-1" },
+                    h("p", { className: "text-sm font-black text-purple-600 mb-1" }, "내가 고른 감정"),
+                    h("h3", { className: "text-4xl font-black text-purple-800 mb-2" }, chosenFeelCard.value),
+                    chosenFeelCard.desc && h("p", { className: "text-xl font-bold text-slate-600 leading-relaxed", style: { wordBreak: 'keep-all' } },
+                        "💡 ", chosenFeelCard.desc
+                    )
+                )
+            ),
+
+            // 예시 문장들
+            validExamples.length > 0 && h("div", { className: "bg-purple-50 rounded-[1.5rem] border-2 border-purple-200 p-4 flex flex-col gap-3 overflow-hidden min-h-0" },
+                h("p", { className: "text-base font-black text-purple-700 shrink-0" }, "📝 이런 문장으로 써볼 수 있어요:"),
+                h("div", { className: "flex-1 overflow-y-auto flex flex-col gap-2 min-h-0" },
+                    validExamples.map(function(ex, ei) {
+                        return h("div", { key: ei, className: "bg-white rounded-xl border-2 border-purple-100 p-3" },
+                            h("div", { className: "flex flex-wrap gap-1.5 mb-2" },
+                                FLC.map(function(fc, idx) {
+                                    var val = ex[idx] || '';
+                                    if (!val) return null;
+                                    return h("span", { key: idx, className: "px-2.5 py-1 rounded-lg text-sm font-black border-2 " + fc.bg + " " + fc.text + " " + fc.border }, val);
+                                })
+                            ),
+                            h("p", { className: "text-base font-bold text-slate-700", style: { wordBreak: 'keep-all' } },
+                                ex.filter(Boolean).join(' ') + '.'
+                            )
+                        );
+                    })
+                )
+            ),
+
+            // 공책에 쓰기 버튼
+            h("div", { className: "flex justify-center shrink-0" },
+                h(motion.button, {
+                    whileHover: { scale: 1.05 },
+                    whileTap: { scale: 0.97 },
+                    onClick: function(){ setSubStep('write'); },
+                    className: "px-12 py-4 bg-emerald-500 text-white rounded-2xl text-2xl font-black shadow-[0_8px_0_rgb(4,120,87)] active:translate-y-1 active:shadow-none"
+                }, "📓 공책에 써볼게요! →")
+            )
+        );
+    }
+
     // ───── subStep: write (10칸 공책에 쓰기) ─────
     else if (subStep === 'write') {
         var chosen = examples[chosenForWriting];
@@ -2155,152 +2337,40 @@ function Stage1_1(props) {
     else if (subStep === 'complete') {
         content = h("div", { className: "flex-1 flex flex-col items-center justify-center p-4 gap-5 overflow-hidden" },
             h(motion.div, { initial: { scale: 0 }, animate: { scale: 1 }, className: "text-8xl" }, "🎉"),
-            h("h2", { className: "text-5xl font-black text-orange-600" }, "카드를 모았어요!"),
+            h("h2", { className: "text-5xl font-black text-orange-600" }, "잘했어요!"),
             h("div", { className: "flex items-center gap-3 px-6 py-3 bg-white rounded-3xl shadow-md border-2 border-orange-200" },
                 h("span", { className: "text-4xl" }, drawn.emoji),
                 h("span", { className: "text-2xl font-black text-slate-700" }, drawn.value),
                 h("span", { className: "text-2xl font-black text-orange-600 ml-2" }, "🃏 " + (finalCards.length || collected.length) + "장")
             ),
-
-            // 감정 더하기 안내
-            h("div", { className: "bg-purple-50 border-3 border-purple-200 rounded-3xl px-8 py-5 text-center max-w-lg border-2" },
-                h("p", { className: "text-3xl font-black text-purple-700 mb-2" }, "💜 감정을 더해볼까요?"),
-                h("p", { className: "text-xl font-bold text-slate-500" }, "지금 어떤 마음인지 감정을 골라봐요!")
+            // 선택한 감정이 있으면 표시
+            feelPicked.length > 0 && feelPicked[0] && h("div", { className: "flex items-center gap-3 px-6 py-3 bg-purple-50 rounded-3xl shadow-md border-2 border-purple-200" },
+                (function() {
+                    var fw = feelPicked[0];
+                    var fc = null;
+                    for (var fi = 0; fi < FEELINGS_POOL.length; fi++) {
+                        if (FEELINGS_POOL[fi].value === fw) { fc = FEELINGS_POOL[fi]; break; }
+                    }
+                    fc = fc || { emoji:'💜', value:fw };
+                    return h(React.Fragment, null,
+                        h("span", { className: "text-base font-black text-purple-600" }, "💜 마음:"),
+                        h("span", { className: "text-3xl" }, fc.emoji),
+                        h("span", { className: "text-2xl font-black text-purple-700" }, fc.value)
+                    );
+                })()
             ),
-
-            h("div", { className: "flex gap-4" },
-                h("button", {
-                    onClick: function() { setSubStep('feeling'); },
-                    className: "px-10 py-5 bg-purple-500 text-white rounded-2xl text-2xl font-black shadow-[0_8px_0_rgb(107,33,168)] active:translate-y-1 active:shadow-none"
-                }, "💜 감정 더하기!"),
-                h("button", {
-                    onClick: function() {
-                        var cards = finalCards.length > 0 ? finalCards : collected;
-                        if (props.onComplete) props.onComplete(cards);
-                        else restart();
-                    },
-                    className: "px-8 py-5 bg-slate-200 text-slate-600 rounded-2xl text-xl font-black hover:bg-slate-300"
-                }, "← 메뉴로")
-            )
+            h("button", {
+                onClick: function() {
+                    var cards = finalCards.length > 0 ? finalCards : collected;
+                    if (props.onComplete) props.onComplete(cards);
+                    else restart();
+                },
+                className: "px-14 py-5 bg-orange-500 text-white rounded-2xl text-2xl font-black shadow-[0_8px_0_rgb(154,52,18)] active:translate-y-1 active:shadow-none"
+            }, "← 메뉴로 돌아가기")
         );
     }
 
     // ───── subStep: feeling (감정 더하기) ─────
-    else if (subStep === 'feeling') {
-        var FEEL_GROUPS = [
-            { g:'red',    label:'속상하거나\n화나는 마음', color:'#EF4444', glow:'rgba(239,68,68,0.6)'   },
-            { g:'yellow', label:'평범하거나\n궁금한 마음', color:'#F59E0B', glow:'rgba(245,158,11,0.6)'  },
-            { g:'green',  label:'기쁘고\n즐거운 마음',    color:'#10B981', glow:'rgba(16,185,129,0.6)'  }
-        ];
-        var groupCards2 = FEELINGS_POOL.filter(function(f){ return f.group === feelGroup; });
-
-        content = h("div", { className: "flex-1 flex flex-col p-4 gap-3 min-h-0 overflow-hidden" },
-            // 안내 말풍선
-            h("div", { className: "flex items-start gap-3 shrink-0" },
-                h(PencilFairy, { mini: true }),
-                h("div", { className: "bg-white px-5 py-3 rounded-2xl shadow-md border-2 border-purple-200 mt-2 whitespace-nowrap" },
-                    h("h2", { className: "text-2xl font-black text-slate-800" }, "💜 감정을 더해볼까요?"),
-                    h("p", { className: "text-xl text-slate-500 font-bold" }, "신호등을 누르고 지금 내 마음과 비슷한 감정을 골라봐요!")
-                ),
-                h("button", {
-                    onClick: function(){ setSubStep('complete'); },
-                    className: "ml-auto self-center px-4 py-2 bg-slate-100 text-slate-500 rounded-2xl font-black text-base hover:bg-slate-200 shrink-0"
-                }, "← 뒤로")
-            ),
-
-            // 좌(신호등) + 우(감정카드) 2단 레이아웃
-            h("div", { className: "flex-1 grid gap-4 min-h-0 overflow-hidden", style: { gridTemplateColumns: '130px 1fr' } },
-
-                // 신호등 세로
-                h("div", { className: "bg-slate-800 rounded-[2rem] flex flex-col items-center justify-center gap-5 py-6 px-3 shadow-2xl" },
-                    FEEL_GROUPS.map(function(item) {
-                        var isActive = feelGroup === item.g;
-                        var cnt = feelPicked.filter(function(w) {
-                            var c = FEELINGS_POOL.find(function(f){ return f.value === w; });
-                            return c && c.group === item.g;
-                        }).length;
-                        return h(motion.button, {
-                            key: item.g,
-                            whileHover:{ scale:1.06 }, whileTap:{ scale:0.95 },
-                            onClick: (function(g){ return function(){ setFeelGroup(g); }; })(item.g),
-                            className: "flex flex-col items-center gap-1.5"
-                        },
-                            h(motion.div, {
-                                animate: isActive ? { boxShadow: ['0 0 20px '+item.glow,'0 0 45px '+item.glow,'0 0 20px '+item.glow] } : {},
-                                transition: { repeat: Infinity, duration: 1.5 },
-                                style: {
-                                    width:'75px', height:'75px', borderRadius:'50%',
-                                    background: 'radial-gradient(circle at 35% 35%, '+item.color+'ff, '+item.color+'88)',
-                                    boxShadow: isActive ? '0 0 25px '+item.glow+', inset -6px -6px 15px rgba(0,0,0,0.3)' : 'inset -6px -6px 15px rgba(0,0,0,0.4)',
-                                    border: isActive ? '3px solid white' : '2px solid rgba(255,255,255,0.15)',
-                                    opacity: isActive ? 1 : 0.65,
-                                    transition: 'all 0.2s'
-                                }
-                            }),
-                            h("p", { style: { color:item.color, fontWeight:900, fontSize:'0.75rem', textAlign:'center', whiteSpace:'pre-line', lineHeight:1.4 } }, item.label),
-                            cnt > 0 && h("div", { style: { background:item.color, color:'white', padding:'2px 10px', borderRadius:'999px', fontWeight:900, fontSize:'0.8rem' } }, cnt+"개")
-                        );
-                    })
-                ),
-
-                // 감정 카드 그리드
-                h("div", { className: "bg-white rounded-[2rem] border-4 border-purple-100 p-4 flex flex-col gap-3 overflow-hidden min-h-0" },
-                    h("h3", { className: "text-lg font-black text-purple-700 shrink-0" },
-                        FEEL_GROUPS.find(function(g){ return g.g === feelGroup; })
-                            ? FEEL_GROUPS.find(function(g){ return g.g === feelGroup; }).label.replace('\n',' ')
-                            : ''
-                    ),
-                    h("div", { className: "flex-1 overflow-y-auto min-h-0" },
-                        h("div", { className: "grid gap-3", style: { gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))' } },
-                            groupCards2.map(function(f, i) {
-                                var word = f.value || '';
-                                var isChosen = feelPicked.indexOf(word) >= 0;
-                                return h(motion.button, {
-                                    key: i,
-                                    whileHover:{ scale:1.05, y:-3 }, whileTap:{ scale:0.95 },
-                                    onClick: (function(fc){ return function(){ toggleFeel(fc); }; })(f),
-                                    className: "flex flex-col items-center gap-2 p-4 rounded-2xl border-4 shadow-md transition " +
-                                        (isChosen ? "bg-purple-100 border-purple-400" : "bg-white border-slate-200 hover:border-purple-300")
-                                },
-                                    h("span", { className: "text-4xl" }, f.emoji || '💜'),
-                                    h("span", { className: "text-lg font-black text-slate-800 text-center leading-tight" }, word),
-                                    f.desc && h("span", { className: "text-xs font-bold text-slate-400 text-center leading-tight" }, f.desc),
-                                    isChosen && h("div", { className: "w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs font-black" }, "✓")
-                                );
-                            })
-                        )
-                    )
-                )
-            ),
-
-            // 하단: 선택 표시 + 완료
-            h("div", { className: "flex items-center gap-3 shrink-0" },
-                h("div", { className: "flex-1 flex flex-wrap gap-2 min-w-0" },
-                    feelPicked.length > 0
-                        ? feelPicked.map(function(word, i) {
-                            var card = FEELINGS_POOL.find(function(f){ return f.value === word; }) || {};
-                            return h("div", { key:i, className:"flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-purple-100 border-2 border-purple-300" },
-                                h("span", { className:"text-xl" }, card.emoji || '💜'),
-                                h("span", { className:"text-base font-black text-purple-700" }, word),
-                                h("button", {
-                                    onClick: (function(w){ return function(){ toggleFeel({ value:w }); }; })(word),
-                                    className:"ml-1 text-sm text-purple-400 hover:text-purple-700"
-                                }, "✕")
-                            );
-                        })
-                        : h("span", { className:"text-base font-bold text-slate-400" }, "💡 지금 내 마음과 비슷한 감정을 골라봐요!")
-                ),
-                h("button", {
-                    onClick: function() {
-                        var cards = finalCards.length > 0 ? finalCards : collected;
-                        if (props.onComplete) props.onComplete(cards);
-                        else restart();
-                    },
-                    className: "px-10 py-4 rounded-2xl text-xl font-black shadow-md shrink-0 bg-emerald-500 text-white shadow-[0_6px_0_rgb(4,120,87)]"
-                }, feelPicked.length > 0 ? "완료! 메뉴로 →" : "건너뛰고 메뉴로 →")
-            )
-        );
-    }
 
     return h("div", { className: "w-full bg-[#F0F7FF] flex flex-col overflow-hidden min-h-0", style: { height: "100dvh" } },
         h(Tutorial, {
@@ -6298,18 +6368,11 @@ function App() {
                 // 화면 키 결정
                 var sc;
                 if      (stageNum === '1') sc = 's1_1';
-                else if (stageNum === '2') sc = 's2_feeling';
-                else if (stageNum === '3') sc = 's1_2';
-                else if (stageNum === '4') sc = 's3';
+                else if (stageNum === '2') sc = 's1_2';
+                else if (stageNum === '3') sc = 's3';
                 if (sc) goTo(sc);
             },
             onChangeStudent: goLogin
-        });
-
-    } else if (screen === 's2_feeling') {
-        content = h(FeelingPickScreen, {
-            onBack: goMenu,
-            onChangeStage: function(key) { goTo(key); }
         });
 
     } else if (screen === 's1_1') {
