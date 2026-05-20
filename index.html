@@ -64,7 +64,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbziA9KJJEFeIzl7ToDp22nfiCl0lTDfVsTSTX3QJUePVRoyFczVXD4ht9DCvT3SonvKvw/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbxbVBGHkchjtQmdir2XSHEENxcXpjQzeNIylCbnKMaM2t9n-Br7diJRJ0eqeQrrDkEp/exec';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -1254,6 +1254,8 @@ function buildCellGrid(parts) {
             cells.push({ ch: '', color: null, isSpace: true });
         }
     }
+    // 문장 끝 마침표
+    cells.push({ ch: '.', color: null, isPeriod: true });
     return cells;
 }
 
@@ -1317,6 +1319,17 @@ function NotebookGrid(props) {
                     if (cell.isEmpty) {
                         bgClass = 'bg-slate-50';
                         borderClass = 'border-slate-100';
+                    }
+                    // 마침표: 왼쪽 아래에 작게 표시
+                    if (cell.isPeriod) {
+                        return h("div", {
+                            key: ci,
+                            className: cellSize + " border-4 rounded-xl relative shadow-sm bg-slate-50 border-slate-200 flex items-end justify-start"
+                        },
+                            h("span", {
+                                style: { fontSize: '1.5rem', fontWeight: 900, color: '#475569', lineHeight: 1, paddingLeft: '0.25rem', paddingBottom: '0.15rem' }
+                            }, ".")
+                        );
                     }
                     return h("div", {
                         key: ci,
@@ -2676,6 +2689,8 @@ function buildCellGrid(parts) {
             cells.push({ ch: '', color: null, isSpace: true });
         }
     }
+    // 문장 끝 마침표
+    cells.push({ ch: '.', color: null, isPeriod: true });
     return cells;
 }
 
@@ -2733,6 +2748,17 @@ function NotebookGrid(props) {
                     if (cell.isEmpty) {
                         bgClass = 'bg-slate-50';
                         borderClass = 'border-slate-100';
+                    }
+                    // 마침표: 왼쪽 아래에 작게 표시
+                    if (cell.isPeriod) {
+                        return h("div", {
+                            key: ci,
+                            className: cellSize + " border-4 rounded-xl relative shadow-sm bg-slate-50 border-slate-200 flex items-end justify-start"
+                        },
+                            h("span", {
+                                style: { fontSize: '1.5rem', fontWeight: 900, color: '#475569', lineHeight: 1, paddingLeft: '0.25rem', paddingBottom: '0.15rem' }
+                            }, ".")
+                        );
                     }
                     return h("div", {
                         key: ci,
@@ -4085,6 +4111,8 @@ function buildCellGrid(parts) {
         }
         if (i < parts.length - 1) cells.push({ ch: '', color: null, isSpace: true });
     }
+    // 문장 끝 마침표
+    cells.push({ ch: '.', color: null, isPeriod: true });
     return cells;
 }
 
@@ -4147,6 +4175,16 @@ function NotebookGrid(props) {
                     if (cell.color) { var c = FIELD_COLORS[cell.color]; bgClass = c.bg; textClass = c.text; borderClass = c.border; }
                     if (cell.isSpace) { bgClass = 'bg-slate-50'; borderClass = 'border-slate-200 border-dashed'; }
                     if (cell.isEmpty) { bgClass = 'bg-slate-50'; borderClass = 'border-slate-100'; }
+                    if (cell.isPeriod) {
+                        return h("div", {
+                            key: ci,
+                            className: cellSize + " border-4 rounded-xl relative shadow-sm bg-slate-50 border-slate-200 flex items-end justify-start"
+                        },
+                            h("span", {
+                                style: { fontSize: '1.5rem', fontWeight: 900, color: '#475569', lineHeight: 1, paddingLeft: '0.25rem', paddingBottom: '0.15rem' }
+                            }, ".")
+                        );
+                    }
                     return h("div", {
                         key: ci,
                         className: cellSize + " border-4 rounded-xl flex items-center justify-center font-black shadow-sm " + textSize + " " + bgClass + " " + textClass + " " + borderClass
