@@ -64,7 +64,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbyNpTqEDOQe8VBwEHasVMbPSnxMFWLi3U08vHa6PRDPpX27vSffSIlxjmbVRWWsvDoPkg/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbziA9KJJEFeIzl7ToDp22nfiCl0lTDfVsTSTX3QJUePVRoyFczVXD4ht9DCvT3SonvKvw/exec';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -3006,11 +3006,30 @@ function Stage1_2(props) {
                 )
             ),
 
-            // 통합 입력 박스 (필드 탭 + 입력)
+            // 통합 입력 박스 (입력방식 탭 위 + 필드탭 아래)
             activeField && h("div", { className: "flex-1 bg-white rounded-[2rem] shadow-xl border-4 " + af.border + " flex flex-col overflow-hidden min-h-0" },
 
-                // ── 상단: 필드 탭 (언제/어디서/누구와/무엇을) ──
-                h("div", { className: "flex border-b-4 " + af.border + " shrink-0" },
+                // ── 상단: 입력 방식 탭 ──
+                h("div", { className: "flex shrink-0 border-b-2 border-slate-100" },
+                    [
+                        { mode: 'mic',    label: '🎤 녹음하기',      recommended: true },
+                        { mode: 'typing', label: '✏️ 직접 쓰기' },
+                        { mode: 'cards',  label: '📇 카드에서 고르기' }
+                    ].map(function(opt) {
+                        var isOn = inputMode === opt.mode;
+                        return h("button", {
+                            key: opt.mode,
+                            onClick: (function(m){ return function(){ setInputMode(m); }; })(opt.mode),
+                            className: "flex-1 py-4 px-3 font-black text-xl transition border-b-4 -mb-0.5 " +
+                                (isOn
+                                    ? af.bg + " " + af.text + " " + af.border
+                                    : "bg-white text-slate-400 border-transparent hover:bg-slate-50 hover:text-slate-600")
+                        }, opt.label + (opt.recommended ? " ⭐" : ""));
+                    })
+                ),
+
+                // ── 중단: 필드 탭 (입력방식 바로 아래 — 학생이 입력한 내용이 즉시 보이도록) ──
+                h("div", { className: "flex border-b-2 border-slate-100 shrink-0" },
                     FIELD_KEYS.map(function(k) {
                         var c = FIELD_COLORS[k];
                         var v = myParts[k];
@@ -3018,46 +3037,30 @@ function Stage1_2(props) {
                         var isFixed = chosenCard && chosenCard.key === k;
                         return h("button", {
                             key: k,
-                            onClick: isFixed ? null : (function(kk){ return function(){ if(!isFixed){ setActiveField(kk); setInputMode('mic'); setTyping(''); } }; })(k),
-                            className: "flex-1 flex flex-col items-center py-3 px-2 gap-1 transition " +
-                                (isActive ? c.bg + " border-b-4 -mb-1 " + c.border : "bg-white hover:bg-slate-50") +
-                                (isFixed ? " cursor-default" : "")
+                            onClick: isFixed ? null : (function(kk){ return function(){ setActiveField(kk); setInputMode('mic'); setTyping(''); }; })(k),
+                            className: "flex-1 flex flex-col items-center py-4 px-2 gap-1.5 transition " +
+                                (isActive ? c.bg : "bg-white hover:bg-slate-50") +
+                                (isFixed ? " cursor-default" : " cursor-pointer")
                         },
                             h("span", { className: "text-sm font-black " + (isActive ? c.text : "text-slate-400") },
                                 c.name + (isFixed ? " 🔒" : "")
                             ),
-                            h("span", {
-                                className: "text-xl font-black px-3 py-1 rounded-xl min-w-[5rem] text-center " +
-                                    (v ? c.bg + " " + c.text + " border-2 " + c.border
-                                       : isActive ? "text-slate-300 animate-pulse" : "text-slate-200")
+                            h("div", {
+                                className: "px-4 py-1.5 rounded-2xl text-xl font-black min-w-[6rem] text-center border-2 " +
+                                    (v      ? c.bg + " " + c.text + " " + c.border
+                                           : isActive ? "bg-white " + c.border + " " + c.text + " animate-pulse"
+                                           : "bg-slate-50 text-slate-300 border-dashed border-slate-200")
                             }, v || (isActive ? "?" : "ㅡ"))
                         );
                     })
                 ),
 
-                // ── 하단: 입력 방식 탭 + 입력 내용 ──
-                h("div", { className: "flex-1 flex flex-col p-4 gap-3 overflow-hidden min-h-0" },
-
-                    // 입력 방식 탭
-                    h("div", { className: "flex gap-2 shrink-0" },
-                        [
-                            { mode: 'mic',    label: '🎤 녹음하기',      recommended: true },
-                            { mode: 'typing', label: '✏️ 직접 쓰기' },
-                            { mode: 'cards',  label: '📇 카드에서 고르기' }
-                        ].map(function(opt) {
-                            var isOn = inputMode === opt.mode;
-                            return h("button", {
-                                key: opt.mode,
-                                onClick: (function(m){ return function(){ setInputMode(m); }; })(opt.mode),
-                                className: "flex-1 px-3 py-2.5 rounded-2xl font-black text-lg border-2 " +
-                                    (isOn ? af.bg + " " + af.border + " " + af.text : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100")
-                            }, opt.label + (opt.recommended ? " ⭐" : ""));
-                        })
-                    ),
+                // ── 하단: 입력 내용 ──
+                h("div", { className: "flex-1 flex flex-col items-center justify-center gap-4 p-6 overflow-hidden min-h-0" },
 
                     // 카드에서 고르기
-                    inputMode === 'cards' && h("div", { className: "flex-1 overflow-y-auto min-h-0" },
-                        h("div", { className: "grid grid-cols-4 gap-2 p-1" },
+                    inputMode === 'cards' && h("div", { className: "flex-1 overflow-y-auto w-full min-h-0" },
+                        h("div", { className: "grid grid-cols-4 gap-3 p-1" },
                             DEMO_POOL[activeField].map(function(card, ci) {
                                 return h(motion.button, {
                                     key: ci,
@@ -3073,15 +3076,15 @@ function Stage1_2(props) {
                     ),
 
                     // 직접 쓰기
-                    inputMode === 'typing' && h("div", { className: "flex-1 flex flex-col gap-4 justify-center" },
-                        h("p", { className: "text-xl font-black text-slate-600 text-center" }, af.name + "를 직접 써보세요"),
+                    inputMode === 'typing' && h("div", { className: "w-full max-w-lg flex flex-col gap-4" },
+                        h("p", { className: "text-2xl font-black text-slate-600 text-center" }, af.name + "를 직접 써보세요"),
                         h("input", {
                             type: "text", value: typing,
                             onChange: function(e){ setTyping(e.target.value); },
                             onKeyDown: function(e){ if(e.key==='Enter' && typing.trim()) fillActive(typing); },
                             placeholder: af.name + "...",
                             autoFocus: true,
-                            className: "px-6 py-5 text-3xl font-black rounded-2xl border-4 outline-none text-center " + af.border + " bg-white"
+                            className: "px-6 py-5 text-3xl font-black rounded-2xl border-4 outline-none text-center bg-white " + af.border
                         }),
                         h("button", {
                             onClick: function(){ fillActive(typing); },
@@ -3092,12 +3095,12 @@ function Stage1_2(props) {
                     ),
 
                     // 녹음하기
-                    inputMode === 'mic' && h("div", { className: "flex-1 flex flex-col gap-4 justify-center items-center" },
-                        h("p", { className: "text-xl font-black text-slate-600 text-center" },
+                    inputMode === 'mic' && h("div", { className: "w-full flex flex-col gap-5 items-center" },
+                        h("p", { className: "text-2xl font-black text-slate-600 text-center" },
                             micRec ? "🎙️ 듣고 있어요!" : af.name + "를 말해보세요"
                         ),
                         h("div", {
-                            className: "px-8 py-6 text-3xl font-black rounded-2xl border-4 w-full max-w-lg text-center min-h-[5rem] flex items-center justify-center " +
+                            className: "w-full max-w-lg px-8 py-7 text-3xl font-black rounded-2xl border-4 text-center min-h-[5.5rem] flex items-center justify-center " +
                                 (micRec ? "border-red-400 ring-4 ring-red-100 bg-red-50" : "border-slate-200 bg-yellow-50")
                         }, typing || h("span", { className: "text-slate-300 text-xl" }, "버튼을 누르고 말해보세요...")),
                         h("div", { className: "flex gap-4" },
@@ -3114,7 +3117,10 @@ function Stage1_2(props) {
                             }, "✓ 이걸로!")
                         )
                     )
-                )
+                ),
+
+                // (필드 탭은 위로 이동됨)
+                null
             ),
 
             // 모두 채운 경우
@@ -6145,58 +6151,61 @@ function Stage3(props) {
                 )
             ),
 
-            // 통합 입력 박스 (필드 탭 + 입력)
+            // 통합 입력 박스 (입력방식 탭 위 + 필드탭 아래)
             activeField && h("div", { className: "flex-1 bg-white rounded-[2rem] shadow-xl border-4 " + af.border + " flex flex-col overflow-hidden min-h-0" },
 
-                // ── 상단: 필드 탭 (언제/어디서/누구와/무엇을/마음) ──
-                h("div", { className: "flex border-b-4 " + af.border + " shrink-0 overflow-x-auto" },
+                // ── 상단: 입력 방식 탭 ──
+                h("div", { className: "flex shrink-0 border-b-2 border-slate-100" },
+                    [
+                        { mode: 'mic',    label: '🎤 녹음하기',      recommended: true },
+                        { mode: 'typing', label: '✏️ 직접 쓰기' },
+                        { mode: 'cards',  label: '📇 카드에서 고르기' }
+                    ].map(function(opt) {
+                        var isOn = inputMode === opt.mode;
+                        return h("button", {
+                            key: opt.mode,
+                            onClick: (function(m){ return function(){ setInputMode(m); }; })(opt.mode),
+                            className: "flex-1 py-4 px-3 font-black text-xl transition border-b-4 -mb-0.5 " +
+                                (isOn
+                                    ? af.bg + " " + af.text + " " + af.border
+                                    : "bg-white text-slate-400 border-transparent hover:bg-slate-50 hover:text-slate-600")
+                        }, opt.label + (opt.recommended ? " ⭐" : ""));
+                    })
+                ),
+
+                // ── 중단: 필드 탭 (입력방식 바로 아래 — 학생이 입력한 내용이 즉시 보이도록) ──
+                h("div", { className: "flex border-b-2 border-slate-100 shrink-0" },
                     S3_FIELDS.map(function(k) {
                         var c = S3_COLORS[k];
                         var v = myParts[k];
                         var isActive = activeField === k;
                         return h("button", {
                             key: k,
-                            onClick: (function(kk){ return function(){ setActiveField(kk); setInputMode('mic'); setTyping(''); }; })(k),
-                            className: "flex-1 flex flex-col items-center py-3 px-2 gap-1 transition min-w-[4rem] " +
-                                (isActive ? c.bg + " border-b-4 -mb-1 " + c.border : "bg-white hover:bg-slate-50")
+                            onClick: (function(kk){ return function(){ setActiveField(kk); setInputMode('mic'); setTyping(''); }; })(kk),
+                            className: "flex-1 flex flex-col items-center py-4 px-1 gap-1.5 transition min-w-[4rem] cursor-pointer " +
+                                (isActive ? c.bg : "bg-white hover:bg-slate-50")
                         },
                             h("span", { className: "text-sm font-black " + (isActive ? c.text : "text-slate-400") }, c.name),
-                            h("span", {
-                                className: "text-lg font-black px-2 py-1 rounded-xl min-w-[4rem] text-center truncate max-w-[8rem] " +
-                                    (v ? c.bg + " " + c.text + " border-2 " + c.border
-                                       : isActive ? "text-slate-300 animate-pulse" : "text-slate-200")
+                            h("div", {
+                                className: "px-3 py-1.5 rounded-2xl text-lg font-black min-w-[4rem] text-center border-2 truncate max-w-[7rem] " +
+                                    (v      ? c.bg + " " + c.text + " " + c.border
+                                           : isActive ? "bg-white " + c.border + " " + c.text + " animate-pulse"
+                                           : "bg-slate-50 text-slate-300 border-dashed border-slate-200")
                             }, v || (isActive ? "?" : "ㅡ"))
                         );
                     })
                 ),
 
-                // ── 하단: 입력 방식 탭 + 입력 내용 ──
-                h("div", { className: "flex-1 flex flex-col p-4 gap-3 overflow-hidden min-h-0" },
-
-                    // 입력 방식 탭
-                    h("div", { className: "flex gap-2 shrink-0" },
-                        [
-                            { mode: 'mic',    label: '🎤 녹음하기',      recommended: true },
-                            { mode: 'typing', label: '✏️ 직접 쓰기' },
-                            { mode: 'cards',  label: '📇 카드에서 고르기' }
-                        ].map(function(opt) {
-                            var isOn = inputMode === opt.mode;
-                            return h("button", {
-                                key: opt.mode,
-                                onClick: (function(m){ return function(){ setInputMode(m); }; })(opt.mode),
-                                className: "flex-1 px-3 py-2.5 rounded-2xl font-black text-lg border-2 " +
-                                    (isOn ? af.bg + " " + af.text + " " + af.border : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100")
-                            }, opt.label + (opt.recommended ? " ⭐" : ""));
-                        })
-                    ),
+                // ── 하단: 입력 내용 ──
+                h("div", { className: "flex-1 flex flex-col items-center justify-center gap-4 p-6 overflow-hidden min-h-0" },
 
                     // mic
-                    inputMode === 'mic' && h("div", { className: "flex-1 flex flex-col gap-4 justify-center items-center min-h-0" },
-                        h("p", { className: "text-xl font-black " + af.text + " text-center" },
+                    inputMode === 'mic' && h("div", { className: "w-full flex flex-col gap-5 items-center" },
+                        h("p", { className: "text-2xl font-black " + af.text + " text-center" },
                             micRec ? "🎙️ 듣고 있어요!" : af.name + "를 말해보세요"
                         ),
                         h("div", {
-                            className: "w-full max-w-xl px-8 py-6 rounded-2xl text-3xl font-black border-4 min-h-[5rem] flex items-center justify-center text-center " +
+                            className: "w-full max-w-xl px-8 py-7 rounded-2xl text-3xl font-black border-4 min-h-[5.5rem] flex items-center justify-center text-center " +
                                 (micRec ? "border-red-400 ring-4 ring-red-100 bg-red-50" : "border-slate-200 bg-yellow-50")
                         }, typing || h("span", { className: "text-slate-300 text-xl" }, "버튼을 누르고 말해보세요...")),
                         h("div", { className: "flex gap-4" },
@@ -6229,15 +6238,15 @@ function Stage3(props) {
                     ),
 
                     // typing
-                    inputMode === 'typing' && h("div", { className: "flex-1 flex flex-col gap-4 justify-center items-center" },
-                        h("p", { className: "text-xl font-black text-slate-600 text-center" }, af.name + "를 직접 써보세요"),
+                    inputMode === 'typing' && h("div", { className: "w-full max-w-lg flex flex-col gap-4 items-center" },
+                        h("p", { className: "text-2xl font-black text-slate-600 text-center" }, af.name + "를 직접 써보세요"),
                         h("input", {
                             type: "text", value: typing,
                             onChange: function(e){ setTyping(e.target.value); },
                             onKeyDown: function(e){ if(e.key==='Enter' && typing.trim()) fillActive(typing); },
                             placeholder: af.name + "을(를) 직접 써보세요",
                             autoFocus: true,
-                            className: "w-full max-w-xl px-6 py-5 text-3xl font-black rounded-2xl border-4 outline-none text-center bg-white " + af.border
+                            className: "w-full px-6 py-5 text-3xl font-black rounded-2xl border-4 outline-none text-center bg-white " + af.border
                         }),
                         typing.trim() && h("button", {
                             onClick: function(){ fillActive(typing); },
@@ -6294,7 +6303,10 @@ function Stage3(props) {
                             })()
                         )
                     )
-                )
+                ),
+
+                // (필드 탭은 위로 이동됨)
+                null
             ),
 
             // 완료 시 review 버튼
