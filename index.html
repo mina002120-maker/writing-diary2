@@ -64,7 +64,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbxbVBGHkchjtQmdir2XSHEENxcXpjQzeNIylCbnKMaM2t9n-Br7diJRJ0eqeQrrDkEp/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbzDGU6i4MG1_hq1Wmjb8PbeHovArcDEQp1DPDa09A5kDSOgNUtl3yYAQni8zdQ4Nm03Jg/exec';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -3054,28 +3054,30 @@ function Stage1_2(props) {
                     })
                 ),
 
-                // ── 중단: 필드 탭 (입력방식 바로 아래 — 학생이 입력한 내용이 즉시 보이도록) ──
-                h("div", { className: "flex border-b-2 border-slate-100 shrink-0" },
+                // ── 중단: 필드 탭 (1단계 카드 스타일 — 라벨 위, 값 크게, 둥글게) ──
+                h("div", { className: "flex gap-3 px-4 py-3 border-b-2 border-slate-100 shrink-0" },
                     FIELD_KEYS.map(function(k) {
                         var c = FIELD_COLORS[k];
                         var v = myParts[k];
                         var isActive = activeField === k;
                         var isFixed = chosenCard && chosenCard.key === k;
-                        return h("button", {
+                        return h(motion.button, {
                             key: k,
+                            whileHover: isFixed ? {} : { scale: 1.03, y: -2 },
+                            whileTap: isFixed ? {} : { scale: 0.97 },
                             onClick: isFixed ? null : (function(kk){ return function(){ setActiveField(kk); setInputMode('mic'); setTyping(''); }; })(k),
-                            className: "flex-1 flex flex-col items-center py-4 px-2 gap-1.5 transition " +
-                                (isActive ? c.bg : "bg-white hover:bg-slate-50") +
+                            className: "flex-1 flex flex-col items-center gap-1 rounded-[1.25rem] border-4 py-3 px-2 shadow-md transition " +
+                                (v      ? c.bg + " " + c.border
+                                       : isActive ? "bg-white " + c.border + " ring-4 ring-offset-1 " + c.ring
+                                       : "bg-white border-slate-200 opacity-60") +
                                 (isFixed ? " cursor-default" : " cursor-pointer")
                         },
-                            h("span", { className: "text-sm font-black " + (isActive ? c.text : "text-slate-400") },
+                            h("span", { className: "text-sm font-black " + (v || isActive ? c.text : "text-slate-400") },
                                 c.name + (isFixed ? " 🔒" : "")
                             ),
-                            h("div", {
-                                className: "px-4 py-1.5 rounded-2xl text-xl font-black min-w-[6rem] text-center border-2 " +
-                                    (v      ? c.bg + " " + c.text + " " + c.border
-                                           : isActive ? "bg-white " + c.border + " " + c.text + " animate-pulse"
-                                           : "bg-slate-50 text-slate-300 border-dashed border-slate-200")
+                            h("span", {
+                                className: "text-2xl font-black text-center leading-tight " +
+                                    (v ? c.text : isActive ? c.text + " animate-pulse" : "text-slate-300")
                             }, v || (isActive ? "?" : "ㅡ"))
                         );
                     })
@@ -6211,24 +6213,26 @@ function Stage3(props) {
                     })
                 ),
 
-                // ── 중단: 필드 탭 (입력방식 바로 아래 — 학생이 입력한 내용이 즉시 보이도록) ──
-                h("div", { className: "flex border-b-2 border-slate-100 shrink-0" },
+                // ── 중단: 필드 탭 (1단계 카드 스타일 — 라벨 위, 값 크게, 둥글게) ──
+                h("div", { className: "flex gap-2 px-4 py-3 border-b-2 border-slate-100 shrink-0" },
                     S3_FIELDS.map(function(k) {
                         var c = S3_COLORS[k];
                         var v = myParts[k];
                         var isActive = activeField === k;
-                        return h("button", {
+                        return h(motion.button, {
                             key: k,
-                            onClick: (function(kk){ return function(){ setActiveField(kk); setInputMode('mic'); setTyping(''); }; })(kk),
-                            className: "flex-1 flex flex-col items-center py-4 px-1 gap-1.5 transition min-w-[4rem] cursor-pointer " +
-                                (isActive ? c.bg : "bg-white hover:bg-slate-50")
+                            whileHover: { scale: 1.03, y: -2 },
+                            whileTap: { scale: 0.97 },
+                            onClick: (function(kk){ return function(){ setActiveField(kk); setInputMode('mic'); setTyping(''); }; })(k),
+                            className: "flex-1 flex flex-col items-center gap-1 rounded-[1.25rem] border-4 py-3 px-2 shadow-md transition cursor-pointer " +
+                                (v      ? c.bg + " " + c.border
+                                       : isActive ? "bg-white " + c.border + " ring-4 ring-offset-1 " + c.ring
+                                       : "bg-white border-slate-200 opacity-60")
                         },
-                            h("span", { className: "text-sm font-black " + (isActive ? c.text : "text-slate-400") }, c.name),
-                            h("div", {
-                                className: "px-3 py-1.5 rounded-2xl text-lg font-black min-w-[4rem] text-center border-2 truncate max-w-[7rem] " +
-                                    (v      ? c.bg + " " + c.text + " " + c.border
-                                           : isActive ? "bg-white " + c.border + " " + c.text + " animate-pulse"
-                                           : "bg-slate-50 text-slate-300 border-dashed border-slate-200")
+                            h("span", { className: "text-sm font-black " + (v || isActive ? c.text : "text-slate-400") }, c.name),
+                            h("span", {
+                                className: "text-xl font-black text-center leading-tight truncate max-w-full " +
+                                    (v ? c.text : isActive ? c.text + " animate-pulse" : "text-slate-300")
                             }, v || (isActive ? "?" : "ㅡ"))
                         );
                     })
