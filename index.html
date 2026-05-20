@@ -64,7 +64,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbzDGU6i4MG1_hq1Wmjb8PbeHovArcDEQp1DPDa09A5kDSOgNUtl3yYAQni8zdQ4Nm03Jg/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbw9kT3tc8jOirXV4yoDvzPMti3iKtH_p4a732t-wNBuQcFBG6DX9UDnldaKWoV-aznM7Q/exec';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -1254,8 +1254,12 @@ function buildCellGrid(parts) {
             cells.push({ ch: '', color: null, isSpace: true });
         }
     }
-    // 문장 끝 마침표
-    cells.push({ ch: '.', color: null, isPeriod: true });
+    // 문장 끝 마침표 (마지막 어절의 색상과 동일하게)
+    var lastColor = null;
+    for (var li = cells.length - 1; li >= 0; li--) {
+        if (cells[li].color) { lastColor = cells[li].color; break; }
+    }
+    cells.push({ ch: '.', color: lastColor, isPeriod: true });
     return cells;
 }
 
@@ -1320,14 +1324,28 @@ function NotebookGrid(props) {
                         bgClass = 'bg-slate-50';
                         borderClass = 'border-slate-100';
                     }
-                    // 마침표: 왼쪽 아래에 작게 표시
+                    // 마침표: 왼쪽 아래에 크게 표시, 마지막 어절 색상 사용
                     if (cell.isPeriod) {
+                        var periodColor = '#475569';
+                        var periodBg = 'bg-slate-50';
+                        var periodBorder = 'border-slate-200';
+                        if (cell.color && FIELD_COLORS[cell.color]) {
+                            var pfc = FIELD_COLORS[cell.color];
+                            periodBg = pfc.bg;
+                            periodBorder = pfc.border;
+                            // text 색상에서 hex 추출 (tailwind class → inline style 불가, style로 지정)
+                            var colorMap = {
+                                'when':'#92400e','where':'#1e40af','who':'#065f46',
+                                'what':'#991b1b','feeling':'#5b21b6'
+                            };
+                            periodColor = colorMap[cell.color] || '#475569';
+                        }
                         return h("div", {
                             key: ci,
-                            className: cellSize + " border-4 rounded-xl relative shadow-sm bg-slate-50 border-slate-200 flex items-end justify-start"
+                            className: cellSize + " border-4 rounded-xl shadow-sm flex items-end justify-start " + periodBg + " " + periodBorder
                         },
                             h("span", {
-                                style: { fontSize: '1.5rem', fontWeight: 900, color: '#475569', lineHeight: 1, paddingLeft: '0.25rem', paddingBottom: '0.15rem' }
+                                style: { fontSize: '2.8rem', fontWeight: 900, color: periodColor, lineHeight: 1, paddingLeft: '0.3rem', paddingBottom: '0.1rem' }
                             }, ".")
                         );
                     }
@@ -2689,8 +2707,12 @@ function buildCellGrid(parts) {
             cells.push({ ch: '', color: null, isSpace: true });
         }
     }
-    // 문장 끝 마침표
-    cells.push({ ch: '.', color: null, isPeriod: true });
+    // 문장 끝 마침표 (마지막 어절의 색상과 동일하게)
+    var lastColor = null;
+    for (var li = cells.length - 1; li >= 0; li--) {
+        if (cells[li].color) { lastColor = cells[li].color; break; }
+    }
+    cells.push({ ch: '.', color: lastColor, isPeriod: true });
     return cells;
 }
 
@@ -2749,14 +2771,28 @@ function NotebookGrid(props) {
                         bgClass = 'bg-slate-50';
                         borderClass = 'border-slate-100';
                     }
-                    // 마침표: 왼쪽 아래에 작게 표시
+                    // 마침표: 왼쪽 아래에 크게 표시, 마지막 어절 색상 사용
                     if (cell.isPeriod) {
+                        var periodColor = '#475569';
+                        var periodBg = 'bg-slate-50';
+                        var periodBorder = 'border-slate-200';
+                        if (cell.color && FIELD_COLORS[cell.color]) {
+                            var pfc = FIELD_COLORS[cell.color];
+                            periodBg = pfc.bg;
+                            periodBorder = pfc.border;
+                            // text 색상에서 hex 추출 (tailwind class → inline style 불가, style로 지정)
+                            var colorMap = {
+                                'when':'#92400e','where':'#1e40af','who':'#065f46',
+                                'what':'#991b1b','feeling':'#5b21b6'
+                            };
+                            periodColor = colorMap[cell.color] || '#475569';
+                        }
                         return h("div", {
                             key: ci,
-                            className: cellSize + " border-4 rounded-xl relative shadow-sm bg-slate-50 border-slate-200 flex items-end justify-start"
+                            className: cellSize + " border-4 rounded-xl shadow-sm flex items-end justify-start " + periodBg + " " + periodBorder
                         },
                             h("span", {
-                                style: { fontSize: '1.5rem', fontWeight: 900, color: '#475569', lineHeight: 1, paddingLeft: '0.25rem', paddingBottom: '0.15rem' }
+                                style: { fontSize: '2.8rem', fontWeight: 900, color: periodColor, lineHeight: 1, paddingLeft: '0.3rem', paddingBottom: '0.1rem' }
                             }, ".")
                         );
                     }
@@ -3046,7 +3082,7 @@ function Stage1_2(props) {
                         return h("button", {
                             key: opt.mode,
                             onClick: (function(m){ return function(){ setInputMode(m); }; })(opt.mode),
-                            className: "flex-1 py-4 px-3 font-black text-xl transition border-b-4 -mb-0.5 " +
+                            className: "flex-1 py-5 px-3 font-black text-2xl transition border-b-4 -mb-0.5 " +
                                 (isOn
                                     ? af.bg + " " + af.text + " " + af.border
                                     : "bg-white text-slate-400 border-transparent hover:bg-slate-50 hover:text-slate-600")
@@ -3072,11 +3108,11 @@ function Stage1_2(props) {
                                        : "bg-white border-slate-200 opacity-60") +
                                 (isFixed ? " cursor-default" : " cursor-pointer")
                         },
-                            h("span", { className: "text-sm font-black " + (v || isActive ? c.text : "text-slate-400") },
+                            h("span", { className: "text-xl font-black " + (v || isActive ? c.text : "text-slate-400") },
                                 c.name + (isFixed ? " 🔒" : "")
                             ),
                             h("span", {
-                                className: "text-2xl font-black text-center leading-tight " +
+                                className: "text-3xl font-black text-center leading-tight " +
                                     (v ? c.text : isActive ? c.text + " animate-pulse" : "text-slate-300")
                             }, v || (isActive ? "?" : "ㅡ"))
                         );
@@ -3105,42 +3141,42 @@ function Stage1_2(props) {
 
                     // 직접 쓰기
                     inputMode === 'typing' && h("div", { className: "w-full max-w-lg flex flex-col gap-4" },
-                        h("p", { className: "text-2xl font-black text-slate-600 text-center" }, af.name + "를 직접 써보세요"),
+                        h("p", { className: "text-3xl font-black text-slate-600 text-center" }, af.name + "를 직접 써보세요"),
                         h("input", {
                             type: "text", value: typing,
                             onChange: function(e){ setTyping(e.target.value); },
                             onKeyDown: function(e){ if(e.key==='Enter' && typing.trim()) fillActive(typing); },
                             placeholder: af.name + "...",
                             autoFocus: true,
-                            className: "px-6 py-5 text-3xl font-black rounded-2xl border-4 outline-none text-center bg-white " + af.border
+                            className: "px-6 py-6 text-4xl font-black rounded-2xl border-4 outline-none text-center bg-white " + af.border
                         }),
                         h("button", {
                             onClick: function(){ fillActive(typing); },
                             disabled: !typing.trim(),
-                            className: "py-4 rounded-2xl text-2xl font-black shadow-md " +
+                            className: "py-5 rounded-2xl text-3xl font-black shadow-md " +
                                 (typing.trim() ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-400 cursor-not-allowed")
                         }, "✓ 이걸로 할게요!")
                     ),
 
                     // 녹음하기
                     inputMode === 'mic' && h("div", { className: "w-full flex flex-col gap-5 items-center" },
-                        h("p", { className: "text-2xl font-black text-slate-600 text-center" },
+                        h("p", { className: "text-3xl font-black text-slate-600 text-center" },
                             micRec ? "🎙️ 듣고 있어요!" : af.name + "를 말해보세요"
                         ),
                         h("div", {
-                            className: "w-full max-w-lg px-8 py-7 text-3xl font-black rounded-2xl border-4 text-center min-h-[5.5rem] flex items-center justify-center " +
+                            className: "w-full max-w-lg px-8 py-8 text-4xl font-black rounded-2xl border-4 text-center min-h-[6.5rem] flex items-center justify-center " +
                                 (micRec ? "border-red-400 ring-4 ring-red-100 bg-red-50" : "border-slate-200 bg-yellow-50")
                         }, typing || h("span", { className: "text-slate-300 text-xl" }, "버튼을 누르고 말해보세요...")),
                         h("div", { className: "flex gap-4" },
                             h("button", {
                                 onClick: toggleMic,
-                                className: "px-8 py-4 rounded-2xl font-black text-2xl shadow-md " +
+                                className: "px-10 py-5 rounded-2xl font-black text-3xl shadow-md " +
                                     (micRec ? "bg-red-600 text-white animate-pulse" : "bg-red-500 text-white")
                             }, "🎤 " + (micRec ? "녹음 중..." : "녹음")),
                             h("button", {
                                 onClick: function(){ fillActive(typing); },
                                 disabled: !typing.trim(),
-                                className: "px-8 py-4 rounded-2xl font-black text-2xl shadow-md " +
+                                className: "px-10 py-5 rounded-2xl font-black text-3xl shadow-md " +
                                     (typing.trim() ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-400 cursor-not-allowed")
                             }, "✓ 이걸로!")
                         )
@@ -4113,8 +4149,12 @@ function buildCellGrid(parts) {
         }
         if (i < parts.length - 1) cells.push({ ch: '', color: null, isSpace: true });
     }
-    // 문장 끝 마침표
-    cells.push({ ch: '.', color: null, isPeriod: true });
+    // 문장 끝 마침표 (마지막 어절의 색상과 동일하게)
+    var lastColor = null;
+    for (var li = cells.length - 1; li >= 0; li--) {
+        if (cells[li].color) { lastColor = cells[li].color; break; }
+    }
+    cells.push({ ch: '.', color: lastColor, isPeriod: true });
     return cells;
 }
 
@@ -4178,12 +4218,25 @@ function NotebookGrid(props) {
                     if (cell.isSpace) { bgClass = 'bg-slate-50'; borderClass = 'border-slate-200 border-dashed'; }
                     if (cell.isEmpty) { bgClass = 'bg-slate-50'; borderClass = 'border-slate-100'; }
                     if (cell.isPeriod) {
+                        var periodColor3 = '#475569';
+                        var periodBg3 = 'bg-slate-50';
+                        var periodBorder3 = 'border-slate-200';
+                        if (cell.color && FIELD_COLORS[cell.color]) {
+                            var pfc3 = FIELD_COLORS[cell.color];
+                            periodBg3 = pfc3.bg;
+                            periodBorder3 = pfc3.border;
+                            var colorMap3 = {
+                                'when':'#92400e','where':'#1e40af','who':'#065f46',
+                                'what':'#991b1b','feeling':'#5b21b6'
+                            };
+                            periodColor3 = colorMap3[cell.color] || '#475569';
+                        }
                         return h("div", {
                             key: ci,
-                            className: cellSize + " border-4 rounded-xl relative shadow-sm bg-slate-50 border-slate-200 flex items-end justify-start"
+                            className: cellSize + " border-4 rounded-xl shadow-sm flex items-end justify-start " + periodBg3 + " " + periodBorder3
                         },
                             h("span", {
-                                style: { fontSize: '1.5rem', fontWeight: 900, color: '#475569', lineHeight: 1, paddingLeft: '0.25rem', paddingBottom: '0.15rem' }
+                                style: { fontSize: '2.8rem', fontWeight: 900, color: periodColor3, lineHeight: 1, paddingLeft: '0.3rem', paddingBottom: '0.1rem' }
                             }, ".")
                         );
                     }
@@ -6205,7 +6258,7 @@ function Stage3(props) {
                         return h("button", {
                             key: opt.mode,
                             onClick: (function(m){ return function(){ setInputMode(m); }; })(opt.mode),
-                            className: "flex-1 py-4 px-3 font-black text-xl transition border-b-4 -mb-0.5 " +
+                            className: "flex-1 py-5 px-3 font-black text-2xl transition border-b-4 -mb-0.5 " +
                                 (isOn
                                     ? af.bg + " " + af.text + " " + af.border
                                     : "bg-white text-slate-400 border-transparent hover:bg-slate-50 hover:text-slate-600")
@@ -6229,9 +6282,9 @@ function Stage3(props) {
                                        : isActive ? "bg-white " + c.border + " ring-4 ring-offset-1 " + c.ring
                                        : "bg-white border-slate-200 opacity-60")
                         },
-                            h("span", { className: "text-sm font-black " + (v || isActive ? c.text : "text-slate-400") }, c.name),
+                            h("span", { className: "text-xl font-black " + (v || isActive ? c.text : "text-slate-400") }, c.name),
                             h("span", {
-                                className: "text-xl font-black text-center leading-tight truncate max-w-full " +
+                                className: "text-2xl font-black text-center leading-tight truncate max-w-full " +
                                     (v ? c.text : isActive ? c.text + " animate-pulse" : "text-slate-300")
                             }, v || (isActive ? "?" : "ㅡ"))
                         );
@@ -6243,11 +6296,11 @@ function Stage3(props) {
 
                     // mic
                     inputMode === 'mic' && h("div", { className: "w-full flex flex-col gap-5 items-center" },
-                        h("p", { className: "text-2xl font-black " + af.text + " text-center" },
+                        h("p", { className: "text-3xl font-black " + af.text + " text-center" },
                             micRec ? "🎙️ 듣고 있어요!" : af.name + "를 말해보세요"
                         ),
                         h("div", {
-                            className: "w-full max-w-xl px-8 py-7 rounded-2xl text-3xl font-black border-4 min-h-[5.5rem] flex items-center justify-center text-center " +
+                            className: "w-full max-w-xl px-8 py-8 rounded-2xl text-4xl font-black border-4 min-h-[6.5rem] flex items-center justify-center text-center " +
                                 (micRec ? "border-red-400 ring-4 ring-red-100 bg-red-50" : "border-slate-200 bg-yellow-50")
                         }, typing || h("span", { className: "text-slate-300 text-xl" }, "버튼을 누르고 말해보세요...")),
                         h("div", { className: "flex gap-4" },
@@ -6273,7 +6326,7 @@ function Stage3(props) {
                                         typing ? "🎤 다시 녹음" : "🎤 녹음 시작"),
                                     typing && h("button", {
                                         onClick: function(){ fillActive(typing); },
-                                        className: "px-8 py-4 rounded-2xl font-black text-2xl bg-emerald-500 text-white shadow-[0_5px_0_rgb(4,120,87)]"
+                                        className: "px-10 py-5 rounded-2xl font-black text-3xl bg-emerald-500 text-white shadow-[0_5px_0_rgb(4,120,87)]"
                                     }, "✅ 이걸로!")
                                   )
                         )
@@ -6281,18 +6334,18 @@ function Stage3(props) {
 
                     // typing
                     inputMode === 'typing' && h("div", { className: "w-full max-w-lg flex flex-col gap-4 items-center" },
-                        h("p", { className: "text-2xl font-black text-slate-600 text-center" }, af.name + "를 직접 써보세요"),
+                        h("p", { className: "text-3xl font-black text-slate-600 text-center" }, af.name + "를 직접 써보세요"),
                         h("input", {
                             type: "text", value: typing,
                             onChange: function(e){ setTyping(e.target.value); },
                             onKeyDown: function(e){ if(e.key==='Enter' && typing.trim()) fillActive(typing); },
                             placeholder: af.name + "을(를) 직접 써보세요",
                             autoFocus: true,
-                            className: "w-full px-6 py-5 text-3xl font-black rounded-2xl border-4 outline-none text-center bg-white " + af.border
+                            className: "w-full px-6 py-6 text-4xl font-black rounded-2xl border-4 outline-none text-center bg-white " + af.border
                         }),
                         typing.trim() && h("button", {
                             onClick: function(){ fillActive(typing); },
-                            className: "px-10 py-4 rounded-2xl font-black text-2xl text-white bg-emerald-500 shadow-md"
+                            className: "px-12 py-5 rounded-2xl font-black text-3xl text-white bg-emerald-500 shadow-md"
                         }, "✅ 이걸로!")
                     ),
 
