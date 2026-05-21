@@ -64,7 +64,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbyRNYlCjZiPznzb-bcbg2DG_PLLIe2xxsSQiku8rguUy1XqjYOkOOpAdiuhcedXCldURQ/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbzB6MM_eHoJ5__flvTWPMbhXNLM6tFux0U_Fk8eKHf41VXPgGANMRk11BcPtg5js3egBQ/exec';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -1342,10 +1342,11 @@ function NotebookGrid(props) {
                         }
                         return h("div", {
                             key: ci,
-                            className: cellSize + " border-4 rounded-xl shadow-sm flex items-end justify-start " + periodBg + " " + periodBorder
+                            className: cellSize + " border-4 rounded-xl shadow-sm " + periodBg + " " + periodBorder,
+                            style: { display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start' }
                         },
                             h("span", {
-                                style: { fontSize: '2.8rem', fontWeight: 900, color: periodColor, lineHeight: 1, paddingLeft: '0.3rem', paddingBottom: '0.1rem' }
+                                style: { fontSize: '3.8rem', fontWeight: 900, color: periodColor, lineHeight: 0.9, paddingLeft: '0.2rem', paddingBottom: '0.05rem' }
                             }, ".")
                         );
                     }
@@ -2008,11 +2009,24 @@ function Stage1_1(props) {
                     },
                         h("p", { className: "text-xl font-black " + feedback.textColor, style: { wordBreak: "keep-all", overflowWrap: "break-word" } }, "💡 " + detailedFeedback)
                     ),
-                    // 닫기 버튼
-                    h("button", {
-                        onClick: function() { setTranscript(''); setHasTriedRecording(false); setMustRetry(false); },
-                        className: "mt-2 px-10 py-4 bg-white rounded-2xl font-black text-2xl border-2 " + feedback.border + " " + feedback.textColor + " shadow-sm"
-                    }, "다시 해볼게요! 💪")
+                    // 버튼 영역
+                    h("div", { className: "flex gap-3 mt-2 w-full justify-center flex-wrap" },
+                        h("button", {
+                            onClick: function() { setTranscript(''); setHasTriedRecording(false); setMustRetry(false); },
+                            className: "flex-1 min-w-[180px] px-8 py-4 bg-white rounded-2xl font-black text-2xl border-4 " + feedback.border + " " + feedback.textColor + " shadow-sm"
+                        }, "💪 다시 해볼게요!"),
+                        h("button", {
+                            onClick: function() {
+                                setTranscript(''); setHasTriedRecording(false); setMustRetry(false);
+                                if (exampleIdx + 1 < examples.length) {
+                                    setExampleIdx(exampleIdx + 1); setSubStep('record');
+                                } else {
+                                    setSubStep('choose');
+                                }
+                            },
+                            className: "flex-1 min-w-[180px] px-8 py-4 bg-slate-100 rounded-2xl font-black text-2xl border-4 border-slate-300 text-slate-600 shadow-sm hover:bg-slate-200"
+                        }, "⏭️ 그냥 넘어갈게요")
+                    )
                 )
             ),
             h("div", { className: "flex flex-col items-center gap-3 shrink-0" },
@@ -2789,10 +2803,11 @@ function NotebookGrid(props) {
                         }
                         return h("div", {
                             key: ci,
-                            className: cellSize + " border-4 rounded-xl shadow-sm flex items-end justify-start " + periodBg + " " + periodBorder
+                            className: cellSize + " border-4 rounded-xl shadow-sm " + periodBg + " " + periodBorder,
+                            style: { display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start' }
                         },
                             h("span", {
-                                style: { fontSize: '2.8rem', fontWeight: 900, color: periodColor, lineHeight: 1, paddingLeft: '0.3rem', paddingBottom: '0.1rem' }
+                                style: { fontSize: '3.8rem', fontWeight: 900, color: periodColor, lineHeight: 0.9, paddingLeft: '0.2rem', paddingBottom: '0.05rem' }
                             }, ".")
                         );
                     }
@@ -4233,10 +4248,11 @@ function NotebookGrid(props) {
                         }
                         return h("div", {
                             key: ci,
-                            className: cellSize + " border-4 rounded-xl shadow-sm flex items-end justify-start " + periodBg3 + " " + periodBorder3
+                            className: cellSize + " border-4 rounded-xl shadow-sm " + periodBg3 + " " + periodBorder3,
+                            style: { display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start' }
                         },
                             h("span", {
-                                style: { fontSize: '2.8rem', fontWeight: 900, color: periodColor3, lineHeight: 1, paddingLeft: '0.3rem', paddingBottom: '0.1rem' }
+                                style: { fontSize: '3.8rem', fontWeight: 900, color: periodColor3, lineHeight: 0.9, paddingLeft: '0.2rem', paddingBottom: '0.05rem' }
                             }, ".")
                         );
                     }
