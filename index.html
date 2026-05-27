@@ -64,7 +64,7 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbw7n9-loU-3vf2m_w6v8xY-k_QmEZqY94FzRHyeiW3ar_OPj6Q1uI4CBXuwvse3-cEK6Q/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbzXJhs6CMaDMkn7pH8FNsXkCCWyqu5iQtygoLx0I5OMae-N6ENEyg8KlXcB0qja6Wq73g/exec요';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -666,28 +666,55 @@ function StageHeader(props) {
         }
     }
 
+    // 현재 단계 번호 (1/2/3)
+    var stageNum = currentKey === 's1_1' || currentKey === 's1_2' ? '1'
+                 : currentKey === 's2_1' || currentKey === 's2_2' ? '2'
+                 : '3';
+    var STAGE_BG = { '1':'bg-amber-100 text-amber-700 border-amber-300', '2':'bg-blue-100 text-blue-700 border-blue-300', '3':'bg-emerald-100 text-emerald-700 border-emerald-300' };
+    var stageBgCls = STAGE_BG[stageNum] || STAGE_BG['1'];
+
+    // 드롭다운 열기/닫기 state
+    var sDropOpen = useState(false);
+    var dropOpen = sDropOpen[0], setDropOpen = sDropOpen[1];
+
+    // 단계→화면키 매핑
+    function stageToKey(n) {
+        if (n === '1') return 's1_1';
+        if (n === '2') return 's1_2';
+        if (n === '3') return 's3';
+        return 's1_1';
+    }
+
+    var STAGE_LABELS = [
+        { num: '1', label: '1단계  낱말 카드 모으기', cls: 'bg-amber-100 text-amber-700 border-amber-300' },
+        { num: '2', label: '2단계  문장 만들기',       cls: 'bg-blue-100 text-blue-700 border-blue-300'   },
+        { num: '3', label: '3단계  일기쓰기',          cls: 'bg-emerald-100 text-emerald-700 border-emerald-300' }
+    ];
+    var currentStageLabel = STAGE_LABELS.filter(function(s){ return s.num === stageNum; })[0] || STAGE_LABELS[0];
+
     return h("div", { className: "px-4 pt-3 pb-2 flex items-center gap-3 shrink-0" },
-        // 좌측: 단계 선택 드롭다운 (표시는 동적 라벨로)
+        // 좌측: 단계 선택 (커스텀 드롭다운)
         h("div", { className: "relative" },
-            h("select", {
-                value: currentKey,
-                onChange: handleChange,
-                className: "px-3 py-2 rounded-xl font-black text-sm border-2 cursor-pointer appearance-none pr-10 " +
-                    current.bg + " " + current.text + " " + current.border,
-                style: {
-                    backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'14\' height=\'14\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'3\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 0.75rem center'
-                }
+            h("button", {
+                onClick: function(){ setDropOpen(!dropOpen); },
+                className: "px-4 py-2 rounded-xl font-black text-base border-2 cursor-pointer flex items-center gap-2 " + currentStageLabel.cls
             },
-                h("option", { value: currentKey }, displayLabel),
-                STAGE_OPTIONS.filter(function(opt){ return opt.key !== currentKey; })
-                    .filter(function(opt, idx, arr) {
-                        // 같은 label의 첫 번째만 표시 (중복 제거)
-                        return arr.findIndex(function(o){ return o.label === opt.label; }) === idx;
-                    })
-                    .map(function(opt) {
-                    return h("option", { key: opt.key, value: opt.key }, opt.label);
+                h("span", null, currentStageLabel.label),
+                h("span", { style: { fontSize: '0.75rem' } }, dropOpen ? "▲" : "▼")
+            ),
+            dropOpen && h("div", {
+                style: { position: 'absolute', top: '110%', left: 0, zIndex: 100, background: 'white', borderRadius: '0.75rem', border: '2px solid #e2e8f0', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', overflow: 'hidden', minWidth: '220px' }
+            },
+                STAGE_LABELS.map(function(s) {
+                    return h("button", {
+                        key: s.num,
+                        onClick: function() {
+                            setDropOpen(false);
+                            if (s.num !== stageNum && onChangeStage) onChangeStage(stageToKey(s.num));
+                        },
+                        className: "w-full text-left px-4 py-3 font-black text-base hover:bg-slate-50 border-b border-slate-100 last:border-0 " +
+                            (s.num === stageNum ? s.cls : 'text-slate-600')
+                    }, s.label);
                 })
             )
         ),
@@ -1247,31 +1274,37 @@ function ColoredSentence(props) {
 
 // 한 문장을 4영역으로 받아서, 글자별로 색을 매칭해 10칸 공책에 그리기
 function buildCellGrid(parts) {
-    // parts = [언제, 어디서, 누구와, 무엇을]
-    // 결과: [{ ch: '오', color: 'when' }, ...]
+    // parts = [언제, 어디서, 누구와, 무엇을, (감정)]
     var keys = ['when', 'where', 'who', 'what', 'feeling'];
+    // 빈 요소 제거하면서 색상 키도 함께 정리
+    var realParts = [];
+    for (var pi = 0; pi < parts.length; pi++) {
+        var w = parts[pi];
+        if (w && String(w).trim() !== '') {
+            realParts.push({ word: String(w).trim(), color: keys[pi] });
+        }
+    }
     var cells = [];
-    for (var i = 0; i < parts.length; i++) {
-        var word = parts[i];
+    var lastColor = null;
+    for (var i = 0; i < realParts.length; i++) {
+        var word = realParts[i].word;
+        var col = realParts[i].color;
+        lastColor = col;
         for (var j = 0; j < word.length; j++) {
             var ch = word.charAt(j);
             if (ch === ' ') {
                 cells.push({ ch: '', color: null, isSpace: true });
             } else {
-                cells.push({ ch: ch, color: keys[i] });
+                cells.push({ ch: ch, color: col });
             }
         }
         // 어절 사이 공백 (마지막 어절 뒤에는 없음)
-        if (i < parts.length - 1) {
+        if (i < realParts.length - 1) {
             cells.push({ ch: '', color: null, isSpace: true });
         }
     }
-    // 문장 끝 마침표 (마지막 어절의 색상과 동일하게)
-    var lastColor = null;
-    for (var li = cells.length - 1; li >= 0; li--) {
-        if (cells[li].color) { lastColor = cells[li].color; break; }
-    }
-    cells.push({ ch: '.', color: lastColor, isPeriod: true });
+    // 문장 끝 마침표 — 항상 추가 (마지막 어절 색상)
+    cells.push({ ch: '.', color: lastColor || 'what', isPeriod: true });
     return cells;
 }
 
@@ -2716,30 +2749,37 @@ var DEMO_COLLECTED = [
     { key: 'what',  value: '신나게 놀았다',   emoji: '🎉' }
 ];
 
-// 한 문장을 4영역으로 받아서, 글자별로 색을 매칭해 10칸 공책에 그리기
+// 한 문장을 5영역으로 받아서, 글자별로 색을 매칭해 10칸 공책에 그리기
 function buildCellGrid(parts) {
     var keys = FIELD_KEYS;
+    // parts는 객체 {when,...} 또는 배열 — 양쪽 지원, 빈 요소 제거
+    var realParts = [];
+    for (var pi = 0; pi < keys.length; pi++) {
+        var w = Array.isArray(parts) ? parts[pi] : parts[keys[pi]];
+        if (w && String(w).trim() !== '') {
+            realParts.push({ word: String(w).trim(), color: keys[pi] });
+        }
+    }
     var cells = [];
-    for (var i = 0; i < parts.length; i++) {
-        var word = parts[keys[i]];
+    var lastColor = null;
+    for (var i = 0; i < realParts.length; i++) {
+        var word = realParts[i].word;
+        var col2 = realParts[i].color;
+        lastColor = col2;
         for (var j = 0; j < word.length; j++) {
             var ch = word.charAt(j);
             if (ch === ' ') {
                 cells.push({ ch: '', color: null, isSpace: true });
             } else {
-                cells.push({ ch: ch, color: keys[i] });
+                cells.push({ ch: ch, color: col2 });
             }
         }
-        if (i < parts.length - 1) {
+        if (i < realParts.length - 1) {
             cells.push({ ch: '', color: null, isSpace: true });
         }
     }
-    // 문장 끝 마침표 (마지막 어절의 색상과 동일하게)
-    var lastColor = null;
-    for (var li = cells.length - 1; li >= 0; li--) {
-        if (cells[li].color) { lastColor = cells[li].color; break; }
-    }
-    cells.push({ ch: '.', color: lastColor, isPeriod: true });
+    // 문장 끝 마침표 — 항상 추가
+    cells.push({ ch: '.', color: lastColor || 'what', isPeriod: true });
     return cells;
 }
 
@@ -4108,22 +4148,41 @@ var RECOMMENDED_FEELINGS = {
 // "무엇을" 문구(+선택적으로 문장 전체)에서 추천 감정 찾기
 function findRecommendedFeelings(whatText, fullSentence) {
     var results = [];
-    // whatText가 없으면 빈 배열
     if (!whatText && !fullSentence) return results;
 
-    // 검색 대상: 무엇을 필드 + (없으면) 문장 전체
-    var targets = [];
-    if (whatText) targets.push(String(whatText).replace(/\s+/g, ''));
-    if (fullSentence) targets.push(String(fullSentence).replace(/\s+/g, ''));
-
-    Object.keys(RECOMMENDED_FEELINGS).forEach(function(key) {
-        var matched = targets.some(function(t) { return t.indexOf(key) !== -1; });
-        if (matched) {
-            RECOMMENDED_FEELINGS[key].forEach(function(f) {
-                if (results.indexOf(f) === -1) results.push(f);
-            });
-        }
+    // 키워드를 공백 제거 후 길이 내림차순 정렬 (구체적 매칭 우선)
+    var keyList = Object.keys(RECOMMENDED_FEELINGS).map(function(k) {
+        return { orig: k, clean: k.replace(/\s+/g, '') };
+    }).sort(function(a, b) {
+        return b.clean.length - a.clean.length;
     });
+
+    // 1) 무엇을(what) 텍스트에서 — 가장 구체적인(긴) 키 하나만 사용
+    var whatClean = whatText ? String(whatText).replace(/\s+/g, '') : '';
+    if (whatClean) {
+        for (var i = 0; i < keyList.length; i++) {
+            if (whatClean.indexOf(keyList[i].clean) !== -1) {
+                RECOMMENDED_FEELINGS[keyList[i].orig].forEach(function(f) {
+                    if (results.indexOf(f) === -1) results.push(f);
+                });
+                break;
+            }
+        }
+    }
+
+    // 2) 무엇을에서 매칭 실패 시에만 문장 전체 검색 (폴백)
+    if (results.length === 0 && fullSentence) {
+        var sentClean = String(fullSentence).replace(/\s+/g, '');
+        for (var j = 0; j < keyList.length; j++) {
+            if (keyList[j].clean.length >= 2 && sentClean.indexOf(keyList[j].clean) !== -1) {
+                RECOMMENDED_FEELINGS[keyList[j].orig].forEach(function(f) {
+                    if (results.indexOf(f) === -1) results.push(f);
+                });
+                break;
+            }
+        }
+    }
+
     return results;
 }
 
@@ -4168,22 +4227,27 @@ function checkAllFields(transcript, parts) {
 // 공책 칸 셀
 function buildCellGrid(parts) {
     var keys = FIELD_KEYS;
+    var realParts = [];
+    for (var pi = 0; pi < keys.length; pi++) {
+        var w = Array.isArray(parts) ? parts[pi] : parts[keys[pi]];
+        if (w && String(w).trim() !== '') {
+            realParts.push({ word: String(w).trim(), color: keys[pi] });
+        }
+    }
     var cells = [];
-    for (var i = 0; i < parts.length; i++) {
-        var word = parts[i];
+    var lastColor = null;
+    for (var i = 0; i < realParts.length; i++) {
+        var word = realParts[i].word;
+        var col3 = realParts[i].color;
+        lastColor = col3;
         for (var j = 0; j < word.length; j++) {
             var ch = word.charAt(j);
             if (ch === ' ') cells.push({ ch: '', color: null, isSpace: true });
-            else cells.push({ ch: ch, color: keys[i] });
+            else cells.push({ ch: ch, color: col3 });
         }
-        if (i < parts.length - 1) cells.push({ ch: '', color: null, isSpace: true });
+        if (i < realParts.length - 1) cells.push({ ch: '', color: null, isSpace: true });
     }
-    // 문장 끝 마침표 (마지막 어절의 색상과 동일하게)
-    var lastColor = null;
-    for (var li = cells.length - 1; li >= 0; li--) {
-        if (cells[li].color) { lastColor = cells[li].color; break; }
-    }
-    cells.push({ ch: '.', color: lastColor, isPeriod: true });
+    cells.push({ ch: '.', color: lastColor || 'what', isPeriod: true });
     return cells;
 }
 
