@@ -1282,6 +1282,32 @@ function PencilFairy(props) {
     );
 }
 
+// 감정 단어(사전형) → 과거형 명시 매핑 (정확도 우선)
+var FEELING_PAST_MAP = {
+    '속상하다':'속상했다', '서운하다':'서운했다', '화나다':'화났다', '무섭다':'무서웠다',
+    '슬프다':'슬펐다', '힘들다':'힘들었다', '외롭다':'외로웠다', '걱정된다':'걱정됐다',
+    '걱정되다':'걱정됐다', '부끄럽다':'부끄러웠다', '떨리다':'떨렸다',
+    '궁금하다':'궁금했다', '쑥스럽다':'쑥스러웠다', '부럽다':'부러웠다', '심심하다':'심심했다',
+    '피곤하다':'피곤했다', '긴장된다':'긴장됐다', '긴장되다':'긴장됐다', '어색하다':'어색했다', '멍하다':'멍했다',
+    '뿌듯하다':'뿌듯했다', '설레다':'설렜다', '신나다':'신났다', '기쁘다':'기뻤다',
+    '재미있다':'재미있었다', '고맙다':'고마웠다', '행복하다':'행복했다', '편안하다':'편안했다',
+    '즐겁다':'즐거웠다', '사랑스럽다':'사랑스러웠다',
+    '아프다':'아팠다', '아쉽다':'아쉬웠다', '지루하다':'지루했다'
+};
+
+// 감정 단어를 과거형으로 변환 (매핑 우선, 없으면 규칙 폴백)
+function toPastFeeling(word) {
+    if (!word) return word;
+    var w = String(word).trim();
+    if (/(았다|었다|였다|했다|됐다|렜다|뻤다|펐다)$/.test(w)) return w;  // 이미 과거형
+    if (FEELING_PAST_MAP[w]) return FEELING_PAST_MAP[w];               // 매핑 우선
+    if (/하다$/.test(w)) return w.replace(/하다$/, '했다');
+    if (/되다$/.test(w)) return w.replace(/되다$/, '됐다');
+    if (/나다$/.test(w)) return w.replace(/나다$/, '났다');
+    if (/다$/.test(w)) return w.slice(0, -1) + '었다';
+    return w;
+}
+
 function ColoredSentence(props) {
     var parts = props.parts;
     var size = props.size || 'lg'; // 'sm' or 'lg'
@@ -2289,7 +2315,7 @@ function Stage1_1(props) {
                 h(PencilFairy, { mini: true }),
                 h("div", { className: "bg-white px-5 py-3 rounded-2xl shadow-md border-2 border-purple-200 mt-2 whitespace-nowrap" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "💜 어울리는 감정을 골라봐요!"),
-                    h("p", { className: "text-xl text-slate-500 font-bold" }, "신호등 색깔을 누르고 감정을 하나 선택해요")
+                    h("p", { className: "text-xl text-slate-500 font-bold" }, "⭐ 추천 감정에서 바로 고르거나, 신호등에서 더 찾아봐요")
                 ),
                 h("button", {
                     onClick: function(){ setSubStep('askFeeling'); },
@@ -2303,25 +2329,37 @@ function Stage1_1(props) {
                 h("span", { className: "text-2xl font-black text-slate-800 truncate", style: { wordBreak: 'keep-all' } }, sentenceTextFP)
             ),
 
-            // ⭐ 추천 감정 배너 (항상 표시)
-            h("div", { className: "bg-pink-50 border-2 border-pink-300 rounded-2xl px-5 py-3 flex items-center gap-3 shrink-0 flex-wrap" },
-                h("span", { className: "text-base font-black text-pink-700 shrink-0" },
-                    recommendedFP.length > 0 ? "⭐ 추천 감정" : "💜 이런 감정은 어때요?"
+            // ⭐ 추천 감정 배너 (항상 표시, 신호등 없이 바로 선택 가능)
+            h("div", { className: "bg-gradient-to-r from-pink-50 to-purple-50 border-4 border-pink-300 rounded-[1.5rem] px-5 py-4 shrink-0 shadow-md" },
+                h("div", { className: "flex items-center gap-2 mb-3" },
+                    h(motion.span, {
+                        animate: { rotate: [0, -15, 15, -15, 0], scale: [1, 1.2, 1] },
+                        transition: { repeat: Infinity, duration: 2, repeatDelay: 1 },
+                        style: { fontSize: '1.8rem', display: 'inline-block' }
+                    }, "⭐"),
+                    h("span", { className: "text-xl font-black text-pink-700" },
+                        recommendedFP.length > 0 ? "이 문장에 어울리는 감정이에요! 하나 골라봐요" : "이런 감정은 어때요?"
+                    )
                 ),
-                h("div", { className: "flex flex-wrap gap-2 items-center" },
+                h("div", { className: "flex flex-wrap gap-3 items-center" },
                     displayRecommendedFP.map(function(word, ri) {
                         var fc = null;
                         for (var pi = 0; pi < FEELINGS_POOL.length; pi++) {
                             if (FEELINGS_POOL[pi].value === word) { fc = FEELINGS_POOL[pi]; break; }
                         }
-                        if (!fc) fc = { emoji:'💜', value: word };
-                        return h("button", {
+                        if (!fc) fc = { emoji:'💜', value: word, group: 'green' };
+                        return h(motion.button, {
                             key: ri,
+                            initial: { scale: 0, opacity: 0 },
+                            animate: { scale: 1, opacity: 1 },
+                            transition: { delay: ri * 0.1, type: 'spring', stiffness: 200 },
+                            whileHover: { scale: 1.08, y: -4 },
+                            whileTap: { scale: 0.95 },
                             onClick: (function(fcc){ return function(){ setPendingFeel(fcc); }; })(fc),
-                            className: "flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border-2 border-pink-300 hover:bg-pink-100 hover:scale-105 transition"
+                            className: "flex flex-col items-center gap-1 px-6 py-3 rounded-2xl bg-white border-4 border-pink-300 shadow-md hover:border-pink-400 hover:bg-pink-50 transition"
                         },
-                            h("span", { className: "text-2xl" }, fc.emoji),
-                            h("span", { className: "text-lg font-black text-pink-700" }, word)
+                            h("span", { style: { fontSize: '2.5rem', lineHeight: 1 } }, fc.emoji),
+                            h("span", { className: "text-xl font-black text-pink-700" }, word)
                         );
                     })
                 )
@@ -2554,10 +2592,8 @@ function Stage1_1(props) {
         // 선택한 감정이 있으면 맨 뒤에 추가
         var chosenWithFeel = chosen ? chosen.slice() : [];
         if (feelPicked.length > 0 && feelPicked[0]) {
-            // 감정 단어 적절한 활용형 변환 (예: "신나다" → "신났다")
-            var feelWord = feelPicked[0];
-            // "다"로 끝나면 과거형 추가 안 함(이미 사전형) — 그대로 사용
-            chosenWithFeel.push(feelWord);
+            // 감정 단어를 과거형으로 변환 (예: "신나다" → "신났다", "즐겁다" → "즐거웠다")
+            chosenWithFeel.push(toPastFeeling(feelPicked[0]));
         }
         var cells = buildCellGrid(chosenWithFeel);
         // 총 칸 수에 따라 줄 수 자동 계산 안내
@@ -3430,7 +3466,7 @@ function Stage1_2(props) {
                 h(PencilFairy, { mini: true }),
                 h("div", { className: "bg-white px-5 py-3 rounded-2xl shadow-md border-2 border-purple-200 mt-2 whitespace-nowrap" },
                     h("h2", { className: "text-2xl font-black text-slate-800" }, "💜 어울리는 감정을 골라봐요!"),
-                    h("p", { className: "text-xl text-slate-500 font-bold" }, "신호등 색깔을 누르고 감정을 하나 선택해요")
+                    h("p", { className: "text-xl text-slate-500 font-bold" }, "⭐ 추천 감정에서 바로 고르거나, 신호등에서 더 찾아봐요")
                 ),
                 h("button", {
                     onClick: function(){ setSubStep('askFeeling'); },
@@ -3444,25 +3480,37 @@ function Stage1_2(props) {
                 h("span", { className: "text-2xl font-black text-slate-800 truncate", style: { wordBreak: 'keep-all' } }, sentenceTextS12_pick)
             ),
 
-            // ⭐ 추천 감정 배너 (항상 표시)
-            h("div", { className: "bg-pink-50 border-2 border-pink-300 rounded-2xl px-5 py-3 flex items-center gap-3 shrink-0 flex-wrap" },
-                h("span", { className: "text-base font-black text-pink-700 shrink-0" },
-                    recommendedS12.length > 0 ? "⭐ 추천 감정" : "💜 이런 감정은 어때요?"
+            // ⭐ 추천 감정 배너 (항상 표시, 신호등 없이 바로 선택 가능)
+            h("div", { className: "bg-gradient-to-r from-pink-50 to-purple-50 border-4 border-pink-300 rounded-[1.5rem] px-5 py-4 shrink-0 shadow-md" },
+                h("div", { className: "flex items-center gap-2 mb-3" },
+                    h(motion.span, {
+                        animate: { rotate: [0, -15, 15, -15, 0], scale: [1, 1.2, 1] },
+                        transition: { repeat: Infinity, duration: 2, repeatDelay: 1 },
+                        style: { fontSize: '1.8rem', display: 'inline-block' }
+                    }, "⭐"),
+                    h("span", { className: "text-xl font-black text-pink-700" },
+                        recommendedS12.length > 0 ? "이 문장에 어울리는 감정이에요! 하나 골라봐요" : "이런 감정은 어때요?"
+                    )
                 ),
-                h("div", { className: "flex flex-wrap gap-2 items-center" },
+                h("div", { className: "flex flex-wrap gap-3 items-center" },
                     displayRecommendedS12.map(function(word, ri) {
                         var fc = null;
                         for (var pi = 0; pi < FEELINGS_POOL.length; pi++) {
                             if (FEELINGS_POOL[pi].value === word) { fc = FEELINGS_POOL[pi]; break; }
                         }
-                        if (!fc) fc = { emoji:'💜', value: word };
-                        return h("button", {
+                        if (!fc) fc = { emoji:'💜', value: word, group: 'green' };
+                        return h(motion.button, {
                             key: ri,
+                            initial: { scale: 0, opacity: 0 },
+                            animate: { scale: 1, opacity: 1 },
+                            transition: { delay: ri * 0.1, type: 'spring', stiffness: 200 },
+                            whileHover: { scale: 1.08, y: -4 },
+                            whileTap: { scale: 0.95 },
                             onClick: (function(fcc){ return function(){ setPendingFeel2(fcc); }; })(fc),
-                            className: "flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border-2 border-pink-300 hover:bg-pink-100 hover:scale-105 transition"
+                            className: "flex flex-col items-center gap-1 px-6 py-3 rounded-2xl bg-white border-4 border-pink-300 shadow-md hover:border-pink-400 hover:bg-pink-50 transition"
                         },
-                            h("span", { className: "text-2xl" }, fc.emoji),
-                            h("span", { className: "text-lg font-black text-pink-700" }, word)
+                            h("span", { style: { fontSize: '2.5rem', lineHeight: 1 } }, fc.emoji),
+                            h("span", { className: "text-xl font-black text-pink-700" }, word)
                         );
                     })
                 )
@@ -3683,7 +3731,7 @@ function Stage1_2(props) {
         var partsArr = [myParts.when, myParts.where, myParts.who, myParts.what];
         // 선택한 감정이 있으면 맨 뒤에 추가
         if (feelPicked2.length > 0 && feelPicked2[0]) {
-            partsArr.push(feelPicked2[0]);
+            partsArr.push(toPastFeeling(feelPicked2[0]));
         }
         var cells = buildCellGrid(partsArr);
         var lineCount = Math.ceil(cells.length / 10);
@@ -6199,7 +6247,7 @@ function Stage3(props) {
         setSubStep('submit');
         try {
             var todayTitle = todayStr() + ' ' + todayDay();
-            var body = S3_FIELDS.map(function(k) { return parts[k]; }).filter(Boolean).join(' ');
+            var body = S3_FIELDS.map(function(k) { return parts[k]; }).filter(Boolean).join(' ') + '.';
             var payload = {
                 type: 'saveDiary',
                 studentId:   data.studentId,
@@ -6656,7 +6704,7 @@ function Stage3(props) {
             ),
             h("div", { className: "bg-emerald-50 px-6 py-3 rounded-full border-2 border-emerald-200 flex items-center gap-3" },
                 h("span", { className: "text-3xl" }, "✅"),
-                h("span", { className: "text-xl font-black text-emerald-700" }, "「" + title + "」 — 제출 완료")
+                h("span", { className: "text-xl font-black text-emerald-700" }, "「" + (todayStr() + ' ' + todayDay()) + "」 — 제출 완료")
             ),
             h("button", {
                 onClick: function() { if (props.onBack) props.onBack(); else restart(); },
