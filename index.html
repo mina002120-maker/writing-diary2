@@ -70,7 +70,7 @@
 //   1) GitHub Actions가 빌드 시 주입하는 __SHEET_API_URL__
 //   2) 선생님이 앱에서 직접 입력해 저장한 localStorage 값
 //   3) 미설정 (앱에서 ⚙️ 버튼으로 입력 가능)
-var GAS_URL_INJECTED = '__SHEET_API_URL__';  // GitHub Actions가 실제 URL로 교체
+var GAS_URL_INJECTED = 'https://script.google.com/macros/s/AKfycbzzoJsVKmauHX0my1TXQ1--GsRDO7mfcOeHVdSo3BmYH7_X4yrnBteFaj9_OiTCYqS4Aw/exec';  // GAS 배포 URL
 var GAS_URL_HARDCODED = (GAS_URL_INJECTED.indexOf('SHEET_API_URL') === -1 && GAS_URL_INJECTED.indexOf('script.google.com') !== -1)
     ? GAS_URL_INJECTED
     : '여기에_배포된_GAS_URL을_입력하세요';
