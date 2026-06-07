@@ -1,0 +1,55 @@
+name: Deploy to GitHub Pages
+
+# main 브랜치에 푸시될 때마다 자동 실행
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:  # 수동 실행도 가능
+
+# GitHub Pages 배포에 필요한 권한
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 동시 배포 방지 (마지막 것만 실행)
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # 1) 저장소 코드 가져오기
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2) index.html 안의 __SHEET_API_URL__ 을 실제 GAS URL로 교체
+      - name: Inject GAS URL
+        run: |
+          if [ -z "${{ secrets.SHEET_API_URL }}" ]; then
+            echo "⚠️ SHEET_API_URL secret이 설정되지 않았습니다. 앱에서 직접 URL을 입력해야 합니다."
+          else
+            # | 를 구분자로 사용 (URL에 / 가 많으므로)
+            sed -i "s|__SHEET_API_URL__|${{ secrets.SHEET_API_URL }}|g" index.html
+            echo "✅ GAS URL 주입 완료"
+          fi
+
+      # 3) Pages 설정
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      # 4) 빌드 결과물 업로드 (저장소 전체 = index.html 포함)
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+
+      # 5) GitHub Pages에 배포
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
