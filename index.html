@@ -64,7 +64,16 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // ★  GAS URL 설정 — 아래 줄의 따옴표 안에만 URL 입력  ★
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbzXJhs6CMaDMkn7pH8FNsXkCCWyqu5iQtygoLx0I5OMae-N6ENEyg8KlXcB0qja6Wq73g/exec요';
+// GAS URL: localStorage에 저장된 값을 우선 사용
+// 직접 하드코딩도 가능 (아래 문자열을 교체)
+var GAS_URL_HARDCODED = '여기에_배포된_GAS_URL을_입력하세요';
+var GAS_URL = (function() {
+    try {
+        var saved = localStorage.getItem('gas_url');
+        if (saved && saved.indexOf('script.google.com') !== -1) return saved;
+    } catch(e) {}
+    return GAS_URL_HARDCODED;
+})();
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 </script>
 <script>
@@ -6872,19 +6881,39 @@ function LoginScreen(props) {
                               GAS_URL.indexOf('script.google.com') !== -1;
         if (!isGasConfigured) {
             setStudents([
-                { id: 1, name: '김민서' }, { id: 2, name: '이준혁' },
-                { id: 3, name: '박소연' }, { id: 4, name: '최지우' },
-                { id: 5, name: '정하은' }, { id: 6, name: '윤서준' },
+                { id: '1', name: '김민서' }, { id: '2', name: '이준혁' },
+                { id: '3', name: '박소연' }, { id: '4', name: '최지우' },
+                { id: '5', name: '정하은' }, { id: '6', name: '윤서준' },
             ]);
             setStatus('nogas');
             return;
         }
+        setStatus('loading');
         gasGet('getStudents')
             .then(function(d) {
-                if (d && d.students && d.students.length > 0) { setStudents(d.students); setStatus('ok'); }
-                else { setStatus('error'); setErrorMsg('명단을 불러오지 못했어요: ' + JSON.stringify(d).substring(0, 80)); }
+                // 응답이 배열 직접이거나 { students: [...] } 형태 모두 처리
+                var list = null;
+                if (Array.isArray(d)) {
+                    list = d;
+                } else if (d && Array.isArray(d.students)) {
+                    list = d.students;
+                }
+                if (list && list.length > 0) {
+                    setStudents(list);
+                    setStatus('ok');
+                } else if (list && list.length === 0) {
+                    // 명단 시트는 있지만 학생이 없는 경우
+                    setStatus('error');
+                    setErrorMsg('명단 시트에 학생 이름을 추가해주세요.\n(구글 스프레드시트 → 명단 시트)');
+                } else {
+                    setStatus('error');
+                    setErrorMsg('GAS 응답 오류: ' + JSON.stringify(d).substring(0, 100));
+                }
             })
-            .catch(function(err) { setStatus('error'); setErrorMsg('연결 실패: ' + (err.message || err)); });
+            .catch(function(err) {
+                setStatus('error');
+                setErrorMsg('GAS 연결 실패. GAS URL을 확인해주세요.\n' + (err.message || String(err)));
+            });
     }, []);
 
     var selectedStudent = null;
@@ -6913,7 +6942,25 @@ function LoginScreen(props) {
     // 페이지 0: 앱 소개
     // ──────────────────────────────────────────
     if (page === 0) {
-        return h("div", { className: "w-full flex flex-col items-center justify-center p-6 gap-5 overflow-hidden", style: wrapStyle },
+        var isGasSet = GAS_URL.indexOf('script.google.com') !== -1;
+        var sUrlInput = useState('');
+        var urlInput = sUrlInput[0], setUrlInput = sUrlInput[1];
+        var sShowUrl = useState(false);
+        var showUrl = sShowUrl[0], setShowUrl = sShowUrl[1];
+
+        function saveGasUrl() {
+            var trimmed = urlInput.trim();
+            if (trimmed.indexOf('script.google.com') === -1) {
+                alert('올바른 GAS URL이 아니에요.\nhttps://script.google.com/... 형태여야 해요.');
+                return;
+            }
+            try { localStorage.setItem('gas_url', trimmed); } catch(e) {}
+            GAS_URL = trimmed;
+            setShowUrl(false);
+            setUrlInput('');
+        }
+
+        return h("div", { className: "w-full flex flex-col items-center justify-center p-6 gap-5 overflow-y-auto", style: wrapStyle },
             // 연필요정
             h(motion.div, {
                 animate: { y: [0, -10, 0] },
@@ -6928,7 +6975,7 @@ function LoginScreen(props) {
 
             // 🎯 학습목표 안내 박스
             h("div", {
-                className: "bg-yellow-100 border-4 border-yellow-400 rounded-[2rem] px-8 py-6 max-w-3xl shadow-lg",
+                className: "bg-yellow-100 border-4 border-yellow-400 rounded-[2rem] px-8 py-6 max-w-3xl w-full shadow-lg",
                 style: { boxShadow: '0 8px 0 -2px rgba(234,179,8,0.3), 0 6px 20px -2px rgba(234,179,8,0.3)' }
             },
                 h("div", { className: "flex items-center gap-3 mb-4" },
@@ -6959,6 +7006,59 @@ function LoginScreen(props) {
                             )
                         );
                     })
+                )
+            ),
+
+            // ⚙️ GAS URL 설정 (선생님용)
+            h("div", { className: "w-full max-w-3xl flex flex-col gap-2" },
+                h("div", { className: "flex items-center justify-between" },
+                    h("div", { className: "flex items-center gap-2" },
+                        h("span", { className: "text-xl" }, isGasSet ? "🟢" : "🔴"),
+                        h("span", { className: "text-lg font-black " + (isGasSet ? "text-emerald-700" : "text-red-600") },
+                            isGasSet ? "선생님 서버 연결됨" : "선생님 서버 미연결"
+                        )
+                    ),
+                    h("button", {
+                        onClick: function(){ setShowUrl(!showUrl); },
+                        className: "px-4 py-2 text-base font-black rounded-xl border-2 " +
+                            (isGasSet ? "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200"
+                                      : "bg-red-50 text-red-600 border-red-300 hover:bg-red-100")
+                    }, isGasSet ? "⚙️ URL 변경" : "⚙️ URL 입력")
+                ),
+
+                // URL 입력창
+                showUrl && h(motion.div, {
+                    initial: { opacity: 0, y: -8 },
+                    animate: { opacity: 1, y: 0 },
+                    className: "bg-white border-2 border-slate-200 rounded-2xl p-4 flex flex-col gap-3 shadow-md"
+                },
+                    h("p", { className: "text-base font-black text-slate-600" }, "📋 Apps Script 배포 URL을 붙여넣으세요"),
+                    h("p", { className: "text-sm text-slate-400" }, "한 번만 입력하면 이 기기에서 자동 저장돼요"),
+                    h("input", {
+                        type: "text",
+                        value: urlInput,
+                        onChange: function(e){ setUrlInput(e.target.value); },
+                        onKeyDown: function(e){ if(e.key==='Enter') saveGasUrl(); },
+                        placeholder: "https://script.google.com/macros/s/...",
+                        className: "w-full px-4 py-3 text-sm font-bold rounded-xl border-2 border-slate-200 outline-none focus:border-blue-400",
+                        style: { fontFamily: 'monospace' }
+                    }),
+                    h("div", { className: "flex gap-2" },
+                        h("button", {
+                            onClick: saveGasUrl,
+                            disabled: !urlInput.trim(),
+                            className: "flex-1 py-3 rounded-xl font-black text-lg " +
+                                (urlInput.trim() ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-400 cursor-not-allowed")
+                        }, "💾 저장"),
+                        isGasSet && h("button", {
+                            onClick: function(){
+                                try { localStorage.removeItem('gas_url'); } catch(e) {}
+                                GAS_URL = GAS_URL_HARDCODED;
+                                setShowUrl(false);
+                            },
+                            className: "px-4 py-3 rounded-xl font-black text-base bg-red-50 text-red-500 border-2 border-red-200"
+                        }, "🗑️ 초기화")
+                    )
                 )
             ),
 
@@ -7075,9 +7175,32 @@ function LoginScreen(props) {
             ),
 
             // 오류 메시지
-            status === 'error' && h("div", { className: "w-full bg-red-50 border-2 border-red-200 rounded-2xl p-4 text-center" },
+            status === 'error' && h("div", { className: "w-full bg-red-50 border-2 border-red-200 rounded-2xl p-5 text-center flex flex-col gap-3" },
                 h("p", { className: "text-xl font-black text-red-700" }, "⚠️ 명단을 불러오지 못했어요"),
-                h("p", { className: "text-base font-bold text-red-500 mt-2 break-all" }, errorMsg)
+                h("p", { className: "text-base font-bold text-red-500 whitespace-pre-line" }, errorMsg),
+                h("div", { className: "flex gap-3 justify-center mt-1" },
+                    h("button", {
+                        onClick: function() {
+                            setStatus('loading');
+                            setErrorMsg('');
+                            gasGet('getStudents')
+                                .then(function(d) {
+                                    var list = Array.isArray(d) ? d : (d && Array.isArray(d.students) ? d.students : null);
+                                    if (list && list.length > 0) { setStudents(list); setStatus('ok'); }
+                                    else { setStatus('error'); setErrorMsg('명단 시트에 학생 이름을 추가해주세요.'); }
+                                })
+                                .catch(function(err) { setStatus('error'); setErrorMsg('연결 실패: ' + (err.message || String(err))); });
+                        },
+                        className: "px-5 py-2 bg-red-500 text-white rounded-xl font-black text-base hover:bg-red-600"
+                    }, "🔄 다시 시도"),
+                    h("button", {
+                        onClick: function() {
+                            setStudents([{id:'1',name:'학생1'},{id:'2',name:'학생2'},{id:'3',name:'학생3'}]);
+                            setStatus('nogas');
+                        },
+                        className: "px-5 py-2 bg-slate-200 text-slate-600 rounded-xl font-black text-base hover:bg-slate-300"
+                    }, "임시로 계속하기")
+                )
             ),
 
             // 시작 버튼
