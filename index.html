@@ -66,8 +66,18 @@
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 // GAS URL: localStorage에 저장된 값을 우선 사용
 // 직접 하드코딩도 가능 (아래 문자열을 교체)
-var GAS_URL_HARDCODED = '여기에_배포된_GAS_URL을_입력하세요';
+// GAS URL 우선순위:
+//   1) GitHub Actions가 빌드 시 주입하는 __SHEET_API_URL__
+//   2) 선생님이 앱에서 직접 입력해 저장한 localStorage 값
+//   3) 미설정 (앱에서 ⚙️ 버튼으로 입력 가능)
+var GAS_URL_INJECTED = '__SHEET_API_URL__';  // GitHub Actions가 실제 URL로 교체
+var GAS_URL_HARDCODED = (GAS_URL_INJECTED.indexOf('SHEET_API_URL') === -1 && GAS_URL_INJECTED.indexOf('script.google.com') !== -1)
+    ? GAS_URL_INJECTED
+    : '여기에_배포된_GAS_URL을_입력하세요';
 var GAS_URL = (function() {
+    // 1) 빌드 시 주입된 URL이 있으면 최우선 사용
+    if (GAS_URL_HARDCODED.indexOf('script.google.com') !== -1) return GAS_URL_HARDCODED;
+    // 2) localStorage 저장값
     try {
         var saved = localStorage.getItem('gas_url');
         if (saved && saved.indexOf('script.google.com') !== -1) return saved;
@@ -6942,24 +6952,6 @@ function LoginScreen(props) {
     // 페이지 0: 앱 소개
     // ──────────────────────────────────────────
     if (page === 0) {
-        var isGasSet = GAS_URL.indexOf('script.google.com') !== -1;
-        var sUrlInput = useState('');
-        var urlInput = sUrlInput[0], setUrlInput = sUrlInput[1];
-        var sShowUrl = useState(false);
-        var showUrl = sShowUrl[0], setShowUrl = sShowUrl[1];
-
-        function saveGasUrl() {
-            var trimmed = urlInput.trim();
-            if (trimmed.indexOf('script.google.com') === -1) {
-                alert('올바른 GAS URL이 아니에요.\nhttps://script.google.com/... 형태여야 해요.');
-                return;
-            }
-            try { localStorage.setItem('gas_url', trimmed); } catch(e) {}
-            GAS_URL = trimmed;
-            setShowUrl(false);
-            setUrlInput('');
-        }
-
         return h("div", { className: "w-full flex flex-col items-center justify-center p-6 gap-5 overflow-y-auto", style: wrapStyle },
             // 연필요정
             h(motion.div, {
@@ -7006,59 +6998,6 @@ function LoginScreen(props) {
                             )
                         );
                     })
-                )
-            ),
-
-            // ⚙️ GAS URL 설정 (선생님용)
-            h("div", { className: "w-full max-w-3xl flex flex-col gap-2" },
-                h("div", { className: "flex items-center justify-between" },
-                    h("div", { className: "flex items-center gap-2" },
-                        h("span", { className: "text-xl" }, isGasSet ? "🟢" : "🔴"),
-                        h("span", { className: "text-lg font-black " + (isGasSet ? "text-emerald-700" : "text-red-600") },
-                            isGasSet ? "선생님 서버 연결됨" : "선생님 서버 미연결"
-                        )
-                    ),
-                    h("button", {
-                        onClick: function(){ setShowUrl(!showUrl); },
-                        className: "px-4 py-2 text-base font-black rounded-xl border-2 " +
-                            (isGasSet ? "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200"
-                                      : "bg-red-50 text-red-600 border-red-300 hover:bg-red-100")
-                    }, isGasSet ? "⚙️ URL 변경" : "⚙️ URL 입력")
-                ),
-
-                // URL 입력창
-                showUrl && h(motion.div, {
-                    initial: { opacity: 0, y: -8 },
-                    animate: { opacity: 1, y: 0 },
-                    className: "bg-white border-2 border-slate-200 rounded-2xl p-4 flex flex-col gap-3 shadow-md"
-                },
-                    h("p", { className: "text-base font-black text-slate-600" }, "📋 Apps Script 배포 URL을 붙여넣으세요"),
-                    h("p", { className: "text-sm text-slate-400" }, "한 번만 입력하면 이 기기에서 자동 저장돼요"),
-                    h("input", {
-                        type: "text",
-                        value: urlInput,
-                        onChange: function(e){ setUrlInput(e.target.value); },
-                        onKeyDown: function(e){ if(e.key==='Enter') saveGasUrl(); },
-                        placeholder: "https://script.google.com/macros/s/...",
-                        className: "w-full px-4 py-3 text-sm font-bold rounded-xl border-2 border-slate-200 outline-none focus:border-blue-400",
-                        style: { fontFamily: 'monospace' }
-                    }),
-                    h("div", { className: "flex gap-2" },
-                        h("button", {
-                            onClick: saveGasUrl,
-                            disabled: !urlInput.trim(),
-                            className: "flex-1 py-3 rounded-xl font-black text-lg " +
-                                (urlInput.trim() ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-400 cursor-not-allowed")
-                        }, "💾 저장"),
-                        isGasSet && h("button", {
-                            onClick: function(){
-                                try { localStorage.removeItem('gas_url'); } catch(e) {}
-                                GAS_URL = GAS_URL_HARDCODED;
-                                setShowUrl(false);
-                            },
-                            className: "px-4 py-3 rounded-xl font-black text-base bg-red-50 text-red-500 border-2 border-red-200"
-                        }, "🗑️ 초기화")
-                    )
                 )
             ),
 
