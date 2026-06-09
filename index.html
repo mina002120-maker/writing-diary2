@@ -6186,6 +6186,14 @@ function Stage3(props) {
     var s8 = useState(false);      var submitted = s8[0], setSubmitted = s8[1];
     var recRef = useRef(null);
 
+    // review 진입 시 3초 후 자동 제출 (훅은 항상 최상단에서 호출 — 조건문 안 X)
+    useEffect(function() {
+        if (subStep === 'review' && !submitted) {
+            var timer = setTimeout(function() { doSubmit(myParts); }, 3000);
+            return function() { clearTimeout(timer); };
+        }
+    }, [subStep]);
+
     // 1단계 모은 카드 + 2단계 모은 감정 카드 (카드에서 고르기용)
     var cards1 = props.collectedCards1 || [];
     var cards2 = props.collectedCards2 || [];
@@ -6619,12 +6627,6 @@ function Stage3(props) {
 
     // ───── review ─────
     else if (subStep === 'review') {
-        // review 진입 시 3초 후 자동 제출
-        useEffect(function() {
-            var timer = setTimeout(function() { doSubmit(myParts); }, 3000);
-            return function() { clearTimeout(timer); };
-        }, []);
-
         content = h("div", { className: "flex-1 flex flex-col p-3 gap-3 min-h-0 overflow-hidden" },
             h("div", { className: "flex items-start gap-3 shrink-0" },
                 h(PencilFairy, { mini: true }),
